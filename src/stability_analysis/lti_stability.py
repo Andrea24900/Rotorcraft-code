@@ -33,7 +33,7 @@ class LTIStability(StabilityAnalysis):
         """
         A = self.rotor_build.state_matrix_A_handles(1, OMEGA)
 
-        eigenvectors, eigenvalues = np.linalg.eig(A)
+        eigenvalues, eigenvectors = np.linalg.eig(A)
 
         eigensolution = {
             'eigenvectors': eigenvectors,
