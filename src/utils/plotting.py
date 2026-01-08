@@ -1,0 +1,205 @@
+"""Plotting utilities and configuration.
+
+Converted from MATLAB plot_properties.m and my_plot.m.
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+from dataclasses import dataclass
+from typing import Optional, List, Tuple
+
+
+@dataclass
+class PlotProperties:
+    """Plot styling properties."""
+    
+    marker_size: int = 4
+    line_width: float = 2.0
+    fontsize_legend: int = 11
+    dash_width: float = 1.5
+    fontsize_label: int = 15
+
+
+@dataclass
+class ColorScheme:
+    """Color scheme for plotting, matching MATLAB defaults."""
+    
+    # Original MATLAB default colors
+    blue_mat: Tuple[float, float, float] = (0.0, 0.4470, 0.7410)
+    orange_mat: Tuple[float, float, float] = (0.8500, 0.3250, 0.0980)
+    yellow_mat: Tuple[float, float, float] = (0.9290, 0.6940, 0.1250)
+    purple_mat: Tuple[float, float, float] = (0.4940, 0.1840, 0.5560)
+    green_mat: Tuple[float, float, float] = (0.4660, 0.6740, 0.1880)
+    light_blue_mat: Tuple[float, float, float] = (0.3010, 0.7450, 0.9330)
+    red_mat: Tuple[float, float, float] = (0.6350, 0.0780, 0.1840)
+    
+    # Additional distinct colors
+    teal_mat: Tuple[float, float, float] = (0.0, 0.5, 0.5)
+    pink_mat: Tuple[float, float, float] = (0.9, 0.4, 0.7)
+    brown_mat: Tuple[float, float, float] = (0.6, 0.3, 0.0)
+    gray_mat: Tuple[float, float, float] = (0.5, 0.5, 0.5)
+    cyan_mat: Tuple[float, float, float] = (0.0, 0.8, 0.8)
+    magenta_mat: Tuple[float, float, float] = (0.8, 0.0, 0.8)
+    lime_mat: Tuple[float, float, float] = (0.7, 0.9, 0.1)
+    gold_mat: Tuple[float, float, float] = (1.0, 0.85, 0.0)
+    navy_mat: Tuple[float, float, float] = (0.0, 0.0, 0.5)
+    maroon_mat: Tuple[float, float, float] = (0.5, 0.0, 0.0)
+    turquoise_mat: Tuple[float, float, float] = (0.25, 0.88, 0.815)
+    violet_mat: Tuple[float, float, float] = (0.58, 0.0, 0.83)
+    
+    def get_color_vector(self) -> np.ndarray:
+        """Get array of all colors."""
+        return np.array([
+            self.blue_mat,
+            self.orange_mat,
+            self.yellow_mat,
+            self.green_mat,
+            self.red_mat,
+            (0, 0, 0),  # Black
+            self.purple_mat,
+            self.light_blue_mat,
+            self.teal_mat,
+            self.pink_mat,
+            self.brown_mat,
+            self.gray_mat,
+            self.cyan_mat,
+            self.magenta_mat,
+            self.lime_mat,
+            self.gold_mat,
+            self.navy_mat,
+            self.maroon_mat,
+            self.turquoise_mat,
+            self.violet_mat,
+        ])
+    
+    def get_color_vector_double(self) -> np.ndarray:
+        """Get doubled color vector for paired plotting."""
+        colors = self.get_color_vector()
+        return np.repeat(colors, 2, axis=0)
+
+
+class MyPlot:
+    """Plotting utilities for rotor dynamics analysis.
+    
+    This class will contain methods converted from my_plot.m
+    """
+    
+    def __init__(self):
+        """Initialize plotting utilities."""
+        self.properties = PlotProperties()
+        self.colors = ColorScheme()
+    
+    @staticmethod
+    def plot_damping_generic(
+        modal_solution: List,
+        xlimits: Optional[Tuple[float, float]] = None
+    ) -> plt.Figure:
+        """Plot generic damping vs RPM.
+        
+        Args:
+            modal_solution: List of modal solution structures
+            xlimits: Optional x-axis limits (min_rpm, max_rpm)
+            
+        Returns:
+            matplotlib Figure object
+        """
+        fig, ax = plt.subplots(figsize=(10, 6))
+        
+        # TODO: Implement plotting logic from MATLAB version
+        # This is a placeholder
+        
+        ax.set_xlabel('Rotor Speed (RPM)', fontsize=15)
+        ax.set_ylabel('Damping', fontsize=15)
+        ax.grid(True)
+        
+        if xlimits:
+            ax.set_xlim(xlimits)
+        
+        return fig
+    
+    @staticmethod
+    def plot_damping_order(
+        modal_solution: List,
+        modes: Optional[List[int]] = None,
+        figure_handle: Optional[plt.Figure] = None
+    ) -> plt.Figure:
+        """Plot damping for specific mode orders.
+        
+        Args:
+            modal_solution: List of modal solution structures
+            modes: List of mode indices to plot
+            figure_handle: Optional existing figure to plot on
+            
+        Returns:
+            matplotlib Figure object
+        """
+        if figure_handle is None:
+            fig, ax = plt.subplots(figsize=(10, 6))
+        else:
+            fig = figure_handle
+            ax = fig.gca()
+        
+        # TODO: Implement plotting logic from MATLAB version
+        # This is a placeholder
+        
+        ax.set_xlabel('Rotor Speed (RPM)', fontsize=15)
+        ax.set_ylabel('Damping', fontsize=15)
+        ax.grid(True)
+        ax.legend()
+        
+        return fig
+    
+    @staticmethod
+    def plot_mod_part(
+        modal_participation: List,
+        state_index: int,
+        mode_index: int,
+        labels: Optional[List[str]] = None,
+        xlimits: Optional[Tuple[float, float]] = None,
+        plot_sum: bool = True
+    ) -> plt.Figure:
+        """Plot modal participation factors.
+        
+        Args:
+            modal_participation: Modal participation data
+            state_index: Index of state to plot
+            mode_index: Index of mode to plot
+            labels: Optional labels for plot
+            xlimits: Optional x-axis limits
+            plot_sum: Whether to plot sum of participations
+            
+        Returns:
+            matplotlib Figure object
+        """
+        fig, ax = plt.subplots(figsize=(10, 6))
+        
+        # TODO: Implement plotting logic from MATLAB version
+        # This is a placeholder
+        
+        ax.set_xlabel('Rotor Speed (RPM)', fontsize=15)
+        ax.set_ylabel('Modal Participation', fontsize=15)
+        ax.grid(True)
+        
+        if xlimits:
+            ax.set_xlim(xlimits)
+        
+        if labels:
+            ax.legend(labels)
+        
+        return fig
+
+
+# Initialize global instances for convenience
+plot_property = PlotProperties()
+color = ColorScheme()
+
+
+if __name__ == "__main__":
+    # Test color scheme
+    colors = color.get_color_vector()
+    print(f"Number of colors: {len(colors)}")
+    print(f"First color (blue): {colors[0]}")
+    
+    # Test plotting utilities
+    plotter = MyPlot()
+    print(f"Line width: {plotter.properties.line_width}")
