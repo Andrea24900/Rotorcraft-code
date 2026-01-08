@@ -63,7 +63,7 @@ class ProblemDefinition:
     number_points: int = 50
     
     # Solver configuration
-    required_solver: Literal["LTI", "LTP", "HD"] = "HD"
+    required_solver: Literal["LTI", "LTP", "HD"] = "LTI"
     number_harmonics: int = 1  # for HD and modal participation
     
     # Continuation method parameters

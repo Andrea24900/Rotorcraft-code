@@ -88,8 +88,8 @@ def main():
     )
     plt.figure(fig1.number)
     plt.tight_layout()
-    plt.savefig('lti_damping_generic.png', dpi=300, bbox_inches='tight')
-    print(f"    [OK] Saved: lti_damping_generic.png")
+    
+    
 
     # Plot 2: Generic frequency plot
     print("  - Creating frequency vs RPM plot...")
@@ -100,9 +100,7 @@ def main():
     )
     plt.figure(fig2.number)
     plt.tight_layout()
-    plt.savefig('lti_frequency_generic.png', dpi=300, bbox_inches='tight')
-    print(f"    [OK] Saved: lti_frequency_generic.png")
-
+    
     # Plot 3: Damping by mode order (first 10 modes)
     n_modes = len(lti_analysis.modal_solution[0].damping)
     modes_to_plot = list(range(min(10, n_modes)))
@@ -117,9 +115,7 @@ def main():
         )
         plt.figure(fig3.number)
         plt.tight_layout()
-        plt.savefig('lti_damping_order.png', dpi=300, bbox_inches='tight')
-        print(f"    [OK] Saved: lti_damping_order.png")
-
+        
     # Plot 4: Frequency by mode order (first 10 modes)
     if len(modes_to_plot) > 0:
         print(f"  - Creating frequency plot for first {len(modes_to_plot)} modes...")
@@ -131,9 +127,7 @@ def main():
         )
         plt.figure(fig4.number)
         plt.tight_layout()
-        plt.savefig('lti_frequency_order.png', dpi=300, bbox_inches='tight')
-        print(f"    [OK] Saved: lti_frequency_order.png")
-
+        
     print("\n" + "="*60)
     print("Analysis Complete!")
     print("="*60)
