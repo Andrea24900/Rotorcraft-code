@@ -51,9 +51,6 @@ This document tracks the conversion of a MATLAB rotorcraft dynamics analysis cod
 | File | Status | Notes |
 |------|--------|-------|
 | `CALL.m` | ✅ Structure | Basic workflow implemented |
-| `CALL_DMD.m` | ⏳ Not Started | DMD analysis |
-| `CALL_DMD_LTP.m` | ⏳ Not Started | DMD for LTP |
-| `CALL_DMD_NL.m` | ⏳ Not Started | DMD for nonlinear |
 
 ## Recent Accomplishments ✅
 
@@ -69,7 +66,7 @@ This document tracks the conversion of a MATLAB rotorcraft dynamics analysis cod
   - All time-varying terms and gyroscopic coupling verified
 
 ### Stability Analysis Base (Completed)
-- **HD_computer**: Full Hill-Determinant matrix construction
+- **HD_computer**: Full Harmonic Decomposition matrix construction
   - FFT coefficient extraction for periodic state matrices
   - All 8 H-matrix assignment helper functions implemented
   - Complete block assembly with harmonic coupling terms
@@ -97,11 +94,7 @@ This document tracks the conversion of a MATLAB rotorcraft dynamics analysis cod
 
 ### Medium Priority (Advanced Analysis)
 
-4. **DMD scripts**
-   - Basic DMD implementation
-   - LTP and nonlinear variants
-
-5. **Testing & Validation**
+4. **Testing & Validation**
    - Unit tests for matrix repositories
    - Numerical comparison with MATLAB results
    - Integration tests for stability analysis
@@ -153,7 +146,7 @@ The `build_damping_matrix()` function returns function handles for C(t,ω) and K
 ### Stability Analysis Implementation Details
 
 #### HD_computer (`src/stability_analysis/base.py`)
-The Hill-Determinant method expands the time-periodic system into an infinite-dimensional time-invariant system:
+The Harmonic Decomposition method expands the time-periodic system into an infinite-dimensional time-invariant system:
 
 **FFT Coefficient Extraction**:
 ```python

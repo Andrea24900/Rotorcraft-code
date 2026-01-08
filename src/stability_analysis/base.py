@@ -45,47 +45,44 @@ class StabilityAnalysis:
     @staticmethod
     def run_stability(rotor_build):
         """Run full stability analysis according to problem definition.
-        
+
         This is the main entry point that selects the appropriate analysis
         method based on the problem configuration.
-        
+
         Args:
             rotor_build: RotorBuild object
-            
+
         Returns:
             StabilityAnalysis subclass instance with computed results
         """
         from .lti_stability import LTIStability
         from .ltp_stability import LTPStability
         from .hd_stability import HDStability
-        
+        from .continuation_analysis import ContinuationAnalysis
+
         solver_type = rotor_build.problem.required_solver
         use_continuation = rotor_build.problem.continuation == "YES"
-        
-        if solver_type == "LTI":
-            if use_continuation:
-                # TODO: Implement continuation analysis
-                raise NotImplementedError("Continuation analysis not yet implemented")
-            else:
+
+        if use_continuation:
+            # Use continuation analysis for all solver types
+            obj = ContinuationAnalysis(rotor_build)
+            obj = obj.continuation()
+        else:
+            # Use standard analysis methods
+            if solver_type == "LTI":
                 obj = LTIStability(rotor_build)
                 obj = obj.eigen_full_range()
-                
-        elif solver_type == "LTP":
-            if use_continuation:
-                raise NotImplementedError("Continuation analysis not yet implemented")
-            else:
+
+            elif solver_type == "LTP":
                 obj = LTPStability(rotor_build)
                 obj = obj.LTP_full_range()
-                
-        elif solver_type == "HD":
-            if use_continuation:
-                raise NotImplementedError("Continuation analysis not yet implemented")
-            else:
+
+            elif solver_type == "HD":
                 obj = HDStability(rotor_build)
                 obj = obj.HD_full_range()
-        else:
-            raise ValueError(f"Unknown solver type: {solver_type}")
-        
+            else:
+                raise ValueError(f"Unknown solver type: {solver_type}")
+
         return obj
     
     @staticmethod

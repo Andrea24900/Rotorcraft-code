@@ -9,9 +9,9 @@ from .ltp_stability import LTPStability
 
 
 class HDStability(LTPStability):
-    """Harmonic Domain stability analysis using Hill's method.
+    """Harmonic Domain stability analysis using Harmonic Decomposition method.
     
-    This class extends LTP stability to use Hill-determinant method
+    This class extends LTP stability to use Harmonic Decomposition method
     for analyzing periodic systems in the frequency domain.
     """
     
@@ -24,7 +24,7 @@ class HDStability(LTPStability):
         super().__init__(rotor_build)
     
     def HD_single_point(self, OMEGA: float, T: float) -> dict:
-        """Compute eigenvalues using Hill-determinant method.
+        """Compute eigenvalues using Harmonic Decomposition method.
 
         Args:
             OMEGA: Rotor speed (rad/s)
@@ -39,7 +39,7 @@ class HDStability(LTPStability):
         # Time vector for sampling (move the number of points in the settings)
         time = np.linspace(0, T, 200)
 
-        # Compute Hill-determinant matrix
+        # Compute Harmonic Decomposition matrix
         A_HD = StabilityAnalysis.HD_computer(
             A,
             time,

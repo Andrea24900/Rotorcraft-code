@@ -118,17 +118,16 @@ class ProblemDefinition:
 - **Damping & Stiffness Matrices**: H2B and B2B configurations with ALL/ODI damper activation
 - **LTI Stability Analysis**: Eigenvalue analysis across RPM range
 - **LTP Stability Analysis**: Monodromy matrix computation via Floquet theory
-- **HD Stability Analysis**: Complete Hill-Determinant method with FFT-based harmonic decomposition
+- **HD Stability Analysis**: Complete Harmonic Decomposition method with FFT-based harmonic decomposition
+- **Continuation Analysis**: Predictor-corrector method for eigenvalue tracking across parameter ranges
 - **State Matrix Construction**: Full state-space formulation for all configurations
-- **Visualization**: Damping and frequency plots vs RPM
+- **Visualization**: Damping and frequency plots vs RPM (generic scatter plots and mode-tracked line plots)
 
 ### In Progress 🚧
 - Modal participation analysis
-- Continuation methods for bifurcation tracking
 - Additional plotting utilities (Campbell diagrams)
 
 ### Planned ⏳
-- DMD (Dynamic Mode Decomposition) analysis
 - Unit tests and validation against MATLAB
 - Documentation and examples
 
@@ -141,10 +140,9 @@ class ProblemDefinition:
 | **Stability Base** | ✅ Complete | `src/stability_analysis/base.py` | HD_computer with 8 H-matrix helpers |
 | **LTI Stability** | ✅ Complete | `src/stability_analysis/lti_stability.py` | Eigenvalue analysis |
 | **LTP Stability** | ✅ Complete | `src/stability_analysis/ltp_stability.py` | Monodromy matrices |
-| **Plotting** | ✅ Complete | `src/utils/plotting.py` | Damping/frequency plots |
+| **Continuation** | ✅ Complete | `src/stability_analysis/continuation_analysis.py` | Predictor-corrector tracking |
+| **Plotting** | ✅ Complete | `src/utils/plotting.py` | Generic and mode-tracked plots |
 | **Modal Participation** | 🚧 Partial | `src/analysis/modal_participation.py` | Structure exists |
-| **Continuation** | ⏳ Not Started | - | Bifurcation tracking |
-| **DMD Analysis** | ⏳ Not Started | - | Dynamic mode decomposition |
 
 Legend: ✅ Complete | 🚧 In Progress | ⏳ Not Started
 
@@ -168,7 +166,7 @@ All converted code has been verified against the original MATLAB implementation:
 ### Implementation Details
 See `CONVERSION_GUIDE.md` for detailed documentation of:
 - Matrix repository implementation
-- Hill-Determinant computer with FFT coefficients
+- Harmonic Decomposition computer with FFT coefficients
 - H-matrix block assembly algorithms
 - Harmonic interaction formulas
 

@@ -45,7 +45,7 @@ def main():
     print("\n4. Generating plots...")
     plotter = MyPlot()
     
-    # Plot damping vs RPM for selected modes
+    # Plot damping vs RPM for selected modes (1-based numbering)
     modes_to_plot = list(range(1, min(13, len(modes.modal_solution[0].damping) + 1)))
     print(f"   - Plotting modes: {modes_to_plot}")
     
