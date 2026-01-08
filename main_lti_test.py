@@ -90,8 +90,8 @@ def main():
     n_modes = len(lti_analysis.modal_solution[0].damping)
     print(f"\n  Total number of modes: {n_modes}")
 
-    # Plot all 12 modes
-    modes_to_plot_damping = list(range(min(12, n_modes)))  # All 12 modes for damping
+    # Plot all 12 modes (using 1-based numbering)
+    modes_to_plot_damping = list(range(1, min(13, n_modes + 1)))  # Modes 1-12 for damping
 
     # For frequency, only plot modes with positive frequencies
     # Identify modes with positive frequencies at any operating point
@@ -99,36 +99,34 @@ def main():
     for sol in lti_analysis.modal_solution:
         for i, freq in enumerate(sol.frequency):
             if freq > 0 and i < 12:
-                modes_with_positive_freq.add(i)
+                modes_with_positive_freq.add(i + 1)  # Convert to 1-based
 
     modes_to_plot_frequency = sorted(list(modes_with_positive_freq))
 
     print(f"  Modes with positive frequencies: {modes_to_plot_frequency}")
     print(f"  Plotting all dampings for modes: {modes_to_plot_damping}")
 
-    # Plot 1: Damping by mode order (all 12 modes)
-    if len(modes_to_plot_damping) > 0:
-        print(f"\n  - Creating damping plot for all {len(modes_to_plot_damping)} modes...")
-        fig1 = plotter.plot_damping_order(
-            lti_analysis.modal_solution,
-            modes=modes_to_plot_damping,
-            xlimits=(rpm_min, rpm_max),
-            ylimits=(damping_min, damping_max)
-        )
-        plt.figure(fig1.number)
-        plt.tight_layout()
+    # Plot 1: Damping (generic - dots only, no lines)
+    print(f"\n  - Creating damping plot (all modes, dots only)...")
+    fig1 = plotter.plot_damping_generic(
+        lti_analysis.modal_solution,
+        xlimits=(rpm_min, rpm_max),
+        ylimits=(damping_min, damping_max)
+    )
+    plt.figure(fig1.number)
+    plt.title("Damping vs RPM")
+    plt.tight_layout()
 
-    # Plot 2: Frequency by mode order (only modes with positive frequencies)
-    if len(modes_to_plot_frequency) > 0:
-        print(f"  - Creating frequency plot for {len(modes_to_plot_frequency)} modes with positive frequencies...")
-        fig2 = plotter.plot_frequency_order(
-            lti_analysis.modal_solution,
-            modes=modes_to_plot_frequency,
-            xlimits=(rpm_min, rpm_max),
-            ylimits=(freq_min, freq_max)
-        )
-        plt.figure(fig2.number)
-        plt.tight_layout()
+    # Plot 2: Frequency (generic - dots only, no lines)
+    print(f"  - Creating frequency plot (all modes, dots only)...")
+    fig2 = plotter.plot_frequency_generic(
+        lti_analysis.modal_solution,
+        xlimits=(rpm_min, rpm_max),
+        ylimits=(freq_min, freq_max)
+    )
+    plt.figure(fig2.number)
+    plt.title("Frequency vs RPM")
+    plt.tight_layout()
         
     print("\n" + "="*60)
     print("Analysis Complete!")

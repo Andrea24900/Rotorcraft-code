@@ -93,15 +93,15 @@ def main():
     n_modes = len(cont_analysis.modal_solution[0].damping)
     print(f"\n  Total number of modes: {n_modes}")
 
-    # Plot all modes for damping
-    modes_to_plot_damping = list(range(min(12, n_modes)))
+    # Plot all modes for damping (using 1-based numbering)
+    modes_to_plot_damping = list(range(1, min(13, n_modes + 1)))  # Modes 1-12
 
     # For frequency, only plot modes with positive frequencies
     modes_with_positive_freq = set()
     for sol in cont_analysis.modal_solution:
         for i, freq in enumerate(sol.frequency):
             if freq > 0 and i < 12:
-                modes_with_positive_freq.add(i)
+                modes_with_positive_freq.add(i + 1)  # Convert to 1-based
 
     modes_to_plot_frequency = sorted(list(modes_with_positive_freq))
 

@@ -116,14 +116,14 @@ class MyPlot:
 
         ax.grid(True)
 
-        # Plot all eigenvalues for all operating points
+        # Plot all eigenvalues for all operating points (dots only, no lines)
         n_modes = len(modal_solution[0].damping)
         for j in range(n_modes):
             rpm_values = [modal_sol.OMEGA_RPM for modal_sol in modal_solution]
             damping_values = [modal_sol.damping[j] for modal_sol in modal_solution]
             ax.plot(rpm_values, damping_values,
                    color='blue', marker='*', markersize=plot_property.marker_size,
-                   linewidth=plot_property.line_width)
+                   linestyle='None')
 
         ax.set_xlabel(r'$\Omega$ [rpm]', fontsize=plot_property.fontsize_label)
         ax.set_ylabel(r'$\lambda$ [-]', fontsize=plot_property.fontsize_label)
@@ -147,7 +147,7 @@ class MyPlot:
 
         Args:
             modal_solution: List of modal solution structures
-            modes: List of mode indices to plot
+            modes: List of mode numbers to plot (1-based indexing)
             xlimits: Optional x-axis limits (min_rpm, max_rpm)
             ylimits: Optional y-axis limits (min_damping, max_damping)
             figure_handle: Optional existing figure to plot on
@@ -186,21 +186,26 @@ class MyPlot:
                        markersize=plot_property.marker_size,
                        linewidth=plot_property.line_width)
         else:
-            # Plot selected modes
-            for j, mode_idx in enumerate(modes):
+            # Plot selected modes (convert 1-based to 0-based for array indexing)
+            # Eigenvalues come in pairs: (1,2), (3,4), (5,6), (7,8), (9,10), (11,12)
+            # Each pair represents one mode: mode 1, 2, 3, 4, 5, 6
+            for j, mode_number in enumerate(modes):
+                mode_idx = mode_number - 1  # Convert to 0-based index for array access
                 rpm_values = [modal_sol.OMEGA_RPM for modal_sol in modal_solution]
                 damping_values = [modal_sol.damping[mode_idx] for modal_sol in modal_solution]
 
-                # Plot with or without legend
-                if j % 2 == 1:  # Even j (odd mode index)
+                # Color based on actual mode_idx (not position j)
+                # This ensures consistent coloring even with filtered lists
+                # Show label for even mode_numbers (2, 4, 6, 8, 10, 12)
+                if mode_number % 2 == 0:
                     ax.plot(rpm_values, damping_values,
-                           color=colors_double[j], marker='o',
+                           color=colors_double[mode_idx], marker='o',
                            markersize=plot_property.marker_size,
                            linewidth=plot_property.line_width,
-                           label=f'{mode_names[j]//2}')
+                           label=f'{mode_number // 2}')
                 else:
                     ax.plot(rpm_values, damping_values,
-                           color=colors_double[j], marker='o',
+                           color=colors_double[mode_idx], marker='o',
                            markersize=plot_property.marker_size,
                            linewidth=plot_property.line_width)
 
@@ -244,14 +249,14 @@ class MyPlot:
 
         ax.grid(True)
 
-        # Plot all eigenvalues for all operating points
+        # Plot all eigenvalues for all operating points (dots only, no lines)
         n_modes = len(modal_solution[0].frequency)
         for j in range(n_modes):
             rpm_values = [modal_sol.OMEGA_RPM for modal_sol in modal_solution]
             freq_values = [modal_sol.frequency[j] for modal_sol in modal_solution]
             ax.plot(rpm_values, freq_values,
                    color='blue', marker='*', markersize=plot_property.marker_size,
-                   linewidth=plot_property.line_width)
+                   linestyle='None')
 
         ax.set_xlabel(r'$\Omega$ [rpm]', fontsize=plot_property.fontsize_label)
         ax.set_ylabel(r'$\omega$ [rad/s]', fontsize=plot_property.fontsize_label)
@@ -275,7 +280,7 @@ class MyPlot:
 
         Args:
             modal_solution: List of modal solution structures
-            modes: List of mode indices to plot
+            modes: List of mode numbers to plot (1-based indexing)
             xlimits: Optional x-axis limits (min_rpm, max_rpm)
             ylimits: Optional y-axis limits (min_freq, max_freq)
             figure_handle: Optional existing figure to plot on
@@ -314,21 +319,26 @@ class MyPlot:
                        markersize=plot_property.marker_size,
                        linewidth=plot_property.line_width)
         else:
-            # Plot selected modes
-            for j, mode_idx in enumerate(modes):
+            # Plot selected modes (convert 1-based to 0-based for array indexing)
+            # Eigenvalues come in pairs: (1,2), (3,4), (5,6), (7,8), (9,10), (11,12)
+            # Each pair represents one mode: mode 1, 2, 3, 4, 5, 6
+            for j, mode_number in enumerate(modes):
+                mode_idx = mode_number - 1  # Convert to 0-based index for array access
                 rpm_values = [modal_sol.OMEGA_RPM for modal_sol in modal_solution]
                 freq_values = [modal_sol.frequency[mode_idx] for modal_sol in modal_solution]
 
-                # Legend only on even-indexed modes
-                if j % 2 == 1:
+                # Color based on actual mode_idx (not position j)
+                # This ensures consistent coloring even with filtered lists
+                # Show label for even mode_numbers (2, 4, 6, 8, 10, 12)
+                if mode_number % 2 == 0:
                     ax.plot(rpm_values, freq_values,
-                           color=colors_double[j], marker='o',
+                           color=colors_double[mode_idx], marker='o',
                            markersize=plot_property.marker_size,
                            linewidth=plot_property.line_width,
-                           label=f'{mode_names[j]//2}')
+                           label=f'{mode_number // 2}')
                 else:
                     ax.plot(rpm_values, freq_values,
-                           color=colors_double[j], marker='o',
+                           color=colors_double[mode_idx], marker='o',
                            markersize=plot_property.marker_size,
                            linewidth=plot_property.line_width)
 
