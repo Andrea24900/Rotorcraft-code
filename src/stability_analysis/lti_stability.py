@@ -22,46 +22,44 @@ class LTIStability(StabilityAnalysis):
         """
         super().__init__(rotor_build)
     
-    def eigen_single_point(self, OMEGA: float) -> dict:
+    def eigen_single_point(self, OMEGA):
         """Compute eigenvalues and eigenvectors at single operating point.
-        
+
         Args:
             OMEGA: Rotor speed (rad/s)
-            
+
         Returns:
             Dictionary containing eigenvectors and eigenvalues
         """
-        # Get state matrix at t=1 (arbitrary for LTI) and given OMEGA
-        A = self.rotor_build.state_matrix_A_handles(1.0, OMEGA)
-        
-        # Compute eigenvalues and eigenvectors
-        eigenvalues, eigenvectors = np.linalg.eig(A)
-        
+        A = self.rotor_build.state_matrix_A_handles(1, OMEGA)
+
+        eigenvectors, eigenvalues = np.linalg.eig(A)
+
         eigensolution = {
             'eigenvectors': eigenvectors,
             'eigenvalues': eigenvalues
         }
-        
+
         return eigensolution
     
-    def eigen_full_range(self) -> 'LTIStability':
+    def eigen_full_range(self):
         """Compute eigenvalues over full RPM range.
-        
+
         Returns:
             Self with populated modal_solution
         """
-        # Assign OMEGA range
-        self.assign_range_OMEGA()
-        
-        # Compute eigenvalues at each point
+        self = self.assign_range_OMEGA()
+
         for i in range(self.rotor_build.problem.number_points):
+
             eigensolution = self.eigen_single_point(self.modal_solution[i].OMEGA)
-            
-            # Extract damping (real part) and frequency (imaginary part)
+
             self.modal_solution[i].damping = np.real(eigensolution['eigenvalues'])
+
             self.modal_solution[i].frequency = np.imag(eigensolution['eigenvalues'])
+
             self.modal_solution[i].eigensolution = eigensolution
-        
+
         return self
 
 
@@ -81,4 +79,7 @@ if __name__ == "__main__":
     
     print(f"Number of solutions: {len(lti.modal_solution)}")
     print(f"First point OMEGA: {lti.modal_solution[0].OMEGA_RPM:.2f} RPM")
-    print(f"Number of eigenvalues: {len(lti.modal_solution[0].eigenvalues)}")
+    print(f"Number of eigenvalues: {len(lti.modal_solution[0].damping)}")
+    print(f"Sample eigenvalues at first point:")
+    print(f"  Damping: {lti.modal_solution[0].damping[:3]}")
+    print(f"  Frequency: {lti.modal_solution[0].frequency[:3]}")
