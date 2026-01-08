@@ -61,12 +61,6 @@ modes = StabilityAnalysis.run_stability(rotor)
 # (plotting functionality to be added)
 ```
 
-### DMD Analysis
-
-```python
-# See scripts/call_dmd.py for Dynamic Mode Decomposition examples
-```
-
 ## Configuration
 
 Edit `src/config/problem_definition.py` to configure:
