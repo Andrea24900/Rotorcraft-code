@@ -141,52 +141,290 @@ class StabilityAnalysis:
         number_harmonics: int,
         OMEGA: float
     ) -> np.ndarray:
-        """Compute Hill-determinant matrix for HD analysis.
-        
-        This method constructs the expanded Hill matrix by computing
+        """Compute the state matrix for HD analysis.
+
+        This method constructs the expanded HD matrix by computing
         Fourier coefficients of the time-periodic state matrix A(t).
-        
+
         Args:
             A_handle_time: Function handle A(t)
             time: Time vector for sampling
             number_harmonics: Number of harmonics to include
             OMEGA: Fundamental frequency
-            
+
         Returns:
-            Hill-determinant matrix A_HD
+            matrix A_HD
         """
         state_number = A_handle_time(0).shape[0]
         size_A_HD = (1 + 2 * number_harmonics) * state_number
         A_HD = np.zeros((size_A_HD, size_A_HD))
-        
+
         # Compute time realizations of A(t)
         time_realisation_A = np.zeros((state_number, state_number, len(time)))
         for i, t in enumerate(time):
             time_realisation_A[:, :, i] = A_handle_time(t)
-        
+
         # Compute FFT coefficients for each element
+        # Storage: A_coeff[:,:,0] = A_0, A_coeff[:,:,2*i] = A_ic, A_coeff[:,:,2*i+1] = A_is
         A_coeff = np.zeros((state_number, state_number, 2 * number_harmonics + 1))
-        
+
         for j in range(state_number):
             for k in range(state_number):
                 # FFT of A[j,k](t)
                 full_transform = np.fft.fft(time_realisation_A[j, k, :]) / len(time)
-                
+
                 # Extract coefficients: A_0, A_1c, A_1s, A_2c, A_2s, ...
                 A_coeff[j, k, 0] = full_transform[0].real  # A_0
-                
+
                 index_coeff = 1
                 for n in range(1, number_harmonics + 1):
                     A_coeff[j, k, index_coeff] = 2 * full_transform[n].real  # A_nc
                     A_coeff[j, k, index_coeff + 1] = -2 * full_transform[n].imag  # A_ns
                     index_coeff += 2
-        
-        # TODO: Implement H-matrix assignment functions
-        # This is a placeholder for the complete HD matrix construction
-        # The full implementation requires the H assignment helper functions
-        
+
+        # Assignment of first diagonal block (H0M)
+        A_HD[0:state_number, 0:state_number] = StabilityAnalysis._H0M_assign(A_coeff)
+
+        # Assignment of first row
+        col_A_HD = state_number
+        i = 1
+        while col_A_HD < size_A_HD:
+            A_HD[0:state_number, col_A_HD:col_A_HD + state_number] = \
+                StabilityAnalysis._H0MiC_assign(A_coeff, i)
+            A_HD[0:state_number, col_A_HD + state_number:col_A_HD + 2 * state_number] = \
+                StabilityAnalysis._H0MiS_assign(A_coeff, i)
+            i += 1
+            col_A_HD += 2 * state_number
+
+        # Assignment of first column
+        row_A_HD = state_number
+        i = 1
+        while row_A_HD < size_A_HD:
+            A_HD[row_A_HD:row_A_HD + state_number, 0:state_number] = \
+                StabilityAnalysis._HiCM_assign(A_coeff, i)
+            A_HD[row_A_HD + state_number:row_A_HD + 2 * state_number, 0:state_number] = \
+                StabilityAnalysis._HiSM_assign(A_coeff, i)
+            i += 1
+            row_A_HD += 2 * state_number
+
+        # Assignment of diagonal terms
+        col_A_HD = state_number
+        row_A_HD = state_number
+        i = 1
+
+        while row_A_HD < size_A_HD:
+            # Upper left corner element: HiCMiC
+            A_HD[row_A_HD:row_A_HD + state_number, col_A_HD:col_A_HD + state_number] = \
+                StabilityAnalysis._HiCMjC_assign(A_coeff, i, i)
+
+            # Upper right corner element: HiCMiS - i*OMEGA
+            A_HD[row_A_HD:row_A_HD + state_number, col_A_HD + state_number:col_A_HD + 2 * state_number] = \
+                StabilityAnalysis._HiCMjS_assign(A_coeff, i, i) - np.eye(state_number) * i * OMEGA
+
+            # Lower left corner element: HiSMiC + i*OMEGA
+            A_HD[row_A_HD + state_number:row_A_HD + 2 * state_number, col_A_HD:col_A_HD + state_number] = \
+                StabilityAnalysis._HiSMjC_assign(A_coeff, i, i) + np.eye(state_number) * i * OMEGA
+
+            # Lower right corner element: HiSMiS
+            A_HD[row_A_HD + state_number:row_A_HD + 2 * state_number,
+                 col_A_HD + state_number:col_A_HD + 2 * state_number] = \
+                StabilityAnalysis._HiSMjS_assign(A_coeff, i, i)
+
+            i += 1
+            row_A_HD += 2 * state_number
+            col_A_HD += 2 * state_number
+
+        # Assignment of extra-diagonal terms (matrix scanned by columns, then by rows)
+        col_A_HD = 3 * state_number  # Skip first diagonal block
+        row_A_HD = state_number
+        i = 1  # Index for "block rows"
+        j = 2  # Index for "block columns"
+
+        while row_A_HD < size_A_HD:
+            while col_A_HD < size_A_HD:
+                if i != j:
+                    # Upper left corner element: HiCMjC
+                    A_HD[row_A_HD:row_A_HD + state_number, col_A_HD:col_A_HD + state_number] = \
+                        StabilityAnalysis._HiCMjC_assign(A_coeff, i, j)
+
+                    # Upper right corner element: HiCMjS
+                    A_HD[row_A_HD:row_A_HD + state_number,
+                         col_A_HD + state_number:col_A_HD + 2 * state_number] = \
+                        StabilityAnalysis._HiCMjS_assign(A_coeff, i, j)
+
+                    # Lower left corner element: HiSMjC
+                    A_HD[row_A_HD + state_number:row_A_HD + 2 * state_number,
+                         col_A_HD:col_A_HD + state_number] = \
+                        StabilityAnalysis._HiSMjC_assign(A_coeff, i, j)
+
+                    # Lower right corner element: HiSMjS
+                    A_HD[row_A_HD + state_number:row_A_HD + 2 * state_number,
+                         col_A_HD + state_number:col_A_HD + 2 * state_number] = \
+                        StabilityAnalysis._HiSMjS_assign(A_coeff, i, j)
+
+                j += 1
+                col_A_HD += 2 * state_number
+
+            # Restart from first block column in the next block row
+            col_A_HD = state_number
+            j = 1  # Restart from first set of coefficients in the next row
+            i += 1
+            row_A_HD += 2 * state_number
+
         return A_HD
-    
+
+    @staticmethod
+    def HD_computer_complex(
+        A_handle_time: Callable[[float], np.ndarray],
+        time: np.ndarray,
+        number_harmonics: int,
+        OMEGA: float
+    ) -> np.ndarray:
+        """Compute HD matrix using complex formulation.
+
+        This is an alternative formulation using complex exponentials
+        instead of separate sine/cosine terms.
+
+        Args:
+            A_handle_time: Function handle A(t)
+            time: Time vector for sampling
+            number_harmonics: Number of harmonics to include
+            OMEGA: Fundamental frequency
+
+        Returns:
+            Complex HD matrix A_HB
+        """
+        state_number = A_handle_time(0).shape[0]
+        size_A_HB = (1 + 2 * number_harmonics) * state_number
+        A_HB = np.zeros((size_A_HB, size_A_HB), dtype=complex)
+
+        # Compute time realizations of A(t)
+        time_realisation_A = np.zeros((state_number, state_number, len(time)))
+        for i, t in enumerate(time):
+            time_realisation_A[:, :, i] = A_handle_time(t)
+
+        # Compute FFT coefficients for each element
+        A_coeff = np.zeros((state_number, state_number, len(time)), dtype=complex)
+
+        for j in range(state_number):
+            for k in range(state_number):
+                A_coeff[j, k, :] = np.fft.fft(time_realisation_A[j, k, :]) / len(time)
+
+        # k is used to cycle the harmonics from -N to N (columns)
+        # j is used to cycle the blocks in the A matrix (rows)
+        k = -number_harmonics
+        j = -number_harmonics
+
+        for block_row in range(2 * number_harmonics + 1):
+            for block_column in range(2 * number_harmonics + 1):
+                m = j - k
+
+                if m < 0:
+                    A_m = A_coeff[:, :, m]  # Negative index wraps around in Python
+                elif m == 0:
+                    A_m = A_coeff[:, :, 0] - 1j * k * OMEGA * np.eye(state_number)
+                else:  # m > 0
+                    A_m = A_coeff[:, :, m]
+
+                A_HB[block_row * state_number:(block_row + 1) * state_number,
+                     block_column * state_number:(block_column + 1) * state_number] = A_m
+
+                # Cycle the column index
+                k += 1
+
+            # Cycle the row index
+            j += 1
+            # Reset the column index
+            k = -number_harmonics
+
+        return A_HB
+
+    # H-matrix assignment helper functions
+    @staticmethod
+    def _H0M_assign(M_coeff: np.ndarray) -> np.ndarray:
+        """Assign H_0_M term (constant part)."""
+        return M_coeff[:, :, 0]
+
+    @staticmethod
+    def _H0MiC_assign(M_coeff: np.ndarray, i: int) -> np.ndarray:
+        """Assign H_0_M_iC term (cosine coefficient for first row)."""
+        return M_coeff[:, :, 2 * i] / 2
+
+    @staticmethod
+    def _H0MiS_assign(M_coeff: np.ndarray, i: int) -> np.ndarray:
+        """Assign H_0_M_iS term (sine coefficient for first row)."""
+        return M_coeff[:, :, 2 * i + 1] / 2
+
+    @staticmethod
+    def _HiCM_assign(M_coeff: np.ndarray, i: int) -> np.ndarray:
+        """Assign H_iC_M term (cosine coefficient for first column)."""
+        return M_coeff[:, :, 2 * i]
+
+    @staticmethod
+    def _HiSM_assign(M_coeff: np.ndarray, i: int) -> np.ndarray:
+        """Assign H_iS_M term (sine coefficient for first column)."""
+        return M_coeff[:, :, 2 * i + 1]
+
+    @staticmethod
+    def _HiCMjC_assign(M_coeff: np.ndarray, i: int, j: int) -> np.ndarray:
+        """Assign H_iC_M_jC term (cosine-cosine interaction)."""
+        if i == j:
+            k = i + j
+            return M_coeff[:, :, 0] + M_coeff[:, :, k * 2] / 2
+        elif i > j:
+            k = i + j
+            l = i - j
+            return (M_coeff[:, :, l * 2] + M_coeff[:, :, k * 2]) / 2
+        else:  # j > i
+            k = i + j
+            m = j - i
+            return (M_coeff[:, :, m * 2] + M_coeff[:, :, k * 2]) / 2
+
+    @staticmethod
+    def _HiCMjS_assign(M_coeff: np.ndarray, i: int, j: int) -> np.ndarray:
+        """Assign H_iC_M_jS term (cosine-sine interaction)."""
+        if i == j:
+            k = i + j
+            return M_coeff[:, :, k * 2 + 1] / 2
+        elif i > j:
+            k = i + j
+            l = i - j
+            return (M_coeff[:, :, k * 2 + 1] - M_coeff[:, :, l * 2 + 1]) / 2
+        else:  # j > i
+            k = i + j
+            m = j - i
+            return (M_coeff[:, :, m * 2 + 1] + M_coeff[:, :, k * 2 + 1]) / 2
+
+    @staticmethod
+    def _HiSMjC_assign(M_coeff: np.ndarray, i: int, j: int) -> np.ndarray:
+        """Assign H_iS_M_jC term (sine-cosine interaction)."""
+        if i == j:
+            k = i + j
+            return M_coeff[:, :, k * 2 + 1] / 2
+        elif i > j:
+            k = i + j
+            l = i - j
+            return (M_coeff[:, :, k * 2 + 1] + M_coeff[:, :, l * 2 + 1]) / 2
+        else:  # j > i
+            k = i + j
+            m = j - i
+            return (M_coeff[:, :, k * 2 + 1] - M_coeff[:, :, m * 2 + 1]) / 2
+
+    @staticmethod
+    def _HiSMjS_assign(M_coeff: np.ndarray, i: int, j: int) -> np.ndarray:
+        """Assign H_iS_M_jS term (sine-sine interaction)."""
+        if i == j:
+            k = i + j
+            return M_coeff[:, :, 0] - M_coeff[:, :, k * 2] / 2
+        elif i > j:
+            k = i + j
+            l = i - j
+            return (M_coeff[:, :, l * 2] - M_coeff[:, :, k * 2]) / 2
+        else:  # j > i
+            k = i + j
+            m = j - i
+            return (M_coeff[:, :, m * 2] - M_coeff[:, :, k * 2]) / 2
+
     def assign_range_OMEGA(self) -> 'StabilityAnalysis':
         """Assign range of rotor speeds to analyze.
         

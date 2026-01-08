@@ -1,9 +1,10 @@
-"""HD (Harmonic Domain) stability analysis using Hill's method.
+"""HD (Harmonic Decomposition) stability analysis using Lopez and Prasad method.
 
 Converted from MATLAB HD_stability.m classdef.
 """
 
 import numpy as np
+from .base import StabilityAnalysis
 from .ltp_stability import LTPStability
 
 
@@ -24,36 +25,36 @@ class HDStability(LTPStability):
     
     def HD_single_point(self, OMEGA: float, T: float) -> dict:
         """Compute eigenvalues using Hill-determinant method.
-        
+
         Args:
             OMEGA: Rotor speed (rad/s)
             T: Period (s)
-            
+
         Returns:
             Dictionary containing eigenvectors and eigenvalues
         """
         # Create time-dependent state matrix handle
         A = lambda t: self.rotor_build.state_matrix_A_handles(t, OMEGA)
-        
-        # Time vector for sampling
-        time = np.linspace(0, T, self.rotor_build.problem.time_samples)
-        
+
+        # Time vector for sampling (move the number of points in the settings)
+        time = np.linspace(0, T, 200)
+
         # Compute Hill-determinant matrix
-        A_HD = self.HD_computer(
+        A_HD = StabilityAnalysis.HD_computer(
             A,
             time,
             self.rotor_build.problem.number_harmonics,
             OMEGA
         )
-        
+
         # Compute eigenvalues and eigenvectors of expanded system
         eigenvalues, eigenvectors = np.linalg.eig(A_HD)
-        
+
         eigensolution = {
-            'eigenvectors': eigenvectors,
+            'eigevectors': eigenvectors,
             'eigenvalues': eigenvalues
         }
-        
+
         return eigensolution
     
     def HD_full_range(self) -> 'HDStability':

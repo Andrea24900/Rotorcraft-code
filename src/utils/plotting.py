@@ -80,56 +80,78 @@ class ColorScheme:
 
 class MyPlot:
     """Plotting utilities for rotor dynamics analysis.
-    
+
     This class will contain methods converted from my_plot.m
     """
-    
+
     def __init__(self):
         """Initialize plotting utilities."""
         self.properties = PlotProperties()
         self.colors = ColorScheme()
-    
+
     @staticmethod
     def plot_damping_generic(
         modal_solution: List,
-        xlimits: Optional[Tuple[float, float]] = None
+        xlimits: Optional[Tuple[float, float]] = (0, 400),
+        ylimits: Optional[Tuple[float, float]] = (-5, 1),
+        figure_handle: Optional[plt.Figure] = None
     ) -> plt.Figure:
         """Plot generic damping vs RPM.
-        
+
         Args:
             modal_solution: List of modal solution structures
             xlimits: Optional x-axis limits (min_rpm, max_rpm)
-            
+            ylimits: Optional y-axis limits (min_damping, max_damping)
+            figure_handle: Optional existing figure to plot on
+
         Returns:
             matplotlib Figure object
         """
-        fig, ax = plt.subplots(figsize=(10, 6))
-        
-        # TODO: Implement plotting logic from MATLAB version
-        # This is a placeholder
-        
-        ax.set_xlabel('Rotor Speed (RPM)', fontsize=15)
-        ax.set_ylabel('Damping', fontsize=15)
+        # Create or reuse figure
+        if figure_handle is None:
+            fig, ax = plt.subplots(figsize=(10, 6))
+        else:
+            fig = figure_handle
+            ax = fig.gca()
+
         ax.grid(True)
-        
+
+        # Plot all eigenvalues for all operating points
+        n_modes = len(modal_solution[0].damping)
+        for j in range(n_modes):
+            rpm_values = [modal_sol.OMEGA_RPM for modal_sol in modal_solution]
+            damping_values = [modal_sol.damping[j] for modal_sol in modal_solution]
+            ax.plot(rpm_values, damping_values,
+                   color='blue', marker='*', markersize=plot_property.marker_size,
+                   linewidth=plot_property.line_width)
+
+        ax.set_xlabel(r'$\Omega$ [rpm]', fontsize=plot_property.fontsize_label)
+        ax.set_ylabel(r'$\lambda$ [-]', fontsize=plot_property.fontsize_label)
+
         if xlimits:
             ax.set_xlim(xlimits)
-        
+        if ylimits:
+            ax.set_ylim(ylimits)
+
         return fig
     
     @staticmethod
     def plot_damping_order(
         modal_solution: List,
         modes: Optional[List[int]] = None,
+        xlimits: Optional[Tuple[float, float]] = (0, 400),
+        ylimits: Optional[Tuple[float, float]] = (-5, 1),
         figure_handle: Optional[plt.Figure] = None
     ) -> plt.Figure:
         """Plot damping for specific mode orders.
-        
+
         Args:
             modal_solution: List of modal solution structures
             modes: List of mode indices to plot
+            xlimits: Optional x-axis limits (min_rpm, max_rpm)
+            ylimits: Optional y-axis limits (min_damping, max_damping)
             figure_handle: Optional existing figure to plot on
-            
+
         Returns:
             matplotlib Figure object
         """
@@ -138,17 +160,192 @@ class MyPlot:
         else:
             fig = figure_handle
             ax = fig.gca()
-        
-        # TODO: Implement plotting logic from MATLAB version
-        # This is a placeholder
-        
-        ax.set_xlabel('Rotor Speed (RPM)', fontsize=15)
-        ax.set_ylabel('Damping', fontsize=15)
+
         ax.grid(True)
-        ax.legend()
-        
+
+        # Get color vector
+        colors_double = color.get_color_vector_double()
+
+        # Generate ordered mode names
+        if modes is not None and len(modes) > 0:
+            min_mode_number = min(modes)
+            max_mode_number = max(modes)
+            mode_names = np.arange(min_mode_number, max_mode_number + 1)
+        else:
+            modes = None
+
+        # Plot data depending on mode selection
+        if modes is None:
+            # Plot all modes
+            n_modes = len(modal_solution[0].damping)
+            for j in range(n_modes):
+                rpm_values = [modal_sol.OMEGA_RPM for modal_sol in modal_solution]
+                damping_values = [modal_sol.damping[j] for modal_sol in modal_solution]
+                ax.plot(rpm_values, damping_values,
+                       color=colors_double[j], marker='o',
+                       markersize=plot_property.marker_size,
+                       linewidth=plot_property.line_width)
+        else:
+            # Plot selected modes
+            for j, mode_idx in enumerate(modes):
+                rpm_values = [modal_sol.OMEGA_RPM for modal_sol in modal_solution]
+                damping_values = [modal_sol.damping[mode_idx] for modal_sol in modal_solution]
+
+                # Plot with or without legend
+                if j % 2 == 1:  # Even j (odd mode index)
+                    ax.plot(rpm_values, damping_values,
+                           color=colors_double[j], marker='o',
+                           markersize=plot_property.marker_size,
+                           linewidth=plot_property.line_width,
+                           label=f'{mode_names[j]//2}')
+                else:
+                    ax.plot(rpm_values, damping_values,
+                           color=colors_double[j], marker='o',
+                           markersize=plot_property.marker_size,
+                           linewidth=plot_property.line_width)
+
+        ax.set_xlabel(r'$\Omega$ [rpm]', fontsize=plot_property.fontsize_label)
+        ax.set_ylabel(r'$\lambda$ [-]', fontsize=plot_property.fontsize_label)
+
+        if modes is not None:
+            ax.legend(fontsize=plot_property.fontsize_legend, loc='center left',
+                     bbox_to_anchor=(1, 0.5))
+
+        if xlimits:
+            ax.set_xlim(xlimits)
+        if ylimits:
+            ax.set_ylim(ylimits)
+
         return fig
-    
+
+    @staticmethod
+    def plot_frequency_generic(
+        modal_solution: List,
+        xlimits: Optional[Tuple[float, float]] = (0, 400),
+        ylimits: Optional[Tuple[float, float]] = (-5, 1),
+        figure_handle: Optional[plt.Figure] = None
+    ) -> plt.Figure:
+        """Plot generic frequency vs RPM.
+
+        Args:
+            modal_solution: List of modal solution structures
+            xlimits: Optional x-axis limits (min_rpm, max_rpm)
+            ylimits: Optional y-axis limits (min_freq, max_freq)
+            figure_handle: Optional existing figure to plot on
+
+        Returns:
+            matplotlib Figure object
+        """
+        if figure_handle is None:
+            fig, ax = plt.subplots(figsize=(10, 6))
+        else:
+            fig = figure_handle
+            ax = fig.gca()
+
+        ax.grid(True)
+
+        # Plot all eigenvalues for all operating points
+        n_modes = len(modal_solution[0].frequency)
+        for j in range(n_modes):
+            rpm_values = [modal_sol.OMEGA_RPM for modal_sol in modal_solution]
+            freq_values = [modal_sol.frequency[j] for modal_sol in modal_solution]
+            ax.plot(rpm_values, freq_values,
+                   color='blue', marker='*', markersize=plot_property.marker_size,
+                   linewidth=plot_property.line_width)
+
+        ax.set_xlabel(r'$\Omega$ [rpm]', fontsize=plot_property.fontsize_label)
+        ax.set_ylabel(r'$\omega$ [rad/s]', fontsize=plot_property.fontsize_label)
+
+        if xlimits:
+            ax.set_xlim(xlimits)
+        if ylimits:
+            ax.set_ylim(ylimits)
+
+        return fig
+
+    @staticmethod
+    def plot_frequency_order(
+        modal_solution: List,
+        modes: Optional[List[int]] = None,
+        xlimits: Optional[Tuple[float, float]] = (0, 400),
+        ylimits: Optional[Tuple[float, float]] = (0, 30),
+        figure_handle: Optional[plt.Figure] = None
+    ) -> plt.Figure:
+        """Plot frequency for specific mode orders.
+
+        Args:
+            modal_solution: List of modal solution structures
+            modes: List of mode indices to plot
+            xlimits: Optional x-axis limits (min_rpm, max_rpm)
+            ylimits: Optional y-axis limits (min_freq, max_freq)
+            figure_handle: Optional existing figure to plot on
+
+        Returns:
+            matplotlib Figure object
+        """
+        if figure_handle is None:
+            fig, ax = plt.subplots(figsize=(10, 6))
+        else:
+            fig = figure_handle
+            ax = fig.gca()
+
+        ax.grid(True)
+
+        # Get color vector
+        colors_double = color.get_color_vector_double()
+
+        # Generate ordered mode names
+        if modes is not None and len(modes) > 0:
+            min_mode_number = min(modes)
+            max_mode_number = max(modes)
+            mode_names = np.arange(min_mode_number, max_mode_number + 1)
+        else:
+            modes = None
+
+        # Plot data depending on mode selection
+        if modes is None:
+            # Plot all modes
+            n_modes = len(modal_solution[0].frequency)
+            for j in range(n_modes):
+                rpm_values = [modal_sol.OMEGA_RPM for modal_sol in modal_solution]
+                freq_values = [modal_sol.frequency[j] for modal_sol in modal_solution]
+                ax.plot(rpm_values, freq_values,
+                       color=colors_double[j], marker='o',
+                       markersize=plot_property.marker_size,
+                       linewidth=plot_property.line_width)
+        else:
+            # Plot selected modes
+            for j, mode_idx in enumerate(modes):
+                rpm_values = [modal_sol.OMEGA_RPM for modal_sol in modal_solution]
+                freq_values = [modal_sol.frequency[mode_idx] for modal_sol in modal_solution]
+
+                # Legend only on even-indexed modes
+                if j % 2 == 1:
+                    ax.plot(rpm_values, freq_values,
+                           color=colors_double[j], marker='o',
+                           markersize=plot_property.marker_size,
+                           linewidth=plot_property.line_width,
+                           label=f'{mode_names[j]//2}')
+                else:
+                    ax.plot(rpm_values, freq_values,
+                           color=colors_double[j], marker='o',
+                           markersize=plot_property.marker_size,
+                           linewidth=plot_property.line_width)
+
+        ax.set_xlabel(r'$\Omega$ [rpm]', fontsize=plot_property.fontsize_label)
+        ax.set_ylabel(r'$\omega$ [rad/s]', fontsize=plot_property.fontsize_label)
+
+        if modes is not None:
+            ax.legend(fontsize=plot_property.fontsize_legend, loc='center left',
+                     bbox_to_anchor=(1, 0.5))
+
+        if xlimits:
+            ax.set_xlim(xlimits)
+        if ylimits:
+            ax.set_ylim(ylimits)
+
+        return fig
+
     @staticmethod
     def plot_mod_part(
         modal_participation: List,
@@ -159,7 +356,7 @@ class MyPlot:
         plot_sum: bool = True
     ) -> plt.Figure:
         """Plot modal participation factors.
-        
+
         Args:
             modal_participation: Modal participation data
             state_index: Index of state to plot
@@ -167,25 +364,25 @@ class MyPlot:
             labels: Optional labels for plot
             xlimits: Optional x-axis limits
             plot_sum: Whether to plot sum of participations
-            
+
         Returns:
             matplotlib Figure object
         """
         fig, ax = plt.subplots(figsize=(10, 6))
-        
+
         # TODO: Implement plotting logic from MATLAB version
         # This is a placeholder
-        
+
         ax.set_xlabel('Rotor Speed (RPM)', fontsize=15)
         ax.set_ylabel('Modal Participation', fontsize=15)
         ax.grid(True)
-        
+
         if xlimits:
             ax.set_xlim(xlimits)
-        
+
         if labels:
             ax.legend(labels)
-        
+
         return fig
 
 
