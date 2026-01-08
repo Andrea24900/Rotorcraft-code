@@ -7,8 +7,7 @@ Python implementation of rotorcraft dynamics stability analysis, converted from 
 This project provides tools for analyzing the stability of rotorcraft systems using various methods:
 - **LTI (Linear Time-Invariant)** stability analysis
 - **LTP (Linear Time-Periodic)** stability analysis using Floquet theory
-- **HD (Harmonic Domain)** stability analysis using Hill's method
-- **DMD (Dynamic Mode Decomposition)** for system identification
+- **HD (Harmonic Decomposition)** stability analysis using the method from Lopez and Prasad
 
 ## Project Structure
 
@@ -74,7 +73,6 @@ Edit `src/config/problem_definition.py` to configure:
 
 - ✅ Multiple stability analysis methods
 - ✅ Modal participation analysis
-- ✅ Dynamic Mode Decomposition (DMD)
 - ✅ Support for various rotor configurations
 - ✅ Continuation methods for bifurcation analysis
 - 🚧 Visualization tools (in progress)
@@ -91,17 +89,8 @@ Edit `src/config/problem_definition.py` to configure:
 | HD Stability | ⏳ Pending | - |
 | Modal Participation | ⏳ Pending | - |
 | Plotting | ⏳ Pending | - |
-| DMD Scripts | ⏳ Pending | - |
 
 Legend: ✅ Complete | 🚧 In Progress | ⏳ Pending
-
-## Key Differences from MATLAB Version
-
-- Object-oriented design with Python conventions
-- Use of NumPy/SciPy instead of MATLAB built-ins
-- Type hints for better code clarity
-- Modular structure for easier testing
-- Configuration via Python modules instead of scripts
 
 ## Dependencies
 
@@ -119,23 +108,15 @@ pytest tests/
 ### Code Style
 This project follows PEP 8 style guidelines.
 
-## Contributing
-
-When converting MATLAB code:
-1. Maintain the same mathematical logic
-2. Use Python naming conventions (snake_case)
-3. Add type hints where appropriate
-4. Document functions with docstrings
-5. Add unit tests for new modules
-
 ## License
 
-[Specify your license here]
+GNU
 
 ## Contact
 
-[Your contact information]
+Andrea Bassi
+GitHub: Andrea24900
 
 ## Acknowledgments
 
-Original MATLAB implementation by [Original Author]
+From my (Andrea Bassi) thesis work.
