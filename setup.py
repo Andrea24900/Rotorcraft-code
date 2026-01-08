@@ -6,8 +6,8 @@ setup(
     name="rotor_dynamics",
     version="0.1.0",
     description="Rotorcraft dynamics stability analysis tools",
-    author="Your Name",
-    author_email="your.email@example.com",
+    author="Andrea Bassi",
+    author_email="ughino1999@gmail.com",
     packages=find_packages(),
     install_requires=[
         "numpy>=1.24.0",
