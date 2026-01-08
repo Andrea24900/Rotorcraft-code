@@ -60,7 +60,7 @@ class ProblemDefinition:
     # Solution parameters
     lower_rotor_RPM: float = 20.0
     higher_rotor_RPM: float = 400.0
-    number_points: int = 50
+    number_points: int = 100
     
     # Solver configuration
     required_solver: Literal["LTI", "LTP", "HD"] = "LTI"

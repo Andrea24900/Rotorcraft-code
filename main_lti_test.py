@@ -50,8 +50,8 @@ def main():
     # Print sample results
     print(f"\n  Sample results at first operating point:")
     print(f"    - RPM: {lti_analysis.modal_solution[0].OMEGA_RPM:.2f}")
-    print(f"    - First 5 damping values: {lti_analysis.modal_solution[0].damping[:5]}")
-    print(f"    - First 5 frequency values: {lti_analysis.modal_solution[0].frequency[:5]}")
+    print(f"    - First 6 damping values: {lti_analysis.modal_solution[0].damping[:6]}")
+    print(f"    - First 6 frequency values: {lti_analysis.modal_solution[0].frequency[:6]}")
 
     # Check stability
     max_damping_overall = max([np.max(sol.damping) for sol in lti_analysis.modal_solution])
@@ -73,71 +73,66 @@ def main():
     all_damping = np.concatenate([sol.damping for sol in lti_analysis.modal_solution])
     all_frequency = np.concatenate([sol.frequency for sol in lti_analysis.modal_solution])
 
+    # Damping limits - include all dampings
     damping_min = np.min(all_damping) - 0.5
     damping_max = max(1.0, np.max(all_damping) + 0.5)
 
-    freq_min = max(0, np.min(all_frequency) - 5)
-    freq_max = np.max(all_frequency) + 5
+    # Frequency limits - only positive frequencies
+    positive_frequencies = all_frequency[all_frequency > 0]
+    if len(positive_frequencies) > 0:
+        freq_min = 0
+        freq_max = np.max(positive_frequencies) + 5
+    else:
+        freq_min = 0
+        freq_max = 50
 
-    # Plot 1: Generic damping plot
-    print("  - Creating damping vs RPM plot...")
-    fig1 = plotter.plot_damping_generic(
-        lti_analysis.modal_solution,
-        xlimits=(rpm_min, rpm_max),
-        ylimits=(damping_min, damping_max)
-    )
-    plt.figure(fig1.number)
-    plt.tight_layout()
-    
-    
-
-    # Plot 2: Generic frequency plot
-    print("  - Creating frequency vs RPM plot...")
-    fig2 = plotter.plot_frequency_generic(
-        lti_analysis.modal_solution,
-        xlimits=(rpm_min, rpm_max),
-        ylimits=(freq_min, freq_max)
-    )
-    plt.figure(fig2.number)
-    plt.tight_layout()
-    
-    # Plot 3: Damping by mode order (first 10 modes)
+    # For 4-blade rotor, we expect 12 eigenvalues (6x6 state matrix -> 12 complex eigenvalues)
     n_modes = len(lti_analysis.modal_solution[0].damping)
-    modes_to_plot = list(range(min(10, n_modes)))
+    print(f"\n  Total number of modes: {n_modes}")
 
-    if len(modes_to_plot) > 0:
-        print(f"  - Creating damping plot for first {len(modes_to_plot)} modes...")
-        fig3 = plotter.plot_damping_order(
+    # Plot all 12 modes
+    modes_to_plot_damping = list(range(min(12, n_modes)))  # All 12 modes for damping
+
+    # For frequency, only plot modes with positive frequencies
+    # Identify modes with positive frequencies at any operating point
+    modes_with_positive_freq = set()
+    for sol in lti_analysis.modal_solution:
+        for i, freq in enumerate(sol.frequency):
+            if freq > 0 and i < 12:
+                modes_with_positive_freq.add(i)
+
+    modes_to_plot_frequency = sorted(list(modes_with_positive_freq))
+
+    print(f"  Modes with positive frequencies: {modes_to_plot_frequency}")
+    print(f"  Plotting all dampings for modes: {modes_to_plot_damping}")
+
+    # Plot 1: Damping by mode order (all 12 modes)
+    if len(modes_to_plot_damping) > 0:
+        print(f"\n  - Creating damping plot for all {len(modes_to_plot_damping)} modes...")
+        fig1 = plotter.plot_damping_order(
             lti_analysis.modal_solution,
-            modes=modes_to_plot,
+            modes=modes_to_plot_damping,
             xlimits=(rpm_min, rpm_max),
             ylimits=(damping_min, damping_max)
         )
-        plt.figure(fig3.number)
+        plt.figure(fig1.number)
         plt.tight_layout()
-        
-    # Plot 4: Frequency by mode order (first 10 modes)
-    if len(modes_to_plot) > 0:
-        print(f"  - Creating frequency plot for first {len(modes_to_plot)} modes...")
-        fig4 = plotter.plot_frequency_order(
+
+    # Plot 2: Frequency by mode order (only modes with positive frequencies)
+    if len(modes_to_plot_frequency) > 0:
+        print(f"  - Creating frequency plot for {len(modes_to_plot_frequency)} modes with positive frequencies...")
+        fig2 = plotter.plot_frequency_order(
             lti_analysis.modal_solution,
-            modes=modes_to_plot,
+            modes=modes_to_plot_frequency,
             xlimits=(rpm_min, rpm_max),
             ylimits=(freq_min, freq_max)
         )
-        plt.figure(fig4.number)
+        plt.figure(fig2.number)
         plt.tight_layout()
         
     print("\n" + "="*60)
     print("Analysis Complete!")
     print("="*60)
-    print(f"\nGenerated {4 if len(modes_to_plot) > 0 else 2} plots:")
-    print("  - lti_damping_generic.png")
-    print("  - lti_frequency_generic.png")
-    if len(modes_to_plot) > 0:
-        print("  - lti_damping_order.png")
-        print("  - lti_frequency_order.png")
-    print("\nAll results saved successfully!")
 
     # Show plots
     print("\nDisplaying plots...")
