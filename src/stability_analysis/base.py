@@ -382,83 +382,170 @@ class StabilityAnalysis:
 
     @staticmethod
     def _H0MiC_assign(M_coeff: np.ndarray, i: int) -> np.ndarray:
-        """Assign H_0_M_iC term (cosine coefficient for first row)."""
-        return M_coeff[:, :, 2 * i] / 2
+        """Assign H_0_M_iC term (cosine coefficient for first row).
+
+        Args:
+            M_coeff: Coefficient array where [:,:,0]=A0, [:,:,1]=A1c, [:,:,2]=A1s, etc.
+            i: Harmonic number (1-based: 1, 2, 3...)
+        """
+        return M_coeff[:, :, 2 * i - 1] / 2
 
     @staticmethod
     def _H0MiS_assign(M_coeff: np.ndarray, i: int) -> np.ndarray:
-        """Assign H_0_M_iS term (sine coefficient for first row)."""
-        return M_coeff[:, :, 2 * i + 1] / 2
+        """Assign H_0_M_iS term (sine coefficient for first row).
+
+        Args:
+            M_coeff: Coefficient array where [:,:,0]=A0, [:,:,1]=A1c, [:,:,2]=A1s, etc.
+            i: Harmonic number (1-based: 1, 2, 3...)
+        """
+        return M_coeff[:, :, 2 * i] / 2
 
     @staticmethod
     def _HiCM_assign(M_coeff: np.ndarray, i: int) -> np.ndarray:
-        """Assign H_iC_M term (cosine coefficient for first column)."""
-        return M_coeff[:, :, 2 * i]
+        """Assign H_iC_M term (cosine coefficient for first column).
+
+        Args:
+            M_coeff: Coefficient array where [:,:,0]=A0, [:,:,1]=A1c, [:,:,2]=A1s, etc.
+            i: Harmonic number (1-based: 1, 2, 3...)
+        """
+        return M_coeff[:, :, 2 * i - 1]
 
     @staticmethod
     def _HiSM_assign(M_coeff: np.ndarray, i: int) -> np.ndarray:
-        """Assign H_iS_M term (sine coefficient for first column)."""
-        return M_coeff[:, :, 2 * i + 1]
+        """Assign H_iS_M term (sine coefficient for first column).
+
+        Args:
+            M_coeff: Coefficient array where [:,:,0]=A0, [:,:,1]=A1c, [:,:,2]=A1s, etc.
+            i: Harmonic number (1-based: 1, 2, 3...)
+        """
+        return M_coeff[:, :, 2 * i]
 
     @staticmethod
     def _HiCMjC_assign(M_coeff: np.ndarray, i: int, j: int) -> np.ndarray:
-        """Assign H_iC_M_jC term (cosine-cosine interaction)."""
+        """Assign H_iC_M_jC term (cosine-cosine interaction).
+
+        Args:
+            M_coeff: Coefficient array where [:,:,0]=A0, [:,:,1]=A1c, [:,:,2]=A1s, etc.
+            i, j: Harmonic numbers (1-based)
+        """
         if i == j:
             k = i + j
-            return M_coeff[:, :, 0] + M_coeff[:, :, k * 2] / 2
+            # Safe access: check if k harmonic exists
+            if 2 * k <= M_coeff.shape[2]:
+                return M_coeff[:, :, 0] + M_coeff[:, :, 2 * k - 1] / 2
+            else:
+                return M_coeff[:, :, 0]
         elif i > j:
             k = i + j
             l = i - j
-            return (M_coeff[:, :, l * 2] + M_coeff[:, :, k * 2]) / 2
+            result = M_coeff[:, :, 0] * 0  # Initialize with correct shape
+            if 2 * l - 1 < M_coeff.shape[2]:
+                result += M_coeff[:, :, 2 * l - 1] / 2
+            if 2 * k - 1 < M_coeff.shape[2]:
+                result += M_coeff[:, :, 2 * k - 1] / 2
+            return result
         else:  # j > i
             k = i + j
             m = j - i
-            return (M_coeff[:, :, m * 2] + M_coeff[:, :, k * 2]) / 2
+            result = M_coeff[:, :, 0] * 0
+            if 2 * m - 1 < M_coeff.shape[2]:
+                result += M_coeff[:, :, 2 * m - 1] / 2
+            if 2 * k - 1 < M_coeff.shape[2]:
+                result += M_coeff[:, :, 2 * k - 1] / 2
+            return result
 
     @staticmethod
     def _HiCMjS_assign(M_coeff: np.ndarray, i: int, j: int) -> np.ndarray:
-        """Assign H_iC_M_jS term (cosine-sine interaction)."""
+        """Assign H_iC_M_jS term (cosine-sine interaction).
+
+        Args:
+            M_coeff: Coefficient array where [:,:,0]=A0, [:,:,1]=A1c, [:,:,2]=A1s, etc.
+            i, j: Harmonic numbers (1-based)
+        """
+        k = i + j
+        result = M_coeff[:, :, 0] * 0
+
         if i == j:
-            k = i + j
-            return M_coeff[:, :, k * 2 + 1] / 2
+            if 2 * k < M_coeff.shape[2]:
+                return M_coeff[:, :, 2 * k] / 2
+            return result
         elif i > j:
-            k = i + j
             l = i - j
-            return (M_coeff[:, :, k * 2 + 1] - M_coeff[:, :, l * 2 + 1]) / 2
+            if 2 * k < M_coeff.shape[2]:
+                result += M_coeff[:, :, 2 * k] / 2
+            if 2 * l < M_coeff.shape[2]:
+                result -= M_coeff[:, :, 2 * l] / 2
+            return result
         else:  # j > i
-            k = i + j
             m = j - i
-            return (M_coeff[:, :, m * 2 + 1] + M_coeff[:, :, k * 2 + 1]) / 2
+            if 2 * m < M_coeff.shape[2]:
+                result += M_coeff[:, :, 2 * m] / 2
+            if 2 * k < M_coeff.shape[2]:
+                result += M_coeff[:, :, 2 * k] / 2
+            return result
 
     @staticmethod
     def _HiSMjC_assign(M_coeff: np.ndarray, i: int, j: int) -> np.ndarray:
-        """Assign H_iS_M_jC term (sine-cosine interaction)."""
+        """Assign H_iS_M_jC term (sine-cosine interaction).
+
+        Args:
+            M_coeff: Coefficient array where [:,:,0]=A0, [:,:,1]=A1c, [:,:,2]=A1s, etc.
+            i, j: Harmonic numbers (1-based)
+        """
+        k = i + j
+        result = M_coeff[:, :, 0] * 0
+
         if i == j:
-            k = i + j
-            return M_coeff[:, :, k * 2 + 1] / 2
+            if 2 * k < M_coeff.shape[2]:
+                return M_coeff[:, :, 2 * k] / 2
+            return result
         elif i > j:
-            k = i + j
             l = i - j
-            return (M_coeff[:, :, k * 2 + 1] + M_coeff[:, :, l * 2 + 1]) / 2
+            if 2 * k < M_coeff.shape[2]:
+                result += M_coeff[:, :, 2 * k] / 2
+            if 2 * l < M_coeff.shape[2]:
+                result += M_coeff[:, :, 2 * l] / 2
+            return result
         else:  # j > i
-            k = i + j
             m = j - i
-            return (M_coeff[:, :, k * 2 + 1] - M_coeff[:, :, m * 2 + 1]) / 2
+            if 2 * k < M_coeff.shape[2]:
+                result += M_coeff[:, :, 2 * k] / 2
+            if 2 * m < M_coeff.shape[2]:
+                result -= M_coeff[:, :, 2 * m] / 2
+            return result
 
     @staticmethod
     def _HiSMjS_assign(M_coeff: np.ndarray, i: int, j: int) -> np.ndarray:
-        """Assign H_iS_M_jS term (sine-sine interaction)."""
+        """Assign H_iS_M_jS term (sine-sine interaction).
+
+        Args:
+            M_coeff: Coefficient array where [:,:,0]=A0, [:,:,1]=A1c, [:,:,2]=A1s, etc.
+            i, j: Harmonic numbers (1-based)
+        """
         if i == j:
             k = i + j
-            return M_coeff[:, :, 0] - M_coeff[:, :, k * 2] / 2
+            if 2 * k - 1 < M_coeff.shape[2]:
+                return M_coeff[:, :, 0] - M_coeff[:, :, 2 * k - 1] / 2
+            else:
+                return M_coeff[:, :, 0]
         elif i > j:
             k = i + j
             l = i - j
-            return (M_coeff[:, :, l * 2] - M_coeff[:, :, k * 2]) / 2
+            result = M_coeff[:, :, 0] * 0
+            if 2 * l - 1 < M_coeff.shape[2]:
+                result += M_coeff[:, :, 2 * l - 1] / 2
+            if 2 * k - 1 < M_coeff.shape[2]:
+                result -= M_coeff[:, :, 2 * k - 1] / 2
+            return result
         else:  # j > i
             k = i + j
             m = j - i
-            return (M_coeff[:, :, m * 2] - M_coeff[:, :, k * 2]) / 2
+            result = M_coeff[:, :, 0] * 0
+            if 2 * m - 1 < M_coeff.shape[2]:
+                result += M_coeff[:, :, 2 * m - 1] / 2
+            if 2 * k - 1 < M_coeff.shape[2]:
+                result -= M_coeff[:, :, 2 * k - 1] / 2
+            return result
 
     def assign_range_OMEGA(self) -> 'StabilityAnalysis':
         """Assign range of rotor speeds to analyze.
