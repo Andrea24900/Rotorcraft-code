@@ -64,6 +64,8 @@ The Python implementation is now fully operational for standard rotor dynamics s
 | `CALL.m` (LTI) | ✅ Complete | `main_lti_test.py` - Full LTI workflow |
 | `CALL.m` (LTI Continuation) | ✅ Complete | `main_lti_continuation_test.py` - Continuation workflow |
 | `CALL.m` (LTP) | ✅ Complete | `main_ltp_test.py` - Full LTP workflow with Floquet theory |
+| `CALL.m` (LTP Continuation) | ✅ **Complete** | `main_ltp_continuation_test.py` - **LTP with branch tracking** |
+| Comparison Script | ✅ **Complete** | `main_ltp_comparison.py` - **Compare LTP methods** |
 
 ## Recent Accomplishments ✅
 
@@ -89,11 +91,13 @@ The Python implementation is now fully operational for standard rotor dynamics s
 
 ### Continuation Analysis (Completed - NEW!)
 - **Full predictor-corrector implementation** for eigenvalue tracking
-  - Supports LTI, LTP, and HD solvers
+  - **Complete support for LTI, LTP, and HD solvers**
+  - **LTP continuation**: Tracks Floquet multiplier branches using monodromy matrix sensitivity
   - Sensitivity-based prediction for next operating point
   - Newton-Raphson corrector with configurable tolerance and max iterations
   - Smooth eigenvalue branch tracking across parameter space
   - Avoids mode crossing issues
+  - Tested and validated for all three solver types
 
 ### Plotting Utilities (Completed - NEW!)
 - **Complete matplotlib implementation** replacing MATLAB my_plot.m
@@ -115,6 +119,17 @@ The Python implementation is now fully operational for standard rotor dynamics s
   - Predictor-corrector eigenvalue tracking
   - Smooth mode branch following
   - Full RPM sweep with continuation tolerance control
+
+- **main_ltp_continuation_test.py**: LTP continuation analysis workflow (NEW!)
+  - Combines Floquet theory with continuation methods
+  - Tracks Floquet multiplier branches smoothly across RPM range
+  - Uses monodromy matrix sensitivity for prediction
+  - Avoids mode crossing issues in time-periodic systems
+
+- **main_ltp_comparison.py**: Side-by-side comparison script (NEW!)
+  - Compares standard LTP vs LTP continuation methods
+  - Visualizes difference between independent eigenvalue computation and branch tracking
+  - Demonstrates computational trade-offs
 
 ## Next Steps Priority
 
@@ -270,6 +285,33 @@ while error > tolerance and iter < max_iter:
 - Configurable tolerance (default: 1e-6) and max iterations (default: 100)
 - Support for LTI, LTP, and HD solvers
 
+**LTP-Specific Implementation**:
+For LTP systems, continuation tracks Floquet multipliers (eigenvalues of monodromy matrix):
+```python
+# At each operating point:
+T = 2π/Ω
+M = monodromy_computer(A_time, T)  # Compute M = Φ(T)
+dM/dΩ = numerical_sensitivity('MON', ...)  # Monodromy sensitivity
+
+# Predict next multipliers
+μ_next = μ_current + (dμ/dΩ) * ΔΩ
+
+# Correct using Newton-Raphson
+while not_converged:
+    μ = find_closest_eigenvalue(M_new, μ_predicted)
+```
+
+The monodromy matrix sensitivity `dM/dΩ` accounts for:
+1. Period variation: `dT/dΩ = -2π/Ω²`
+2. State matrix variation: `∂A(t,Ω)/∂Ω`
+3. Integration over varying period
+
+**Comparison: Standard vs Continuation LTP**:
+- **Standard**: `O(n³)` per point (eigenvalue decomposition only)
+- **Continuation**: `O(n³ + n² × n_iter)` per point (includes sensitivity + correction)
+- Benefit: Smooth mode identification, essential for bifurcation analysis
+- Trade-off: ~2-3x computation time for robust tracking
+
 #### Plotting Implementation (`src/utils/plotting.py`)
 Complete matplotlib-based plotting system matching MATLAB functionality:
 
@@ -329,6 +371,22 @@ rotor.problem.required_solver = "LTP"
 ltp = LTPStability(rotor)
 ltp = ltp.LTP_full_range()
 # Computes monodromy matrices and characteristic exponents
+```
+
+**4. main_ltp_continuation_test.py** - LTP with continuation tracking:
+```python
+rotor = RotorBuild.build_all()
+rotor.problem.required_solver = "LTP"
+rotor.problem.continuation = "YES"
+cont = ContinuationAnalysis(rotor)
+cont = cont.continuation()
+# Smooth Floquet multiplier tracking using sensitivity analysis
+```
+
+**5. main_ltp_comparison.py** - Compare standard vs continuation LTP:
+```python
+# Runs both methods and generates side-by-side comparison plots
+# Shows difference between scatter plots (standard) and line plots (continuation)
 ```
 
 Each script provides:
