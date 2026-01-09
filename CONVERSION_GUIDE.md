@@ -722,9 +722,7 @@ x = np.array([1, 2, 3]).reshape(-1, 1)
 - Comprehensive documentation for future users
 
 **Next Steps**:
-- Consider HD continuation test script
 - Modal participation analysis
-- Campbell diagram plotting
 
 ---
 
@@ -738,9 +736,9 @@ x = np.array([1, 2, 3]).reshape(-1, 1)
 ## Contact & Support
 
 For questions about:
-- **MATLAB implementation**: [Original author]
-- **Python conversion**: [Your contact]
-- **Mathematical theory**: [Reference papers/books]
+- **MATLAB implementation**: [Andrea24900]
+- **Python conversion**: [Andrea24900]
+- **Mathematical theory**: A. Bassi, "Periodic ground resonance analysis with non-linearities", Master Thesis, 2025
 
 ## Acknowledgments
 
