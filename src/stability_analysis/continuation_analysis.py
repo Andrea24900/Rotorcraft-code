@@ -252,11 +252,11 @@ class ContinuationAnalysis(StabilityAnalysis):
         problem_size = A.shape[0]
 
         dM_dOMEGA = self.numerical_sensitivity(
-            'HB', 'CEN', A_time_OMEGA,
+            'HD', 'CEN', A_time_OMEGA,
             self.rotor_build.problem.step_h,
             self.modal_solution[0].OMEGA,
             par=1000,
-            HB_parameters=[self.rotor_build.problem.time_samples,
+            HD_parameters=[self.rotor_build.problem.time_samples,
                           self.rotor_build.problem.number_harmonics]
         )
 
@@ -305,11 +305,11 @@ class ContinuationAnalysis(StabilityAnalysis):
         problem_size = A.shape[0]
 
         dM_dOMEGA = self.numerical_sensitivity(
-            'HB', 'CEN', A_time_OMEGA,
+            'HD', 'CEN', A_time_OMEGA,
             self.rotor_build.problem.step_h,
             self.modal_solution[i].OMEGA,
             par=1000,
-            HB_parameters=[self.rotor_build.problem.time_samples,
+            HD_parameters=[self.rotor_build.problem.time_samples,
                           self.rotor_build.problem.number_harmonics]
         )
 
@@ -341,18 +341,18 @@ class ContinuationAnalysis(StabilityAnalysis):
         step_size_h: float,
         OMEGA: float,
         par: float = None,
-        HB_parameters: list = None
+        HD_parameters: list = None
     ) -> np.ndarray:
         """Compute numerical sensitivity matrix for continuation.
 
         Args:
-            matrix_type: 'SS' (state space), 'MON' (monodromy), or 'HB' (harmonic balance)
+            matrix_type: 'SS' (state space), 'MON' (monodromy), or 'HD' (harmonic decomposition)
             derivative_type: 'FW' (forward) or 'CEN' (central) difference
             A_handle_all: Function handle for state matrix
             step_size_h: Step size for finite differences
             OMEGA: Angular frequency
             par: Parameter value (optional)
-            HB_parameters: [time_samples, number_harmonics] for HB method
+            HD_parameters: [time_samples, number_harmonics] for HD method
 
         Returns:
             Sensitivity matrix dM/d(parameter)
@@ -380,22 +380,22 @@ class ContinuationAnalysis(StabilityAnalysis):
                     A_min_h = A_handle_all(par - step_size_h, OMEGA)
                     sensitivity = (A_plus_h - A_min_h) / (2 * step_size_h)
 
-        elif matrix_type == 'HB':
-            # Harmonic balance sensitivity
-            number_time_instants = HB_parameters[0]
-            number_harmonics = HB_parameters[1]
+        elif matrix_type == 'HD':
+            # Harmonic decomposition sensitivity
+            number_time_instants = HD_parameters[0]
+            number_harmonics = HD_parameters[1]
 
             if par is None or par == 1000:  # Variation with respect to OMEGA
                 if derivative_type == 'CEN':
                     time_min_h = np.linspace(0, 2 * np.pi / (OMEGA - step_size_h), number_time_instants)
                     A_min_h = lambda t: A_handle_all(t, OMEGA - step_size_h)
-                    A_HB_min_h = StabilityAnalysis.HD_computer(
+                    A_HD_min_h = StabilityAnalysis.HD_computer(
                         A_min_h, time_min_h, number_harmonics, OMEGA - step_size_h
                     )
 
                 time_plus_h = np.linspace(0, 2 * np.pi / (OMEGA + step_size_h), number_time_instants)
                 A_plus_h = lambda t: A_handle_all(t, OMEGA + step_size_h)
-                A_HB_plus_h = StabilityAnalysis.HD_computer(
+                A_HD_plus_h = StabilityAnalysis.HD_computer(
                     A_plus_h, time_plus_h, number_harmonics, OMEGA + step_size_h
                 )
 
@@ -403,29 +403,29 @@ class ContinuationAnalysis(StabilityAnalysis):
                     T = 2 * np.pi / OMEGA
                     time = np.linspace(0, T, number_time_instants)
                     A = lambda t: A_handle_all(t, OMEGA)
-                    A_HB = StabilityAnalysis.HD_computer(A, time, number_harmonics, OMEGA)
-                    sensitivity = (A_HB_plus_h - A_HB) / step_size_h
+                    A_HD = StabilityAnalysis.HD_computer(A, time, number_harmonics, OMEGA)
+                    sensitivity = (A_HD_plus_h - A_HD) / step_size_h
                 elif derivative_type == 'CEN':
-                    sensitivity = (A_HB_plus_h - A_HB_min_h) / (2 * step_size_h)
+                    sensitivity = (A_HD_plus_h - A_HD_min_h) / (2 * step_size_h)
             else:
                 # Variation with respect to parameter
                 T = 2 * np.pi / OMEGA
                 time = np.linspace(0, T, number_time_instants)
                 A_plus_h = lambda t: A_handle_all(t, par + step_size_h, OMEGA)
-                A_HB_plus_h = StabilityAnalysis.HD_computer(
+                A_HD_plus_h = StabilityAnalysis.HD_computer(
                     A_plus_h, time, number_harmonics, OMEGA
                 )
 
                 if derivative_type == 'FW':
                     A = lambda t: A_handle_all(t, par, OMEGA)
-                    A_HB = StabilityAnalysis.HD_computer(A, time, number_harmonics, OMEGA)
-                    sensitivity = (A_HB_plus_h - A_HB) / step_size_h
+                    A_HD = StabilityAnalysis.HD_computer(A, time, number_harmonics, OMEGA)
+                    sensitivity = (A_HD_plus_h - A_HD) / step_size_h
                 elif derivative_type == 'CEN':
                     A_min_h = lambda t: A_handle_all(t, par - step_size_h, OMEGA)
-                    A_HB_min_h = StabilityAnalysis.HD_computer(
+                    A_HD_min_h = StabilityAnalysis.HD_computer(
                         A_min_h, time, number_harmonics, OMEGA
                     )
-                    sensitivity = (A_HB_plus_h - A_HB_min_h) / (2 * step_size_h)
+                    sensitivity = (A_HD_plus_h - A_HD_min_h) / (2 * step_size_h)
 
         elif matrix_type == 'MON':
             # Monodromy matrix sensitivity
