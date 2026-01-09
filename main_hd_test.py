@@ -15,7 +15,7 @@ into an infinite-dimensional time-invariant system by expanding:
 The state vector is expanded as:
   x(t) = x₀ + Σ[xₖᶜcos(kωt) + xₖˢsin(kωt)]
 
-This results in the Hill matrix (harmonic balance matrix):
+This results in the Hill matrix (harmonic decomposition matrix):
   H = [H₀₀  H₀₁ᶜ  H₀₁ˢ  H₀₂ᶜ  ...]
       [H₁ᶜ₀ H₁ᶜ₁ᶜ H₁ᶜ₁ˢ ...]
       [H₁ˢ₀ H₁ˢ₁ᶜ H₁ˢ₁ˢ ...]
