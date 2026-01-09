@@ -125,10 +125,8 @@ class ProblemDefinition:
 
 ### In Progress 🚧
 - Modal participation analysis
-- Additional plotting utilities (Campbell diagrams)
 
 ### Planned ⏳
-- Unit tests and validation against MATLAB
 - Documentation and examples
 
 ## Conversion Status
