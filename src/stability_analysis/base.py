@@ -90,45 +90,83 @@ class StabilityAnalysis:
         A_handle_time: Callable[[float], np.ndarray],
         period_T: float
     ) -> np.ndarray:
-        """Compute monodromy matrix for LTP system.
-        
-        The monodromy matrix M is computed by integrating the fundamental
-        solution matrix Φ(t) over one period: M = Φ(T).
-        
+        """Compute monodromy matrix for Linear Time-Periodic (LTP) systems.
+
+        The monodromy matrix M characterizes the stability of time-periodic systems.
+        It is defined as the fundamental solution matrix evaluated at one period:
+        M = Φ(T), where dΦ/dt = A(t)Φ and Φ(0) = I.
+
+        Algorithm:
+        ---------
+        For a system dx/dt = A(t)x with period T:
+        1. Initialize fundamental matrix: Φ(0) = I (identity matrix)
+        2. Integrate each column j: dΦⱼ/dt = A(t)Φⱼ from t=0 to t=T
+        3. Assemble columns into monodromy matrix: M = [Φ₁(T), Φ₂(T), ..., Φₙ(T)]
+        4. Eigenvalues of M are characteristic multipliers μ
+        5. Stability: |μ| < 1 → stable, |μ| > 1 → unstable
+
+        Integration Method:
+        ------------------
+        Uses scipy's DOP853 (Dormand-Prince 8th order) integrator with:
+        - Relative tolerance: 1e-6
+        - Absolute tolerance: 1e-8
+        - Suitable for long-period integrations with high accuracy
+
         Args:
-            A_handle_time: Function handle A(t) returning state matrix
-            period_T: Period of oscillation
-            
+        ----
+        A_handle_time : Callable[[float], np.ndarray]
+            Function handle A(t) that returns the n×n state matrix at time t
+        period_T : float
+            Period of oscillation (s), typically T = 2π/OMEGA for rotor systems
+
         Returns:
-            Monodromy matrix M
+        -------
+        np.ndarray
+            n×n monodromy matrix M whose eigenvalues are characteristic multipliers
+
+        Notes:
+        -----
+        - Computational cost: O(n) integrations, each solving n ODEs
+        - Total complexity: O(n²) for each monodromy computation
+        - For large systems or many operating points, this can be expensive
+        - The method is numerically stable for well-conditioned systems
+        - Fixed from previous implementation that incorrectly reshaped vectors
+
+        Example:
+        -------
+        >>> A = lambda t: np.array([[0, 1], [-1 - 0.1*np.sin(t), -0.1]])
+        >>> T = 2 * np.pi  # Period of time-varying term
+        >>> M = StabilityAnalysis.monodromy_computer(A, T)
+        >>> multipliers = np.linalg.eigvals(M)
+        >>> is_stable = np.all(np.abs(multipliers) < 1)
         """
         n = A_handle_time(0).shape[0]
         phi_0_matrix = np.eye(n)
         monodromy_matrix_M = np.zeros((n, n))
-        
+
         def odefun_monodromy(t, phi_vec, A_func):
             """ODE function for fundamental solution matrix."""
-            phi = phi_vec.reshape((n, n))
-            dphi_dt = A_func(t) @ phi
-            return dphi_dt.flatten()
-        
+            # phi_vec is a single column vector
+            dphi_dt = A_func(t) @ phi_vec
+            return dphi_dt
+
         # Integrate each column of the fundamental solution matrix
         for j in range(n):
             phi_0 = phi_0_matrix[:, j]
-            
+
             sol = solve_ivp(
                 lambda t, phi: odefun_monodromy(t, phi, A_handle_time),
                 [0, period_T],
-                phi_0.flatten() if len(phi_0.shape) == 1 else phi_0,
+                phi_0,
                 method='DOP853',
                 rtol=1e-6,
                 atol=1e-8
             )
-            
+
             # Extract final value
-            phi_T = sol.y[:, -1].reshape((n, 1))
-            monodromy_matrix_M[:, j] = phi_T.flatten()
-        
+            phi_T = sol.y[:, -1]
+            monodromy_matrix_M[:, j] = phi_T
+
         return monodromy_matrix_M
     
     @staticmethod
