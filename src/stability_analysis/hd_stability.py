@@ -36,8 +36,8 @@ class HDStability(LTPStability):
         # Create time-dependent state matrix handle
         A = lambda t: self.rotor_build.state_matrix_A_handles(t, OMEGA)
 
-        # Time vector for sampling (move the number of points in the settings)
-        time = np.linspace(0, T, 200)
+        # Time vector for sampling using problem definition
+        time = np.linspace(0, T, self.rotor_build.problem.time_samples)
 
         # Compute Harmonic Decomposition matrix
         A_HD = StabilityAnalysis.HD_computer(
