@@ -35,6 +35,10 @@ class ContinuationAnalysis(StabilityAnalysis):
         # Initialize OMEGA range
         self = self.assign_range_OMEGA()
 
+        # Assign periods for LTP solver
+        if self.rotor_build.problem.required_solver == "LTP":
+            self = self.assign_period_T()
+
         solver_type = self.rotor_build.problem.required_solver
 
         # STEP 1: Compute initial eigenvalue problem at first operating point
