@@ -20,8 +20,10 @@ rotor_dynamics_python/
 │   └── utils/                    # Utilities and plotting
 ├── scripts/                      # Executable scripts
 ├── tests/                        # Unit tests
-│   ├── test_problem_definition.py
-│   └── test_package_config.py    # Tests for pyproject.toml validation
+│   ├── test_problem_definition.py  # Configuration tests (13 tests)
+│   ├── test_rotor_build.py         # Rotor build tests (16 tests)
+│   ├── test_matrix_repositories.py # Matrix construction tests (25 tests)
+│   └── test_package_config.py      # Package config validation (9 tests)
 ├── pyproject.toml                # Modern package configuration (PEP 621)
 ├── setup.py                      # Minimal setup file for compatibility
 └── requirements.txt              # Legacy dependencies (use pyproject.toml)
@@ -205,6 +207,8 @@ All dependencies are automatically installed when you run `pip install -e .` or 
 
 ### Running Tests
 
+The project includes **63 comprehensive tests** covering all core functionality.
+
 **Run all tests:**
 ```bash
 python -m pytest tests/ -v
@@ -212,6 +216,9 @@ python -m pytest tests/ -v
 
 **Run specific test file:**
 ```bash
+python -m pytest tests/test_matrix_repositories.py -v
+python -m pytest tests/test_rotor_build.py -v
+python -m pytest tests/test_problem_definition.py -v
 python -m pytest tests/test_package_config.py -v
 ```
 
@@ -220,14 +227,17 @@ python -m pytest tests/test_package_config.py -v
 python -m pytest tests/ --cov=src --cov-report=term-missing
 ```
 
-**Run tests without pytest:**
+**Run tests without pytest (standalone):**
 ```bash
+python tests/test_matrix_repositories.py
+python tests/test_rotor_build.py
+python tests/test_problem_definition.py
 python tests/test_package_config.py
 ```
 
-### Package Configuration Tests
+### Test Suite Overview
 
-The `test_package_config.py` file validates your `pyproject.toml` configuration:
+**test_package_config.py** (9 tests) - Package configuration validation:
 - ✅ TOML file exists and is valid
 - ✅ Build system properly configured
 - ✅ Project metadata (name, version, description)
@@ -236,6 +246,33 @@ The `test_package_config.py` file validates your `pyproject.toml` configuration:
 - ✅ Authors and license information
 - ✅ Package discovery configuration
 - ✅ Python version requirements
+
+**test_problem_definition.py** (13 tests) - Configuration and rotor characteristics:
+- ✅ Default values and custom initialization
+- ✅ H2B and B2B damper configurations
+- ✅ Geometric calculations for different blade counts
+- ✅ Solver types (LTI, LTP, HD)
+- ✅ Damper activation modes
+- ✅ RPM range and continuation parameters
+
+**test_rotor_build.py** (16 tests) - State-space matrix construction:
+- ✅ Initialization with/without auto_build
+- ✅ Mass matrix properties (symmetry, positive definiteness)
+- ✅ Mass matrix inverse validation
+- ✅ State matrix dimensions and structure
+- ✅ Time-varying behavior
+- ✅ Different blade counts and damper modes
+- ✅ Error handling and caching
+
+**test_matrix_repositories.py** (25 tests) - Matrix repository functions:
+- ✅ Mass matrix construction for 3, 4, 5, 7-blade rotors
+- ✅ Matrix symmetry and positive definiteness
+- ✅ Damping/stiffness matrices for H2B and B2B configurations
+- ✅ ALL vs ODI damper activation modes
+- ✅ Speed and time dependencies
+- ✅ Gyroscopic coupling effects
+- ✅ 7-blade coupling coefficient validation
+- ✅ Numerical stability (no NaN/Inf values)
 
 ### Building the Package
 
