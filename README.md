@@ -20,7 +20,11 @@ rotor_dynamics_python/
 │   └── utils/                    # Utilities and plotting
 ├── scripts/                      # Executable scripts
 ├── tests/                        # Unit tests
-└── requirements.txt              # Python dependencies
+│   ├── test_problem_definition.py
+│   └── test_package_config.py    # Tests for pyproject.toml validation
+├── pyproject.toml                # Modern package configuration (PEP 621)
+├── setup.py                      # Minimal setup file for compatibility
+└── requirements.txt              # Legacy dependencies (use pyproject.toml)
 ```
 
 ## Installation
@@ -37,10 +41,25 @@ rotor_dynamics_python/
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
-3. **Install dependencies**:
+3. **Install the package**:
+
+   **For development (editable install - recommended):**
    ```bash
-   pip install -r requirements.txt
+   pip install -e .
    ```
+   This allows you to make changes to the code and see them reflected immediately.
+
+   **For normal use:**
+   ```bash
+   pip install .
+   ```
+
+   **With development dependencies (includes pytest, pytest-cov):**
+   ```bash
+   pip install -e ".[dev]"
+   ```
+
+The package uses modern Python packaging standards with `pyproject.toml` (PEP 621 compliant).
 
 ## Quick Start
 
@@ -170,16 +189,69 @@ See `CONVERSION_GUIDE.md` for detailed documentation of:
 
 ## Dependencies
 
-- **NumPy**: Array operations and linear algebra
-- **SciPy**: ODE solvers, interpolation, FFT
-- **Matplotlib**: Plotting and visualization
+### Runtime Dependencies
+- **NumPy** (>=1.24.0): Array operations and linear algebra
+- **SciPy** (>=1.10.0): ODE solvers, interpolation, FFT
+- **Matplotlib** (>=3.7.0): Plotting and visualization
+
+### Development Dependencies
+- **pytest** (>=7.0.0): Testing framework
+- **pytest-cov** (>=4.0.0): Test coverage reporting
+- **tomli**: TOML file parsing (Python <3.11)
+
+All dependencies are automatically installed when you run `pip install -e .` or `pip install -e ".[dev]"`
 
 ## Development
 
 ### Running Tests
+
+**Run all tests:**
 ```bash
-pytest tests/
+python -m pytest tests/ -v
 ```
+
+**Run specific test file:**
+```bash
+python -m pytest tests/test_package_config.py -v
+```
+
+**Run with coverage report:**
+```bash
+python -m pytest tests/ --cov=src --cov-report=term-missing
+```
+
+**Run tests without pytest:**
+```bash
+python tests/test_package_config.py
+```
+
+### Package Configuration Tests
+
+The `test_package_config.py` file validates your `pyproject.toml` configuration:
+- ✅ TOML file exists and is valid
+- ✅ Build system properly configured
+- ✅ Project metadata (name, version, description)
+- ✅ Dependencies correctly specified
+- ✅ Optional dev dependencies defined
+- ✅ Authors and license information
+- ✅ Package discovery configuration
+- ✅ Python version requirements
+
+### Building the Package
+
+**Build distribution packages (wheel and source):**
+```bash
+python -m build
+```
+
+This creates installable packages in the `dist/` directory.
+
+### Package Structure
+
+The package follows modern Python packaging standards:
+- `pyproject.toml`: Modern PEP 621 compliant configuration
+- `setup.py`: Minimal backward-compatibility shim
+- All package metadata, dependencies, and build configuration in `pyproject.toml`
 
 ### Code Style
 This project follows PEP 8 style guidelines.
