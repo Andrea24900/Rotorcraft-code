@@ -209,7 +209,7 @@ class ContinuationAnalysis(StabilityAnalysis):
 
     def _setup_LTI_initial(self) -> Tuple[np.ndarray, np.ndarray, int]:
         """Setup initial LTI problem."""
-        A_OMEGA = lambda omega: self.rotor_build.state_matrix_A_handles(0, omega)
+        A_OMEGA = lambda omega: self.rotor_build.state_matrix_function(0, omega)
         A = A_OMEGA(self.modal_solution[0].OMEGA)
         problem_size = A.shape[0]
 
@@ -224,7 +224,7 @@ class ContinuationAnalysis(StabilityAnalysis):
     def _setup_LTP_initial(self) -> Tuple[np.ndarray, np.ndarray, int]:
         """Setup initial LTP problem."""
         T = 2 * np.pi / self.modal_solution[0].OMEGA
-        A_time_OMEGA = lambda t, omega: self.rotor_build.state_matrix_A_handles(t, omega)
+        A_time_OMEGA = lambda t, omega: self.rotor_build.state_matrix_function(t, omega)
         A_time = lambda t: A_time_OMEGA(t, self.modal_solution[0].OMEGA)
 
         A = self.monodromy_computer(A_time, T)
@@ -243,7 +243,7 @@ class ContinuationAnalysis(StabilityAnalysis):
         T = 2 * np.pi / self.modal_solution[0].OMEGA
         time = np.linspace(0, T, self.rotor_build.problem.time_samples)
 
-        A_time_OMEGA = lambda t, omega: self.rotor_build.state_matrix_A_handles(t, omega)
+        A_time_OMEGA = lambda t, omega: self.rotor_build.state_matrix_function(t, omega)
         A_time = lambda t: A_time_OMEGA(t, self.modal_solution[0].OMEGA)
 
         A = self.hd_computer(A_time, time,
@@ -264,7 +264,7 @@ class ContinuationAnalysis(StabilityAnalysis):
 
     def _compute_LTI_matrices(self, i: int) -> Tuple[np.ndarray, np.ndarray]:
         """Compute LTI matrices at operating point i."""
-        A_OMEGA = lambda omega: self.rotor_build.state_matrix_A_handles(0, omega)
+        A_OMEGA = lambda omega: self.rotor_build.state_matrix_function(0, omega)
         A = A_OMEGA(self.modal_solution[i].OMEGA)
 
         dM_dOMEGA = self.numerical_sensitivity(
@@ -278,7 +278,7 @@ class ContinuationAnalysis(StabilityAnalysis):
     def _compute_LTP_matrices(self, i: int) -> Tuple[np.ndarray, np.ndarray]:
         """Compute LTP matrices at operating point i."""
         T = 2 * np.pi / self.modal_solution[i].OMEGA
-        A_time_OMEGA = lambda t, omega: self.rotor_build.state_matrix_A_handles(t, omega)
+        A_time_OMEGA = lambda t, omega: self.rotor_build.state_matrix_function(t, omega)
         A_time = lambda t: A_time_OMEGA(t, self.modal_solution[i].OMEGA)
 
         A = self.monodromy_computer(A_time, T)
@@ -296,7 +296,7 @@ class ContinuationAnalysis(StabilityAnalysis):
         T = 2 * np.pi / self.modal_solution[i].OMEGA
         time = np.linspace(0, T, self.rotor_build.problem.time_samples)
 
-        A_time_OMEGA = lambda t, omega: self.rotor_build.state_matrix_A_handles(t, omega)
+        A_time_OMEGA = lambda t, omega: self.rotor_build.state_matrix_function(t, omega)
         A_time = lambda t: A_time_OMEGA(t, self.modal_solution[i].OMEGA)
 
         A = self.hd_computer(A_time, time,
