@@ -65,6 +65,7 @@ class ProblemDefinition:
     # Solver configuration
     required_solver: Literal["LTI", "LTP", "HD"] = "LTI"
     number_harmonics: int = 1  # for HD and modal participation
+    hd_use_complex: bool = False  # Use complex formulation for HD solver
     
     # Continuation method parameters
     continuation: Literal["YES", "NO"] = "NO"

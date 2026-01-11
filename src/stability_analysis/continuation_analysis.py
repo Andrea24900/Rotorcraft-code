@@ -246,7 +246,7 @@ class ContinuationAnalysis(StabilityAnalysis):
         A_time_OMEGA = lambda t, omega: self.rotor_build.state_matrix_A_handles(t, omega)
         A_time = lambda t: A_time_OMEGA(t, self.modal_solution[0].OMEGA)
 
-        A = self.HD_computer(A_time, time,
+        A = self.hd_computer(A_time, time,
                             self.rotor_build.problem.number_harmonics,
                             self.modal_solution[0].OMEGA)
         problem_size = A.shape[0]
@@ -299,7 +299,7 @@ class ContinuationAnalysis(StabilityAnalysis):
         A_time_OMEGA = lambda t, omega: self.rotor_build.state_matrix_A_handles(t, omega)
         A_time = lambda t: A_time_OMEGA(t, self.modal_solution[i].OMEGA)
 
-        A = self.HD_computer(A_time, time,
+        A = self.hd_computer(A_time, time,
                             self.rotor_build.problem.number_harmonics,
                             self.modal_solution[i].OMEGA)
         problem_size = A.shape[0]
@@ -389,13 +389,13 @@ class ContinuationAnalysis(StabilityAnalysis):
                 if derivative_type == 'CEN':
                     time_min_h = np.linspace(0, 2 * np.pi / (OMEGA - step_size_h), number_time_instants)
                     A_min_h = lambda t: A_handle_all(t, OMEGA - step_size_h)
-                    A_HB_min_h = StabilityAnalysis.HD_computer(
+                    A_HB_min_h = StabilityAnalysis.hd_computer(
                         A_min_h, time_min_h, number_harmonics, OMEGA - step_size_h
                     )
 
                 time_plus_h = np.linspace(0, 2 * np.pi / (OMEGA + step_size_h), number_time_instants)
                 A_plus_h = lambda t: A_handle_all(t, OMEGA + step_size_h)
-                A_HB_plus_h = StabilityAnalysis.HD_computer(
+                A_HB_plus_h = StabilityAnalysis.hd_computer(
                     A_plus_h, time_plus_h, number_harmonics, OMEGA + step_size_h
                 )
 
@@ -403,7 +403,7 @@ class ContinuationAnalysis(StabilityAnalysis):
                     T = 2 * np.pi / OMEGA
                     time = np.linspace(0, T, number_time_instants)
                     A = lambda t: A_handle_all(t, OMEGA)
-                    A_HB = StabilityAnalysis.HD_computer(A, time, number_harmonics, OMEGA)
+                    A_HB = StabilityAnalysis.hd_computer(A, time, number_harmonics, OMEGA)
                     sensitivity = (A_HB_plus_h - A_HB) / step_size_h
                 elif derivative_type == 'CEN':
                     sensitivity = (A_HB_plus_h - A_HB_min_h) / (2 * step_size_h)
@@ -412,17 +412,17 @@ class ContinuationAnalysis(StabilityAnalysis):
                 T = 2 * np.pi / OMEGA
                 time = np.linspace(0, T, number_time_instants)
                 A_plus_h = lambda t: A_handle_all(t, par + step_size_h, OMEGA)
-                A_HB_plus_h = StabilityAnalysis.HD_computer(
+                A_HB_plus_h = StabilityAnalysis.hd_computer(
                     A_plus_h, time, number_harmonics, OMEGA
                 )
 
                 if derivative_type == 'FW':
                     A = lambda t: A_handle_all(t, par, OMEGA)
-                    A_HB = StabilityAnalysis.HD_computer(A, time, number_harmonics, OMEGA)
+                    A_HB = StabilityAnalysis.hd_computer(A, time, number_harmonics, OMEGA)
                     sensitivity = (A_HB_plus_h - A_HB) / step_size_h
                 elif derivative_type == 'CEN':
                     A_min_h = lambda t: A_handle_all(t, par - step_size_h, OMEGA)
-                    A_HB_min_h = StabilityAnalysis.HD_computer(
+                    A_HB_min_h = StabilityAnalysis.hd_computer(
                         A_min_h, time, number_harmonics, OMEGA
                     )
                     sensitivity = (A_HB_plus_h - A_HB_min_h) / (2 * step_size_h)

@@ -23,7 +23,7 @@ class HDStability(LTPStability):
         """
         super().__init__(rotor_build)
     
-    def HD_single_point(self, OMEGA: float, T: float) -> dict:
+    def hd_single_point(self, OMEGA: float, T: float) -> dict:
         """Compute eigenvalues using Harmonic Decomposition method.
 
         Args:
@@ -40,11 +40,12 @@ class HDStability(LTPStability):
         time = np.linspace(0, T, self.rotor_build.problem.time_samples)
 
         # Compute Harmonic Decomposition matrix
-        A_HD = StabilityAnalysis.HD_computer(
+        A_HD = StabilityAnalysis.hd_computer(
             A,
             time,
             self.rotor_build.problem.number_harmonics,
-            OMEGA
+            OMEGA,
+            use_complex=self.rotor_build.problem.hd_use_complex
         )
 
         # Compute eigenvalues and eigenvectors of expanded system
@@ -57,7 +58,7 @@ class HDStability(LTPStability):
 
         return eigensolution
     
-    def HD_full_range(self) -> 'HDStability':
+    def hd_full_range(self) -> 'HDStability':
         """Compute eigenvalues over full RPM range using HD method.
         
         Returns:
@@ -69,7 +70,7 @@ class HDStability(LTPStability):
         
         # Compute eigenvalues at each point
         for i in range(self.rotor_build.problem.number_points):
-            eigensolution = self.HD_single_point(
+            eigensolution = self.hd_single_point(
                 self.modal_solution[i].OMEGA,
                 self.modal_solution[i].T
             )
@@ -95,7 +96,7 @@ if __name__ == "__main__":
     
     print("Running HD stability analysis...")
     hd = HDStability(rotor)
-    hd = hd.HD_full_range()
+    hd = hd.hd_full_range()
     
     print(f"Number of solutions: {len(hd.modal_solution)}")
     print(f"First point OMEGA: {hd.modal_solution[0].OMEGA_RPM:.2f} RPM")

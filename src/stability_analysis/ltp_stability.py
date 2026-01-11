@@ -59,9 +59,9 @@ class LTPStability(StabilityAnalysis):
 
     Methods:
     -------
-    LTP_single_point(OMEGA, T)
+    ltp_single_point(OMEGA, T)
         Compute characteristic exponents at a single operating point
-    LTP_full_range()
+    ltp_full_range()
         Compute characteristic exponents over full RPM range
 
     Example:
@@ -83,7 +83,7 @@ class LTPStability(StabilityAnalysis):
         """
         super().__init__(rotor_build)
     
-    def LTP_single_point(self, OMEGA: float, T: float) -> dict:
+    def ltp_single_point(self, OMEGA: float, T: float) -> dict:
         """Compute characteristic multipliers and exponents at single operating point.
 
         This method computes the monodromy matrix M = Φ(T) by integrating each
@@ -150,7 +150,7 @@ class LTPStability(StabilityAnalysis):
         
         return char_solutions
     
-    def LTP_full_range(self) -> 'LTPStability':
+    def ltp_full_range(self) -> 'LTPStability':
         """Compute characteristic exponents over full RPM range.
 
         This method performs a sweep of operating points across the specified
@@ -196,7 +196,7 @@ class LTPStability(StabilityAnalysis):
         
         # Compute characteristic solutions at each point
         for i in range(self.rotor_build.problem.number_points):
-            char_solution = self.LTP_single_point(
+            char_solution = self.ltp_single_point(
                 self.modal_solution[i].OMEGA,
                 self.modal_solution[i].T
             )
@@ -221,7 +221,7 @@ if __name__ == "__main__":
     
     print("Running LTP stability analysis...")
     ltp = LTPStability(rotor)
-    ltp = ltp.LTP_full_range()
+    ltp = ltp.ltp_full_range()
     
     print(f"Number of solutions: {len(ltp.modal_solution)}")
     print(f"First point OMEGA: {ltp.modal_solution[0].OMEGA_RPM:.2f} RPM")

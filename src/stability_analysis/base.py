@@ -24,18 +24,26 @@ class ModalSolution:
 
 class StabilityAnalysis:
     """Base class for stability analysis.
-    
+
     This class contains main functions for various stability analyses
     including LTI, LTP, and HD methods.
-    
+
     Attributes:
         rotor_build: Rotor build object with state matrices
         modal_solution: List of modal solutions at different operating points
+
+    Class Constants:
+        DEFAULT_RTOL: Default relative tolerance for ODE integration
+        DEFAULT_ATOL: Default absolute tolerance for ODE integration
     """
-    
-    def __init__(self, rotor_build):
+
+    # Integration tolerances for monodromy computation
+    DEFAULT_RTOL = 1e-6
+    DEFAULT_ATOL = 1e-8
+
+    def __init__(self, rotor_build) -> None:
         """Initialize stability analysis.
-        
+
         Args:
             rotor_build: RotorBuild object
         """
@@ -75,11 +83,11 @@ class StabilityAnalysis:
 
             elif solver_type == "LTP":
                 obj = LTPStability(rotor_build)
-                obj = obj.LTP_full_range()
+                obj = obj.ltp_full_range()
 
             elif solver_type == "HD":
                 obj = HDStability(rotor_build)
-                obj = obj.HD_full_range()
+                obj = obj.hd_full_range()
             else:
                 raise ValueError(f"Unknown solver type: {solver_type}")
 
@@ -88,7 +96,9 @@ class StabilityAnalysis:
     @staticmethod
     def monodromy_computer(
         A_handle_time: Callable[[float], np.ndarray],
-        period_T: float
+        period_T: float,
+        rtol: float = None,
+        atol: float = None
     ) -> np.ndarray:
         """Compute monodromy matrix for Linear Time-Periodic (LTP) systems.
 
@@ -108,8 +118,8 @@ class StabilityAnalysis:
         Integration Method:
         ------------------
         Uses scipy's DOP853 (Dormand-Prince 8th order) integrator with:
-        - Relative tolerance: 1e-6
-        - Absolute tolerance: 1e-8
+        - Relative tolerance: configurable (default 1e-6)
+        - Absolute tolerance: configurable (default 1e-8)
         - Suitable for long-period integrations with high accuracy
 
         Args:
@@ -118,11 +128,20 @@ class StabilityAnalysis:
             Function handle A(t) that returns the n×n state matrix at time t
         period_T : float
             Period of oscillation (s), typically T = 2π/OMEGA for rotor systems
+        rtol : float, optional
+            Relative tolerance for integration (default: DEFAULT_RTOL)
+        atol : float, optional
+            Absolute tolerance for integration (default: DEFAULT_ATOL)
 
         Returns:
         -------
         np.ndarray
             n×n monodromy matrix M whose eigenvalues are characteristic multipliers
+
+        Raises:
+        ------
+        ValueError
+            If period_T <= 0 or A_handle_time(0) is not square
 
         Notes:
         -----
@@ -140,7 +159,46 @@ class StabilityAnalysis:
         >>> multipliers = np.linalg.eigvals(M)
         >>> is_stable = np.all(np.abs(multipliers) < 1)
         """
-        n = A_handle_time(0).shape[0]
+        # Input validation
+        if period_T <= 0:
+            raise ValueError(f"period_T must be positive, got {period_T}")
+
+        try:
+            A_0 = A_handle_time(0)
+        except Exception as e:
+            raise ValueError(f"A_handle_time(0) failed: {e}")
+
+        if A_0 is None:
+            raise ValueError("A_handle_time(0) returned None")
+
+        if not isinstance(A_0, np.ndarray):
+            raise ValueError(f"A_handle_time must return numpy array, got {type(A_0)}")
+
+        if A_0.ndim != 2:
+            raise ValueError(f"A_handle_time must return 2D array, got {A_0.ndim}D")
+
+        if A_0.shape[0] != A_0.shape[1]:
+            raise ValueError(f"A_handle_time must return square matrix, got shape {A_0.shape}")
+
+        # Set default tolerances
+        if rtol is None:
+            rtol = StabilityAnalysis.DEFAULT_RTOL
+        if atol is None:
+            atol = StabilityAnalysis.DEFAULT_ATOL
+
+        n = A_0.shape[0]
+
+        # Performance warning for large systems
+        if n > 50:
+            import warnings
+            warnings.warn(
+                f"Computing monodromy matrix for large system (n={n}). "
+                f"This requires {n} sequential ODE integrations and may take significant time. "
+                f"Consider using a reduced-order model or parallel computing for n > 100.",
+                UserWarning,
+                stacklevel=2
+            )
+
         phi_0_matrix = np.eye(n)
         monodromy_matrix_M = np.zeros((n, n))
 
@@ -159,8 +217,8 @@ class StabilityAnalysis:
                 [0, period_T],
                 phi_0,
                 method='DOP853',
-                rtol=1e-6,
-                atol=1e-8
+                rtol=rtol,
+                atol=atol
             )
 
             # Extract final value
@@ -170,11 +228,12 @@ class StabilityAnalysis:
         return monodromy_matrix_M
     
     @staticmethod
-    def HD_computer(
+    def hd_computer(
         A_handle_time: Callable[[float], np.ndarray],
         time: np.ndarray,
         number_harmonics: int,
-        OMEGA: float
+        OMEGA: float,
+        use_complex: bool = False
     ) -> np.ndarray:
         """Compute the state matrix for HD analysis.
 
@@ -186,18 +245,58 @@ class StabilityAnalysis:
             time: Time vector for sampling
             number_harmonics: Number of harmonics to include
             OMEGA: Fundamental frequency
+            use_complex: If True, use complex formulation (default: False)
 
         Returns:
-            matrix A_HD
+            matrix A_HD (real or complex depending on use_complex)
+
+        Raises:
+            ValueError: If inputs are invalid
         """
-        state_number = A_handle_time(0).shape[0]
+        # Input validation
+        if number_harmonics < 1:
+            raise ValueError(f"number_harmonics must be >= 1, got {number_harmonics}")
+
+        if OMEGA <= 0:
+            raise ValueError(f"OMEGA must be positive, got {OMEGA}")
+
+        if not isinstance(time, np.ndarray):
+            raise ValueError(f"time must be numpy array, got {type(time)}")
+
+        if time.size < 2:
+            raise ValueError(f"time array must have at least 2 points, got {time.size}")
+
+        try:
+            A_0 = A_handle_time(0)
+        except Exception as e:
+            raise ValueError(f"A_handle_time(0) failed: {e}")
+
+        if A_0 is None:
+            raise ValueError("A_handle_time(0) returned None")
+
+        if not isinstance(A_0, np.ndarray):
+            raise ValueError(f"A_handle_time must return numpy array, got {type(A_0)}")
+
+        if A_0.ndim != 2:
+            raise ValueError(f"A_handle_time must return 2D array, got {A_0.ndim}D")
+
+        if A_0.shape[0] != A_0.shape[1]:
+            raise ValueError(f"A_handle_time must return square matrix, got shape {A_0.shape}")
+
+        # Dispatch to complex or real formulation
+        if use_complex:
+            return StabilityAnalysis.hd_computer_complex(
+                A_handle_time, time, number_harmonics, OMEGA
+            )
+
+        state_number = A_0.shape[0]
         size_A_HD = (1 + 2 * number_harmonics) * state_number
         A_HD = np.zeros((size_A_HD, size_A_HD))
 
-        # Compute time realizations of A(t)
-        time_realisation_A = np.zeros((state_number, state_number, len(time)))
-        for i, t in enumerate(time):
-            time_realisation_A[:, :, i] = A_handle_time(t)
+        # Compute time realizations of A(t) - vectorized for better performance
+        time_realisation_A = np.array([A_handle_time(t) for t in time])
+        # Transpose to shape (state_number, state_number, len(time))
+        time_realisation_A = np.transpose(time_realisation_A, (1, 2, 0))
 
         # Compute FFT coefficients for each element
         # Storage: A_coeff[:,:,0] = A_0, A_coeff[:,:,2*i] = A_ic, A_coeff[:,:,2*i+1] = A_is
@@ -309,7 +408,7 @@ class StabilityAnalysis:
         return A_HD
 
     @staticmethod
-    def HD_computer_complex(
+    def hd_computer_complex(
         A_handle_time: Callable[[float], np.ndarray],
         time: np.ndarray,
         number_harmonics: int,
@@ -318,7 +417,8 @@ class StabilityAnalysis:
         """Compute HD matrix using complex formulation.
 
         This is an alternative formulation using complex exponentials
-        instead of separate sine/cosine terms.
+        instead of separate sine/cosine terms. This method is called
+        internally by hd_computer when use_complex=True.
 
         Args:
             A_handle_time: Function handle A(t)
@@ -328,15 +428,37 @@ class StabilityAnalysis:
 
         Returns:
             Complex HD matrix A_HB
+
+        Raises:
+            ValueError: If inputs are invalid
+
+        Notes:
+            This method assumes inputs are already validated by hd_computer.
+            Can also be called directly for advanced use cases.
         """
-        state_number = A_handle_time(0).shape[0]
+        # Validate inputs (in case called directly)
+        if number_harmonics < 1:
+            raise ValueError(f"number_harmonics must be >= 1, got {number_harmonics}")
+
+        if OMEGA <= 0:
+            raise ValueError(f"OMEGA must be positive, got {OMEGA}")
+
+        try:
+            A_0 = A_handle_time(0)
+        except Exception as e:
+            raise ValueError(f"A_handle_time(0) failed: {e}")
+
+        if A_0.ndim != 2 or A_0.shape[0] != A_0.shape[1]:
+            raise ValueError(f"A_handle_time must return square 2D matrix, got shape {A_0.shape}")
+
+        state_number = A_0.shape[0]
         size_A_HB = (1 + 2 * number_harmonics) * state_number
         A_HB = np.zeros((size_A_HB, size_A_HB), dtype=complex)
 
-        # Compute time realizations of A(t)
-        time_realisation_A = np.zeros((state_number, state_number, len(time)))
-        for i, t in enumerate(time):
-            time_realisation_A[:, :, i] = A_handle_time(t)
+        # Compute time realizations of A(t) - vectorized for better performance
+        time_realisation_A = np.array([A_handle_time(t) for t in time])
+        # Transpose to shape (state_number, state_number, len(time))
+        time_realisation_A = np.transpose(time_realisation_A, (1, 2, 0))
 
         # Compute FFT coefficients for each element
         A_coeff = np.zeros((state_number, state_number, len(time)), dtype=complex)
@@ -549,22 +671,20 @@ class StabilityAnalysis:
 
     def assign_range_OMEGA(self) -> 'StabilityAnalysis':
         """Assign range of rotor speeds to analyze.
-        
+
         Returns:
             Self (for method chaining)
         """
-        rotor_OMEGA_vector = np.linspace(
-            self.rotor_build.problem.lower_rotor_RPM / 60 * 2 * np.pi,
-            self.rotor_build.problem.higher_rotor_RPM / 60 * 2 * np.pi,
-            self.rotor_build.problem.number_points
-        )
-        
+        # Create RPM vector first, then convert to rad/s
         rotor_OMEGA_vector_RPM = np.linspace(
             self.rotor_build.problem.lower_rotor_RPM,
             self.rotor_build.problem.higher_rotor_RPM,
             self.rotor_build.problem.number_points
         )
-        
+
+        # Convert RPM to rad/s: rad/s = RPM * (2π / 60)
+        rotor_OMEGA_vector = rotor_OMEGA_vector_RPM * (2 * np.pi / 60)
+
         # Reverse if solving right to left
         if self.rotor_build.problem.solution_direction == "R2L":
             rotor_OMEGA_vector = rotor_OMEGA_vector[::-1]
