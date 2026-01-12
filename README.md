@@ -1,5 +1,7 @@
 # Rotor Dynamics Analysis - Python
 
+[![Version](https://img.shields.io/github/v/release/Andrea24900/rotor_dynamics_python)](https://github.com/Andrea24900/rotor_dynamics_python/releases)
+
 Python implementation of rotorcraft dynamics stability analysis.
 
 ## Overview
@@ -25,8 +27,20 @@ rotor_dynamics_python/
 
 ## Installation
 
+### From Release (Recommended)
 ```bash
-git clone <repository-url>
+# Install specific version
+pip install git+https://github.com/Andrea24900/rotor_dynamics_python.git@v1.0.0
+
+# Or clone specific version
+git clone --branch v1.0.0 https://github.com/Andrea24900/rotor_dynamics_python.git
+cd rotor_dynamics_python
+pip install -e ".[dev]"
+```
+
+### From Source (Development)
+```bash
+git clone https://github.com/Andrea24900/rotor_dynamics_python.git
 cd rotor_dynamics_python
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
@@ -154,6 +168,14 @@ class ProblemDefinition:
 - **Performance**: Configurable tolerances, automatic warnings for large systems
 - **Testing**: 78 tests with 100% pass rate
 
+## Results
+
+Comprehensive stability analysis results and visualizations for all methods (LTI, LTP, HD) are available in [RESULTS.md](RESULTS.md), including:
+- Damping and frequency plots across RPM ranges
+- Continuation analysis demonstrations
+- Method comparisons and validation
+- Complete bibliography
+
 ## Verification
 
 All code verified against MATLAB implementation:
@@ -161,7 +183,7 @@ All code verified against MATLAB implementation:
 - HD computer with FFT coefficients
 - 8 H-matrix assignment functions
 
-See `CONVERSION_GUIDE.md` for details.
+See [CONVERSION_GUIDE.md](CONVERSION_GUIDE.md) for details.
 
 ## Dependencies
 
@@ -201,11 +223,33 @@ python -m build  # Creates dist/ packages
 
 GNU
 
+## Citation
+
+If you use this software in your research, please cite:
+
+```bibtex
+@software{bassi2026rotor,
+  author = {Bassi, Andrea},
+  title = {Rotor Dynamics Analysis - Python},
+  year = {2026},
+  version = {1.0.0},
+  url = {https://github.com/Andrea24900/rotor_dynamics_python}
+}
+
+@mastersthesis{bassi2024thesis,
+  author = {Bassi, Andrea},
+  title = {Periodic ground resonance analysis with non-linear elements},
+  school = {Politecnico di Milano},
+  year = {2024}
+}
+```
+
 ## Contact
 
 Andrea Bassi
-GitHub: Andrea24900
+GitHub: [@Andrea24900](https://github.com/Andrea24900)
+Politecnico di Milano
 
 ## Acknowledgments
 
-From my (Andrea Bassi) thesis work and the MATLAB implementation
+Based on the Master's thesis *Periodic ground resonance analysis with non-linear elements* (2024) and the original MATLAB implementation developed for that work.

@@ -66,12 +66,12 @@ Predictor-corrector algorithms for robust eigenvalue tracking across parameter r
 *Figure 9: Damping vs RPM for HD analysis. Frequency-domain approach with N=1 harmonics.*
 
 ![HD Frequency](results_figures/hd_frequency.png)
-*Figure 10: Frequency vs RPM for HD analysis. Shows (1+2N)×n = 24 eigenvalues for expanded system.*
+*Figure 10: Frequency vs RPM for HD analysis. Shows (1+2N)×n = 36 eigenvalues (complex conjugate pairs) for expanded system.*
 
 ### 6. HD Continuation Analysis
 
 ![HD Continuation Damping](results_figures/hd_cont_damping.png)
-*Figure 11: Damping vs RPM with HD continuation. Tracks all 24 eigenvalues of augmented HD matrix.*
+*Figure 11: Damping vs RPM with HD continuation. Tracks all 36 eigenvalues of augmented HD matrix.*
 
 ![HD Continuation Frequency](results_figures/hd_cont_frequency.png)
 *Figure 12: Frequency vs RPM with HD continuation. Complete tracking of harmonic decomposition modes.*
