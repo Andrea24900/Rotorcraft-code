@@ -428,30 +428,8 @@ class StabilityAnalysis:
 
         Returns:
             Complex HD matrix A_HB
-
-        Raises:
-            ValueError: If inputs are invalid
-
-        Notes:
-            This method assumes inputs are already validated by hd_computer.
-            Can also be called directly for advanced use cases.
         """
-        # Validate inputs (in case called directly)
-        if number_harmonics < 1:
-            raise ValueError(f"number_harmonics must be >= 1, got {number_harmonics}")
-
-        if OMEGA <= 0:
-            raise ValueError(f"OMEGA must be positive, got {OMEGA}")
-
-        try:
-            A_0 = A_handle_time(0)
-        except Exception as e:
-            raise ValueError(f"A_handle_time(0) failed: {e}")
-
-        if A_0.ndim != 2 or A_0.shape[0] != A_0.shape[1]:
-            raise ValueError(f"A_handle_time must return square 2D matrix, got shape {A_0.shape}")
-
-        state_number = A_0.shape[0]
+        state_number = A_handle_time(0).shape[0]
         size_A_HB = (1 + 2 * number_harmonics) * state_number
         A_HB = np.zeros((size_A_HB, size_A_HB), dtype=complex)
 
@@ -483,7 +461,7 @@ class StabilityAnalysis:
                 else:  # m > 0
                     A_m = A_coeff[:, :, m]
 
-                A_HB[block_row * state_number:(block_row + 1) * state_number,
+                A_HD[block_row * state_number:(block_row + 1) * state_number,
                      block_column * state_number:(block_column + 1) * state_number] = A_m
 
                 # Cycle the column index
@@ -494,7 +472,7 @@ class StabilityAnalysis:
             # Reset the column index
             k = -number_harmonics
 
-        return A_HB
+        return A_HD
 
     # H-matrix assignment helper functions
     @staticmethod
