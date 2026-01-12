@@ -31,7 +31,7 @@ class LTIStability(StabilityAnalysis):
         Returns:
             Dictionary containing eigenvectors and eigenvalues
         """
-        A = self.rotor_build.state_matrix_A_handles(1, OMEGA)
+        A = self.rotor_build.state_matrix_function(1, OMEGA)
 
         eigenvalues, eigenvectors = np.linalg.eig(A)
 
