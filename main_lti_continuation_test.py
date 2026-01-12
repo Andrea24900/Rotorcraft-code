@@ -89,29 +89,24 @@ def main():
         freq_min = 0
         freq_max = 50
 
-    # For 4-blade rotor, we expect 12 eigenvalues
+    # Determine number of modes from the system
     n_modes = len(cont_analysis.modal_solution[0].damping)
     print(f"\n  Total number of modes: {n_modes}")
 
     # Plot all modes for damping (using 1-based numbering)
-    modes_to_plot_damping = list(range(1, min(13, n_modes + 1)))  # Modes 1-12
+    modes_to_plot_damping = list(range(1, n_modes + 1))
 
-    # For frequency, only plot modes with positive frequencies
+    # Identify modes with positive frequencies at any operating point
     modes_with_positive_freq = set()
     for sol in cont_analysis.modal_solution:
         for i, freq in enumerate(sol.frequency):
-            if freq > 0 and i < 12:
+            if freq > 0:
                 modes_with_positive_freq.add(i + 1)  # Convert to 1-based
 
     modes_to_plot_frequency = sorted(list(modes_with_positive_freq))
 
-    print(f"  Modes with positive frequencies: {modes_to_plot_frequency}")
-    print(f"  Plotting all dampings for modes: {modes_to_plot_damping}")
-
-    # Plot 1: Damping by mode order (all 12 modes) with continuation tracking
+    # Plot 1: Damping by mode order with continuation tracking
     if len(modes_to_plot_damping) > 0:
-        print(f"\n  - Creating damping plot for all {len(modes_to_plot_damping)} modes...")
-        print(f"    Note: Continuation method tracks individual eigenvalue branches")
         fig1 = plotter.plot_damping_order(
             cont_analysis.modal_solution,
             modes=modes_to_plot_damping,
@@ -124,7 +119,6 @@ def main():
 
     # Plot 2: Frequency by mode order (only modes with positive frequencies)
     if len(modes_to_plot_frequency) > 0:
-        print(f"  - Creating frequency plot for {len(modes_to_plot_frequency)} modes with positive frequencies...")
         fig2 = plotter.plot_frequency_order(
             cont_analysis.modal_solution,
             modes=modes_to_plot_frequency,
@@ -138,11 +132,6 @@ def main():
     print("\n" + "="*60)
     print("Continuation Analysis Complete!")
     print("="*60)
-    print("\nThe continuation method provides smooth eigenvalue tracking")
-    print("across the parameter range, avoiding mode crossing issues.")
-
-    # Show plots
-    print("\nDisplaying plots...")
     plt.show()
 
 

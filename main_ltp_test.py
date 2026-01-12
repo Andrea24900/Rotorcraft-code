@@ -72,8 +72,7 @@ def main():
     Notes:
     -----
     - Computation time scales with number of points and system size
-    - For a 4-blade rotor (6x6 state matrix), expect 12 characteristic exponents
-    - Stability is determined by the maximum real exponent (damping)
+    - Stability is determined by the maximum real characteristic exponent (damping)
     """
 
     print("="*60)

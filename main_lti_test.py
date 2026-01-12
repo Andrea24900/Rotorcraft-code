@@ -86,28 +86,23 @@ def main():
         freq_min = 0
         freq_max = 50
 
-    # For 4-blade rotor, we expect 12 eigenvalues (6x6 state matrix -> 12 complex eigenvalues)
+    # Determine number of modes from the system
     n_modes = len(lti_analysis.modal_solution[0].damping)
     print(f"\n  Total number of modes: {n_modes}")
 
-    # Plot all 12 modes (using 1-based numbering)
-    modes_to_plot_damping = list(range(1, min(13, n_modes + 1)))  # Modes 1-12 for damping
+    # Plot all modes (using 1-based numbering)
+    modes_to_plot_damping = list(range(1, n_modes + 1))
 
-    # For frequency, only plot modes with positive frequencies
     # Identify modes with positive frequencies at any operating point
     modes_with_positive_freq = set()
     for sol in lti_analysis.modal_solution:
         for i, freq in enumerate(sol.frequency):
-            if freq > 0 and i < 12:
+            if freq > 0:
                 modes_with_positive_freq.add(i + 1)  # Convert to 1-based
 
     modes_to_plot_frequency = sorted(list(modes_with_positive_freq))
 
-    print(f"  Modes with positive frequencies: {modes_to_plot_frequency}")
-    print(f"  Plotting all dampings for modes: {modes_to_plot_damping}")
-
     # Plot 1: Damping (generic - dots only, no lines)
-    print(f"\n  - Creating damping plot (all modes, dots only)...")
     fig1 = plotter.plot_damping_generic(
         lti_analysis.modal_solution,
         xlimits=(rpm_min, rpm_max),
@@ -118,7 +113,6 @@ def main():
     plt.tight_layout()
 
     # Plot 2: Frequency (generic - dots only, no lines)
-    print(f"  - Creating frequency plot (all modes, dots only)...")
     fig2 = plotter.plot_frequency_generic(
         lti_analysis.modal_solution,
         xlimits=(rpm_min, rpm_max),
@@ -127,13 +121,10 @@ def main():
     plt.figure(fig2.number)
     plt.title("Frequency vs RPM")
     plt.tight_layout()
-        
+
     print("\n" + "="*60)
     print("Analysis Complete!")
     print("="*60)
-
-    # Show plots
-    print("\nDisplaying plots...")
     plt.show()
 
 

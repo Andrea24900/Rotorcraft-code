@@ -33,10 +33,9 @@ Computational Cost:
 
 Matrix Dimensions:
 ------------------
-For 4-blade rotor (n=12 states) with N=1 harmonics:
-- Hill matrix: 36×36
-- Sensitivity matrix: 36×36
-- Each corrector iteration: O(36³) operations
+- HD matrix size: (1+2N)×n where N is number of harmonics (user-defined), n is state dimension
+- Computational cost scales with ((1+2N)×n)³ for eigenvalue problem
+- Sensitivity matrix has same dimensions as HD matrix
 
 Usage:
 ------
@@ -105,11 +104,11 @@ def main():
     print(f"    - Continuation tolerance: {rotor.problem.continuation_tolerance}")
     print(f"    - Max iterations: {rotor.problem.continuation_max_iter}")
 
-    # Calculate expected matrix size
+    # Calculate HD matrix size
     state_size = 2 * rotor.problem.number_blades
-    hill_matrix_size = (1 + 2 * rotor.problem.number_harmonics) * state_size
+    hd_matrix_size = (1 + 2 * rotor.problem.number_harmonics) * state_size
     print(f"    - State space dimension: {state_size}")
-    print(f"    - Hill matrix dimension: {hill_matrix_size}×{hill_matrix_size}")
+    print(f"    - HD matrix dimension: {hd_matrix_size}×{hd_matrix_size}")
 
     # Step 2: Create continuation analysis object
     print("\n[2/4] Initializing HD continuation analysis...")
@@ -118,19 +117,10 @@ def main():
 
     # Step 3: Run continuation analysis over full RPM range
     print("\n[3/4] Running HD continuation analysis...")
-    print(f"  Computing Hill matrices and sensitivities...")
-    print(f"  This uses FFT for harmonic expansion plus sensitivity calculations...")
     cont_analysis = cont_analysis.continuation()
 
     print(f"\n  [OK] HD continuation analysis completed")
     print(f"    - Number of solution points: {len(cont_analysis.modal_solution)}")
-    print(f"    - Number of eigenvalues per point: {len(cont_analysis.modal_solution[0].damping)}")
-
-    # Print sample results
-    print(f"\n  Sample results at first operating point:")
-    print(f"    - RPM: {cont_analysis.modal_solution[0].OMEGA_RPM:.2f}")
-    print(f"    - First 6 damping values: {cont_analysis.modal_solution[0].damping[:6]}")
-    print(f"    - First 6 frequency values: {cont_analysis.modal_solution[0].frequency[:6]}")
 
     # Check stability
     max_damping_overall = max([np.max(sol.damping) for sol in cont_analysis.modal_solution])
@@ -167,11 +157,8 @@ def main():
 
     # Get number of eigenvalues
     n_eigenvalues = len(cont_analysis.modal_solution[0].damping)
-    print(f"\n  Total number of eigenvalues per point: {n_eigenvalues}")
-    print(f"  Note: HD produces (1+2N)×state_size = {hill_matrix_size} eigenvalues")
 
-    # For HD continuation, plot ALL modes (not just 12)
-    # The Hill matrix produces (1+2N)×state_size eigenvalues that all need tracking
+    # Plot all modes for damping
     modes_to_plot_damping = list(range(1, n_eigenvalues + 1))
 
     # For frequency, only plot modes with positive frequencies
@@ -183,13 +170,8 @@ def main():
 
     modes_to_plot_frequency = sorted(list(modes_with_positive_freq))
 
-    print(f"  Modes with positive frequencies: {len(modes_to_plot_frequency)} out of {n_eigenvalues}")
-    print(f"  Plotting ALL dampings for {n_eigenvalues} modes (full Hill matrix)")
-
     # Plot 1: Damping by mode order with continuation tracking
     if len(modes_to_plot_damping) > 0:
-        print(f"\n  - Creating damping plot for {len(modes_to_plot_damping)} modes...")
-        print(f"    Note: Continuation method tracks individual eigenvalue branches")
         fig1 = plotter.plot_damping_order(
             cont_analysis.modal_solution,
             modes=modes_to_plot_damping,
@@ -202,7 +184,6 @@ def main():
 
     # Plot 2: Frequency by mode order
     if len(modes_to_plot_frequency) > 0:
-        print(f"  - Creating frequency plot for {len(modes_to_plot_frequency)} modes with positive frequencies...")
         fig2 = plotter.plot_frequency_order(
             cont_analysis.modal_solution,
             modes=modes_to_plot_frequency,
@@ -216,16 +197,6 @@ def main():
     print("\n" + "="*60)
     print("HD Continuation Analysis Complete!")
     print("="*60)
-    print("\nThe HD continuation method combines frequency-domain expansion")
-    print("with predictor-corrector algorithms, providing smooth eigenvalue")
-    print("tracking without numerical integration. Essential for bifurcation")
-    print("analysis in systems with strong periodic forcing.")
-    print(f"\nHill matrix size: {hill_matrix_size}×{hill_matrix_size}")
-    print(f"Tracked ALL {n_eigenvalues} eigenvalue branches across {rotor.problem.number_points} RPM points")
-    print(f"Note: HD method expands {state_size}-state system into {n_eigenvalues} harmonics for analysis")
-
-    # Show plots
-    print("\nDisplaying plots...")
     plt.show()
 
 

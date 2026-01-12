@@ -177,7 +177,7 @@ def test_hd_computer_basic():
 
     A_HD = StabilityAnalysis.hd_computer(A_func, time, number_harmonics, OMEGA)
 
-    # For n=2 states and N=1 harmonic: size = (1 + 2*1) * 2 = 6
+    # For n=2 original state variables and N=1 harmonic (user-defined): HD matrix size = (1 + 2*N) * n = 6
     expected_size = (1 + 2 * number_harmonics) * 2
     assert A_HD.shape == (expected_size, expected_size)
 
@@ -195,7 +195,7 @@ def test_hd_computer_multiple_harmonics():
 
     A_HD = StabilityAnalysis.hd_computer(A_func, time, number_harmonics, OMEGA)
 
-    # For n=2 states and N=3 harmonics: size = (1 + 2*3) * 2 = 14
+    # For n=2 original state variables and N=3 harmonics (user-defined): HD matrix size = (1 + 2*N) * n = 14
     expected_size = (1 + 2 * number_harmonics) * 2
     assert A_HD.shape == (expected_size, expected_size)
 
@@ -214,7 +214,7 @@ def test_hd_computer_3x3_system():
 
     A_HD = StabilityAnalysis.hd_computer(A_func, time, number_harmonics, OMEGA)
 
-    # For n=3 states and N=2 harmonics: size = (1 + 2*2) * 3 = 15
+    # For n=3 original state variables and N=2 harmonics (user-defined): HD matrix size = (1 + 2*N) * n = 15
     expected_size = (1 + 2 * number_harmonics) * 3
     assert A_HD.shape == (expected_size, expected_size)
 
@@ -231,14 +231,14 @@ def test_hd_computer_complex():
     time = np.linspace(0, T, 100)
     number_harmonics = 1
 
-    A_HB = StabilityAnalysis.hd_computer(A_func, time, number_harmonics, OMEGA, use_complex=True)
+    A_HD = StabilityAnalysis.hd_computer(A_func, time, number_harmonics, OMEGA, use_complex=True)
 
     # Same size as real formulation
     expected_size = (1 + 2 * number_harmonics) * 2
-    assert A_HB.shape == (expected_size, expected_size)
+    assert A_HD.shape == (expected_size, expected_size)
 
     # Should be complex-valued
-    assert A_HB.dtype == np.complex128 or np.iscomplexobj(A_HB)
+    assert A_HD.dtype == np.complex128 or np.iscomplexobj(A_HD)
 
 
 def test_hd_computer_complex_direct_call():
@@ -249,11 +249,11 @@ def test_hd_computer_complex_direct_call():
     time = np.linspace(0, T, 100)
     number_harmonics = 2
 
-    A_HB = StabilityAnalysis.hd_computer_complex(A_func, time, number_harmonics, OMEGA)
+    A_HD = StabilityAnalysis.hd_computer_complex(A_func, time, number_harmonics, OMEGA)
 
     expected_size = (1 + 2 * number_harmonics) * 2
-    assert A_HB.shape == (expected_size, expected_size)
-    assert np.iscomplexobj(A_HB)
+    assert A_HD.shape == (expected_size, expected_size)
+    assert np.iscomplexobj(A_HD)
 
 
 # ============================================================================

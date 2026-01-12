@@ -96,6 +96,107 @@ The `main_lti_test.py` script performs a complete LTI stability analysis:
 - Generates damping and frequency plots
 - Shows all 12 eigenvalues (dampings) and positive frequencies only
 
+### Continuation Analysis
+
+The continuation method provides **robust eigenvalue tracking** across parameter ranges by using a predictor-corrector algorithm. This avoids mode crossing issues common in standard eigenvalue analysis.
+
+#### Running Continuation Analysis
+
+**Test script:**
+```bash
+python main_lti_continuation_test.py
+```
+
+**API usage (continuation w.r.t. OMEGA):**
+```python
+from src.rotor_build import RotorBuild
+from src.stability_analysis.continuation_analysis import ContinuationAnalysis
+
+# Build rotor system
+rotor = RotorBuild.build_all()
+rotor.problem.continuation = "YES"
+
+# Run continuation analysis
+cont_analysis = ContinuationAnalysis(rotor)
+cont_analysis = cont_analysis.continuation()
+
+# Access tracked eigenvalue branches
+for sol in cont_analysis.modal_solution:
+    print(f"RPM: {sol.OMEGA_RPM:.1f}")
+    print(f"Dampings: {sol.damping}")
+    print(f"Frequencies: {sol.frequency}")
+```
+
+#### Parametric Continuation (New Feature!)
+
+The continuation method now supports **parametric continuation** with respect to any system parameter, not just rotor speed (OMEGA).
+
+**Example - Continuation w.r.t. damping coefficient:**
+```python
+from src.stability_analysis.continuation_analysis import ContinuationAnalysis
+
+# Define state matrix function with parameter
+def state_matrix_with_damping(t, damping_coeff, omega):
+    """State matrix A(t, c, Ω) where c is the damping parameter."""
+    # Your state matrix construction with variable damping_coeff
+    return A
+
+# Create continuation analysis
+cont_analysis = ContinuationAnalysis(rotor)
+
+# Compute sensitivity w.r.t. damping coefficient (not OMEGA)
+sensitivity_matrix = ContinuationAnalysis.numerical_sensitivity(
+    matrix_type='SS',           # or 'MON', 'HD'
+    A_handle_all=state_matrix_with_damping,
+    step_size_h=0.01,
+    OMEGA=100.0,                # Fixed rotor speed
+    wrt_omega=False,            # Key parameter!
+    par=5.0                     # Current damping coefficient value
+)
+```
+
+**Key Parameters:**
+- `wrt_omega=True` (default): Compute derivative w.r.t. rotor speed OMEGA
+- `wrt_omega=False`: Compute derivative w.r.t. parameter `par`
+  - When using `wrt_omega=False`, you **must** provide `par` value
+  - Your `A_handle_all` function signature changes:
+    - For OMEGA: `A(omega)` or `A(t, omega)`
+    - For parameter: `A(par, omega)` or `A(t, par, omega)`
+
+**Supported Matrix Types:**
+- `'SS'`: State-space (LTI systems)
+- `'MON'`: Monodromy matrix (LTP systems)
+- `'HD'`: Harmonic Decomposition (time-periodic systems)
+
+**Use Cases for Parametric Continuation:**
+- Damping coefficient variation studies
+- Stiffness parameter sensitivity
+- Geometric parameter sweeps
+- Control parameter optimization
+- Bifurcation analysis with respect to design parameters
+
+#### Continuation Method Details
+
+The continuation algorithm uses:
+- **Predictor step**: First-order sensitivity-based prediction of next eigenvalue
+- **Corrector step**: Newton-Raphson iterations to refine the eigenvalue
+- **Normalization constraint**: Ensures unique eigenvector determination
+
+**Configuration parameters** (in `problem_definition.py`):
+```python
+continuation: Literal["YES", "NO"] = "NO"
+continuation_tolerance: float = 0.01    # Convergence tolerance
+continuation_max_iter: int = 100        # Max corrector iterations
+step_h: float = 0.1                     # Finite difference step size
+```
+
+**Benefits of continuation method:**
+- ✅ Smooth eigenvalue branch tracking (no mode jumping)
+- ✅ Works with degenerate/clustered eigenvalues
+- ✅ Handles bifurcations naturally
+- ✅ More robust than standard eigenvalue sorting
+- ✅ Supports parametric studies beyond just RPM variation
+
 ## Configuration
 
 The default configuration can be modified in `src/config/problem_definition.py`:
@@ -176,6 +277,38 @@ class ProblemDefinition:
 Legend: ✅ Complete | 🚧 In Progress | ⏳ Not Started
 
 ## Recent Improvements (January 2026)
+
+### Continuation Analysis Refactoring (January 2026)
+
+The continuation analysis module has been significantly refactored for improved clarity, performance, and flexibility:
+
+#### 1. Fixed Critical Mathematical Bug
+- **Conjugation inconsistency**: Corrected normalization constraint in sensitivity systems
+- All three augmented systems now use mathematically correct `2 * v^H` (conjugate transpose)
+- Improved predictor accuracy and convergence speed
+- The corrector was already correct, which is why code worked but with suboptimal prediction
+
+#### 2. Nomenclature Consistency
+- **HD vs HB**: Unified all references to use "HD" (Harmonic Decomposition) consistently
+- Updated variable names: `A_HB*` → `A_HD*`
+- Updated parameter names: `HB_parameters` → `HD_parameters`
+- Clearer and more consistent codebase
+
+#### 3. Removed Dead Code
+- Eliminated unused forward difference (FW) derivative code
+- Kept only centered difference (CEN) implementation
+- Reduced `numerical_sensitivity` from ~105 to ~78 lines
+- Code is now simpler and more maintainable
+
+#### 4. Parametric Continuation Support
+- **New feature**: Continuation with respect to any parameter, not just OMEGA
+- Replaced confusing `par=1000` magic number with explicit `wrt_omega` boolean
+- Clear API: `wrt_omega=True` (OMEGA derivative) or `wrt_omega=False` (parameter derivative)
+- Enables parametric studies: damping coefficients, stiffness, geometric parameters, etc.
+
+#### 5. Bug Fixes
+- Fixed `state_matrix_A_handles` → `state_matrix_function` attribute name
+- Tests now run successfully
 
 ### Stability Analysis Enhancements
 

@@ -77,8 +77,7 @@ def main():
 
     Notes:
     ------
-    - Matrix size: (1+2N)×n where N is number of harmonics, n is state dimension
-    - For 4-blade rotor (n=12) with N=1: Hill matrix is 36×36
+    - HD matrix size: (1+2N)×n where N is number of harmonics (user-defined), n is state dimension
     - Computation time scales with (1+2N)³
     """
 
@@ -102,11 +101,11 @@ def main():
     print(f"    - Number of points: {rotor.problem.number_points}")
     print(f"    - Number of harmonics (N): {rotor.problem.number_harmonics}")
 
-    # Calculate expected matrix size
-    state_size = 2 * rotor.problem.number_blades  # For 4 blades: 12
-    hill_matrix_size = (1 + 2 * rotor.problem.number_harmonics) * state_size
+    # Calculate HD matrix size
+    state_size = 2 * rotor.problem.number_blades
+    hd_matrix_size = (1 + 2 * rotor.problem.number_harmonics) * state_size
     print(f"    - State space dimension: {state_size}")
-    print(f"    - Hill matrix dimension: {hill_matrix_size}×{hill_matrix_size}")
+    print(f"    - HD matrix dimension: {hd_matrix_size}×{hd_matrix_size}")
 
     # Step 2: Create HD analysis object
     print("\n[2/4] Initializing HD stability analysis...")
@@ -115,19 +114,10 @@ def main():
 
     # Step 3: Run HD analysis over full RPM range
     print("\n[3/4] Running HD analysis...")
-    print(f"  Computing Hill matrices using FFT and harmonic expansion...")
     hd = hd.HD_full_range()
 
     print(f"\n  [OK] HD analysis completed")
     print(f"    - Number of solution points: {len(hd.modal_solution)}")
-    print(f"    - Number of eigenvalues per point: {len(hd.modal_solution[0].damping)}")
-
-    # Print sample results
-    print(f"\n  Sample results at first operating point:")
-    print(f"    - RPM: {hd.modal_solution[0].OMEGA_RPM:.2f}")
-    print(f"    - Period T: {hd.modal_solution[0].T:.6f} s")
-    print(f"    - First 6 damping values: {hd.modal_solution[0].damping[:6]}")
-    print(f"    - First 6 frequency values: {hd.modal_solution[0].frequency[:6]}")
 
     # Check stability
     max_damping_overall = max([np.max(sol.damping) for sol in hd.modal_solution])
@@ -162,11 +152,7 @@ def main():
         freq_min = 0
         freq_max = 50
 
-    print(f"\n  Total number of eigenvalues per point: {len(hd.modal_solution[0].damping)}")
-    print(f"  Note: HD method produces (1+2N)×state_size eigenvalues")
-
     # Plot 1: Damping (generic - all points)
-    print(f"\n  - Creating damping plot (all eigenvalues, dots)...")
     fig1 = plotter.plot_damping_generic(
         hd.modal_solution,
         xlimits=(rpm_min, rpm_max),
@@ -177,7 +163,6 @@ def main():
     plt.tight_layout()
 
     # Plot 2: Frequency (generic - all points)
-    print(f"  - Creating frequency plot (all eigenvalues, dots)...")
     fig2 = plotter.plot_frequency_generic(
         hd.modal_solution,
         xlimits=(rpm_min, rpm_max),
@@ -190,13 +175,6 @@ def main():
     print("\n" + "="*60)
     print("HD Analysis Complete!")
     print("="*60)
-    print("\nThe Harmonic Decomposition method expands the periodic system")
-    print("into frequency domain, solving a larger but time-invariant")
-    print("eigenvalue problem. This avoids numerical integration but")
-    print("requires sufficient harmonics for accuracy.")
-
-    # Show plots
-    print("\nDisplaying plots...")
     plt.show()
 
 
