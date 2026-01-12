@@ -102,7 +102,7 @@ def main():
     print(f"    - Number of harmonics (N): {rotor.problem.number_harmonics}")
 
     # Calculate HD matrix size
-    state_size = 2 * rotor.problem.number_blades
+    state_size = 2 * rotor.problem.number_blades+4
     hd_matrix_size = (1 + 2 * rotor.problem.number_harmonics) * state_size
     print(f"    - State space dimension: {state_size}")
     print(f"    - HD matrix dimension: {hd_matrix_size}×{hd_matrix_size}")
