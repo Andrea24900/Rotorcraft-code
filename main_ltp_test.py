@@ -102,7 +102,7 @@ def main():
     # Step 3: Run Floquet analysis over full RPM range
     print("\n[3/4] Computing characteristic exponents over RPM range...")
     print(f"  This may take several minutes (computing monodromy matrices)...")
-    ltp_analysis = ltp_analysis.LTP_full_range()
+    ltp_analysis = ltp_analysis.ltp_full_range()
 
     print(f"  [OK] Floquet analysis completed")
     print(f"    - Number of solution points: {len(ltp_analysis.modal_solution)}")
@@ -196,6 +196,15 @@ def main():
 
     # Show plots
     print("\nDisplaying plots...")
+    # Save figures at 600 DPI
+
+    fig1.savefig("results_figures/ltp_damping.png", dpi=600, bbox_inches='tight')
+
+    fig2.savefig("results_figures/ltp_frequency.png", dpi=600, bbox_inches='tight')
+
+    print("\n  Figures saved to results_figures/")
+
+
     plt.show()
 
 

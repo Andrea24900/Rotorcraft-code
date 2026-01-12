@@ -36,7 +36,7 @@ from .ltp_stability import LTPStability
 
 
 class HDStability(LTPStability):
-    """Harmonic Domain stability analysis using Harmonic Decomposition method.
+    """Harmonic Decomposition (HD) stability analysis.
 
     This class extends LTP stability to use the Harmonic Decomposition (HD) method
     for analyzing periodic systems. Instead of computing the monodromy matrix through
@@ -80,12 +80,7 @@ class HDStability(LTPStability):
     - More harmonics → better accuracy but larger matrices
     - Eigenvalues are direct stability indicators (λ = σ + jω)
     - Negative real part (σ < 0) indicates stable mode
-
-    Performance:
-    -----------
-    - Matrix size grows as O((2N+1)n)² with harmonics
     - Can be faster than LTP monodromy for small N
-    - Becomes expensive for large N or large systems
     - No ODE integration required (advantage over LTP)
 
     Example:
@@ -361,22 +356,7 @@ class HDStability(LTPStability):
         - No ODE integration required (advantage over LTP monodromy)
         - Eigenvalues directly represent stability (no conversion needed)
         - Method uses method chaining pattern for fluent interface
-
-        Performance:
-        -----------
-        - Computational complexity: O((2N+1)³n³ × M) where:
-          - N = number_harmonics
-          - n = original state dimension
-          - M = number of operating points
-        - Each point requires eigenvalue problem of size (1+2N)n
         - Can be faster than LTP for small N, slower for large N
-        - Memory scales as O((2N+1)²n²) per point
-
-        Comparison with LTP:
-        -------------------
-        - HD: Algebraic eigenvalue problem, no integration
-        - LTP: ODE integration for monodromy matrix
-        - HD faster for N ≤ 3-5, LTP faster for larger N
         - HD has truncation error, LTP has integration error
 
         Example:

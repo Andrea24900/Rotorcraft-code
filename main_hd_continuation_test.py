@@ -7,20 +7,20 @@ HD Continuation Method:
 -----------------------
 Combines the Harmonic Decomposition approach with predictor-corrector algorithms:
 
-1. HD Method: Expands periodic system A(t) into Hill matrix H
+1. HD Method: Expands periodic system A(t) into HD matrix A_HD
    - A(t) = A₀ + Σ[Aₖᶜcos(kωt) + Aₖˢsin(kωt)]
    - Results in (1+2N)×n dimensional time-invariant system
    - Direct eigenvalue computation
 
 2. Continuation: Tracks eigenvalue branches smoothly
-   - Predictor: Uses sensitivity dH/dΩ to extrapolate
+   - Predictor: Uses sensitivity dA_HD/dΩ to extrapolate
    - Corrector: Newton-Raphson to find actual eigenvalue
    - Smooth mode tracking across RPM range
 
 Benefits:
 ---------
 - No numerical integration (unlike LTP continuation)
-- Direct sensitivity computation from Hill matrix
+- Direct sensitivity computation from HD matrix
 - Larger but structured eigenvalue problems
 - Smooth tracking of complex eigenvalue branches
 - Essential for bifurcation analysis in frequency domain
@@ -197,6 +197,15 @@ def main():
     print("\n" + "="*60)
     print("HD Continuation Analysis Complete!")
     print("="*60)
+    # Save figures at 600 DPI
+
+    fig1.savefig("results_figures/hd_cont_damping.png", dpi=600, bbox_inches='tight')
+
+    fig2.savefig("results_figures/hd_cont_frequency.png", dpi=600, bbox_inches='tight')
+
+    print("\n  Figures saved to results_figures/")
+
+
     plt.show()
 
 

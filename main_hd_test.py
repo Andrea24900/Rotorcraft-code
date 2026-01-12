@@ -15,13 +15,9 @@ into an infinite-dimensional time-invariant system by expanding:
 The state vector is expanded as:
   x(t) = x₀ + Σ[xₖᶜcos(kωt) + xₖˢsin(kωt)]
 
-This results in the Hill matrix (harmonic balance matrix):
-  H = [H₀₀  H₀₁ᶜ  H₀₁ˢ  H₀₂ᶜ  ...]
-      [H₁ᶜ₀ H₁ᶜ₁ᶜ H₁ᶜ₁ˢ ...]
-      [H₁ˢ₀ H₁ˢ₁ᶜ H₁ˢ₁ˢ ...]
-      [...]
+This results in the Harmonic Decomposition (HD) matrix A_HD, see Lopez.
 
-The eigenvalues of H directly give the stability of the periodic system.
+The eigenvalues of A_HD directly give the stability of the periodic system.
 
 Advantages over LTP:
 - No numerical integration (monodromy matrix)
@@ -114,7 +110,7 @@ def main():
 
     # Step 3: Run HD analysis over full RPM range
     print("\n[3/4] Running HD analysis...")
-    hd = hd.HD_full_range()
+    hd = hd.hd_full_range()
 
     print(f"\n  [OK] HD analysis completed")
     print(f"    - Number of solution points: {len(hd.modal_solution)}")
@@ -175,6 +171,15 @@ def main():
     print("\n" + "="*60)
     print("HD Analysis Complete!")
     print("="*60)
+    # Save figures at 600 DPI
+
+    fig1.savefig("results_figures/hd_damping.png", dpi=600, bbox_inches='tight')
+
+    fig2.savefig("results_figures/hd_frequency.png", dpi=600, bbox_inches='tight')
+
+    print("\n  Figures saved to results_figures/")
+
+
     plt.show()
 
 

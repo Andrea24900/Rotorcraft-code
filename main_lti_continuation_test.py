@@ -132,6 +132,15 @@ def main():
     print("\n" + "="*60)
     print("Continuation Analysis Complete!")
     print("="*60)
+    # Save figures at 600 DPI
+
+    fig1.savefig("results_figures/lti_cont_damping.png", dpi=600, bbox_inches='tight')
+
+    fig2.savefig("results_figures/lti_cont_frequency.png", dpi=600, bbox_inches='tight')
+
+    print("\n  Figures saved to results_figures/")
+
+
     plt.show()
 
 

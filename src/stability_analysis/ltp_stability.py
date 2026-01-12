@@ -281,17 +281,10 @@ class LTPStability(StabilityAnalysis):
         -----
         - This method can be computationally expensive for many points
         - Each point requires integration of n columns of the fundamental matrix
-        - Computational complexity: O(n³ × N) where n is state dimension
-          and N is number of operating points
+        - Each monodromy computation requires n ODE integrations over period T
         - For n DOF system, expect n complex conjugate pairs of exponents
         - Use continuation methods for more efficient tracking of specific modes
         - Method uses method chaining pattern for fluent interface
-
-        Performance:
-        -----------
-        - Significantly more expensive than LTI eigenvalue analysis
-        - Each monodromy computation requires n ODE integrations over period T
-        - Consider using fewer points or continuation methods for large systems
         - Integration tolerance controlled by base class defaults
           (DEFAULT_RTOL=1e-6, DEFAULT_ATOL=1e-8)
 
@@ -340,18 +333,21 @@ class LTPStability(StabilityAnalysis):
 if __name__ == "__main__":
     # Test LTP stability analysis
     from ..rotor_build import RotorBuild
-    
+
     print("Building rotor system...")
     rotor = RotorBuild.build_all()
-    
+
     # Override to use LTP solver
     rotor.problem.required_solver = "LTP"
-    
+
     print("Running LTP stability analysis...")
     ltp = LTPStability(rotor)
     ltp = ltp.ltp_full_range()
-    
+
     print(f"Number of solutions: {len(ltp.modal_solution)}")
     print(f"First point OMEGA: {ltp.modal_solution[0].OMEGA_RPM:.2f} RPM")
     if len(ltp.modal_solution) > 0:
         print(f"Number of characteristic exponents: {len(ltp.modal_solution[0].damping)}")
+        print(f"Sample characteristic exponents at first point:")
+        print(f"  Damping: {ltp.modal_solution[0].damping[:3]}")
+        print(f"  Frequency: {ltp.modal_solution[0].frequency[:3]}")

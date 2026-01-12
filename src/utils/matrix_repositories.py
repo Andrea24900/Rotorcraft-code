@@ -1,6 +1,10 @@
 """Matrix repository functions for mass, damping, and stiffness matrices.
 
 Converted from MATLAB mass_matrix_repository.m and damping_matrix_repository.m.
+
+Damper activation modes:
+- ALL: All dampers active (produces LTI system)
+- ODI: One Damper Inoperative per mode (produces LTP system with periodic coefficients)
 """
 
 import numpy as np

@@ -200,6 +200,15 @@ def main():
 
     # Show plots
     print("\nDisplaying plots...")
+    # Save figures at 600 DPI
+
+    fig1.savefig("results_figures/ltp_cont_damping.png", dpi=600, bbox_inches='tight')
+
+    fig2.savefig("results_figures/ltp_cont_frequency.png", dpi=600, bbox_inches='tight')
+
+    print("\n  Figures saved to results_figures/")
+
+
     plt.show()
 
 

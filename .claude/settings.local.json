@@ -6,7 +6,12 @@
       "Bash(ls:*)",
       "Bash(git add:*)",
       "Bash(git log:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(powershell -Command \"Get-Content ''c:\\\\Users\\\\andre\\\\github\\\\rotor_dynamics_python\\\\README.md'' | Measure-Object -Line | Select-Object -ExpandProperty Lines\")",
+      "Bash(powershell -Command \"Get-Content 'c:\\\\Users\\\\andre\\\\github\\\\rotor_dynamics_python\\\\CONVERSION_GUIDE.md' | Measure-Object -Line | Select-Object -ExpandProperty Lines\":*)",
+      "Bash(powershell -Command:*)",
+      "Bash(dir:*)",
+      "Bash(del update_scripts.py)"
     ]
   }
 }

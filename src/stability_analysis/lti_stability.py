@@ -195,13 +195,7 @@ class LTIStability(StabilityAnalysis):
         - Damping ratio: ζ = -σ / √(σ² + ω²)
         - Natural frequency: ωₙ = √(σ² + ω²)
         - Method uses method chaining pattern for fluent interface
-
-        Performance:
-        -----------
-        - Computational complexity: O(n³ × N) where n is state dimension
-          and N is number of operating points
         - Significantly faster than LTP (monodromy) or HD methods
-        - Suitable for real-time or parametric studies
 
         Example:
         -------
@@ -242,20 +236,21 @@ class LTIStability(StabilityAnalysis):
 if __name__ == "__main__":
     # Test LTI stability analysis
     from ..rotor_build import RotorBuild
-    
+
     print("Building rotor system...")
     rotor = RotorBuild.build_all()
-    
+
     # Override to use LTI solver
     rotor.problem.required_solver = "LTI"
-    
+
     print("Running LTI stability analysis...")
     lti = LTIStability(rotor)
     lti = lti.eigen_full_range()
-    
+
     print(f"Number of solutions: {len(lti.modal_solution)}")
     print(f"First point OMEGA: {lti.modal_solution[0].OMEGA_RPM:.2f} RPM")
-    print(f"Number of eigenvalues: {len(lti.modal_solution[0].damping)}")
-    print(f"Sample eigenvalues at first point:")
-    print(f"  Damping: {lti.modal_solution[0].damping[:3]}")
-    print(f"  Frequency: {lti.modal_solution[0].frequency[:3]}")
+    if len(lti.modal_solution) > 0:
+        print(f"Number of eigenvalues: {len(lti.modal_solution[0].damping)}")
+        print(f"Sample eigenvalues at first point:")
+        print(f"  Damping: {lti.modal_solution[0].damping[:3]}")
+        print(f"  Frequency: {lti.modal_solution[0].frequency[:3]}")

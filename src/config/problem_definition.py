@@ -55,7 +55,7 @@ class ProblemDefinition:
     # Rotor configuration
     number_blades: Literal[3, 4, 5, 7] = 4
     damper_connection: Literal["H2B", "B2B"] = "H2B"
-    damper_activation: Literal["ALL", "ODI", "2DI ADJ", "2DI OPP", "3DI"] = "ODI"
+    damper_activation: Literal["ALL", "ODI", "2DI ADJ", "2DI OPP", "3DI"] = "ODI"  # ODI = One Damper Inoperative
     
     # Solution parameters
     lower_rotor_RPM: float = 20.0
