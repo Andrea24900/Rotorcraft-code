@@ -306,7 +306,16 @@ The continuation analysis module has been significantly refactored for improved 
 - Clear API: `wrt_omega=True` (OMEGA derivative) or `wrt_omega=False` (parameter derivative)
 - Enables parametric studies: damping coefficients, stiffness, geometric parameters, etc.
 
-#### 5. Bug Fixes
+#### 5. Code Deduplication and Refactoring
+- **Extracted helper methods**: Eliminated code duplication in continuation algorithm
+  - `_build_augmented_matrix()`: Constructs augmented system matrix (used in 3 places)
+  - `_compute_residual()`: Computes residual for corrector (used in 2 places)
+  - `_solve_augmented_system()`: Solves with conditioning check (used in 3 places)
+- **Reduced code size**: Main continuation method is now ~60% cleaner
+- **Improved maintainability**: Changes to augmented system only need to be made once
+- **Better documentation**: Each helper method has clear docstrings explaining purpose
+
+#### 6. Bug Fixes
 - Fixed `state_matrix_A_handles` → `state_matrix_function` attribute name
 - Tests now run successfully
 

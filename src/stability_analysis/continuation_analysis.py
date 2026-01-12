@@ -26,6 +26,83 @@ class ContinuationAnalysis(StabilityAnalysis):
         """
         super().__init__(rotor_build)
 
+    @staticmethod
+    def _build_augmented_matrix(
+        eigenvector: np.ndarray,
+        eigenvalue: complex,
+        A: np.ndarray,
+        problem_size: int
+    ) -> np.ndarray:
+        """Build augmented system matrix for continuation.
+
+        Constructs the augmented matrix used in both predictor (sensitivity)
+        and corrector steps:
+        [v,  λI - A]
+        [0,  2v^H  ]
+
+        Args:
+            eigenvector: Current eigenvector (n×1)
+            eigenvalue: Current eigenvalue (scalar)
+            A: System matrix (n×n)
+            problem_size: Size of the system
+
+        Returns:
+            Augmented matrix ((n+1)×(n+1))
+        """
+        return np.vstack([
+            np.hstack([eigenvector.reshape(-1, 1),
+                      eigenvalue * np.eye(problem_size) - A]),
+            np.hstack([np.array([[0]]),
+                      2 * eigenvector.conj().reshape(1, -1)])
+        ])
+
+    @staticmethod
+    def _compute_residual(
+        eigenvector: np.ndarray,
+        eigenvalue: complex,
+        A: np.ndarray
+    ) -> np.ndarray:
+        """Compute residual for corrector iterations.
+
+        The residual measures how well the current iterate satisfies:
+        1. Eigenvalue equation: Av = λv
+        2. Normalization constraint: v^H·v = 1
+
+        Args:
+            eigenvector: Current eigenvector iterate
+            eigenvalue: Current eigenvalue iterate
+            A: System matrix
+
+        Returns:
+            Residual vector ((n+1)×1)
+        """
+        return np.vstack([
+            (-eigenvalue * eigenvector + A @ eigenvector).reshape(-1, 1),
+            np.array([[1 - np.vdot(eigenvector, eigenvector)]])
+        ])
+
+    @staticmethod
+    def _solve_augmented_system(
+        A_matrix: np.ndarray,
+        b_vector: np.ndarray
+    ) -> np.ndarray:
+        """Solve augmented linear system with conditioning check.
+
+        Uses direct solve for well-conditioned systems, pseudo-inverse
+        for ill-conditioned systems.
+
+        Args:
+            A_matrix: Augmented system matrix
+            b_vector: Right-hand side vector
+
+        Returns:
+            Solution vector
+        """
+        if np.linalg.cond(A_matrix) > 1/np.finfo(float).eps:
+            return np.linalg.pinv(A_matrix) @ b_vector
+        else:
+            return np.linalg.solve(A_matrix, b_vector)
+
     def continuation(self) -> 'ContinuationAnalysis':
         """Run continuation analysis across parameter range.
 
@@ -83,12 +160,9 @@ class ContinuationAnalysis(StabilityAnalysis):
             current_eigenvector = self.modal_solution[0].eigensolution['eigenvectors'][:, j]
 
             # Build sensitivity system
-            A_sens = np.vstack([
-                np.hstack([current_eigenvector.reshape(-1, 1),
-                          current_eigenvalue * np.eye(problem_size) - A]),
-                np.hstack([np.array([[0]]),
-                          2 * current_eigenvector.conj().reshape(1, -1)])
-            ])
+            A_sens = self._build_augmented_matrix(
+                current_eigenvector, current_eigenvalue, A, problem_size
+            )
 
             b_sens = np.vstack([
                 (dM_dOMEGA @ current_eigenvector).reshape(-1, 1),
@@ -96,10 +170,7 @@ class ContinuationAnalysis(StabilityAnalysis):
             ])
 
             # Solve sensitivity system
-            if np.linalg.cond(A_sens) > 1/np.finfo(float).eps:
-                x_sens = np.linalg.pinv(A_sens) @ b_sens
-            else:
-                x_sens = np.linalg.solve(A_sens, b_sens)
+            x_sens = self._solve_augmented_system(A_sens, b_sens)
 
             # Predict next values
             next_eigenvalue[j] = x_sens[0, 0] * delta_OMEGA + current_eigenvalue
@@ -130,11 +201,8 @@ class ContinuationAnalysis(StabilityAnalysis):
                 iter_eigenvalue = next_eigenvalue[j]
                 iter_eigenvector = next_eigenvector[:, j]
 
-                # Compute residual
-                residual_b = np.vstack([
-                    (-iter_eigenvalue * iter_eigenvector + A @ iter_eigenvector).reshape(-1, 1),
-                    np.array([[1 - np.vdot(iter_eigenvector, iter_eigenvector)]])
-                ])
+                # Compute initial residual
+                residual_b = self._compute_residual(iter_eigenvector, iter_eigenvalue, A)
 
                 iter_norm = np.linalg.norm(np.hstack([iter_eigenvalue, iter_eigenvector]))
                 iter_number = 0
@@ -144,19 +212,13 @@ class ContinuationAnalysis(StabilityAnalysis):
                        self.rotor_build.problem.continuation_tolerance and
                        iter_number < self.rotor_build.problem.continuation_max_iter):
 
-                    # Build continuation system
-                    A_con = np.vstack([
-                        np.hstack([iter_eigenvector.reshape(-1, 1),
-                                  iter_eigenvalue * np.eye(problem_size) - A]),
-                        np.hstack([np.array([[0]]),
-                                  2 * iter_eigenvector.conj().reshape(1, -1)])
-                    ])
+                    # Build corrector system
+                    A_con = self._build_augmented_matrix(
+                        iter_eigenvector, iter_eigenvalue, A, problem_size
+                    )
 
                     # Solve correction system
-                    if np.linalg.cond(A_con) > 1/np.finfo(float).eps:
-                        x_con = np.linalg.pinv(A_con) @ residual_b
-                    else:
-                        x_con = np.linalg.solve(A_con, residual_b)
+                    x_con = self._solve_augmented_system(A_con, residual_b)
 
                     # Update iterative values
                     iter_eigenvalue = x_con[0, 0] + iter_eigenvalue
@@ -164,10 +226,7 @@ class ContinuationAnalysis(StabilityAnalysis):
                     iter_number += 1
 
                     # Recompute residual
-                    residual_b = np.vstack([
-                        (-iter_eigenvalue * iter_eigenvector + A @ iter_eigenvector).reshape(-1, 1),
-                        np.array([[1 - np.vdot(iter_eigenvector, iter_eigenvector)]])
-                    ])
+                    residual_b = self._compute_residual(iter_eigenvector, iter_eigenvalue, A)
 
                 # Store converged values
                 self.modal_solution[i].eigensolution['eigenvalues'][j] = iter_eigenvalue
@@ -179,12 +238,9 @@ class ContinuationAnalysis(StabilityAnalysis):
                     current_eigenvector = iter_eigenvector
 
                     # Build sensitivity system
-                    A_sens = np.vstack([
-                        np.hstack([current_eigenvector.reshape(-1, 1),
-                                  current_eigenvalue * np.eye(problem_size) - A]),
-                        np.hstack([np.array([[0]]),
-                                  2 * current_eigenvector.conj().reshape(1, -1)])
-                    ])
+                    A_sens = self._build_augmented_matrix(
+                        current_eigenvector, current_eigenvalue, A, problem_size
+                    )
 
                     b_sens = np.vstack([
                         (dM_dOMEGA @ current_eigenvector).reshape(-1, 1),
@@ -192,10 +248,7 @@ class ContinuationAnalysis(StabilityAnalysis):
                     ])
 
                     # Solve sensitivity system
-                    if np.linalg.cond(A_sens) > 1/np.finfo(float).eps:
-                        x_sens = np.linalg.pinv(A_sens) @ b_sens
-                    else:
-                        x_sens = np.linalg.solve(A_sens, b_sens)
+                    x_sens = self._solve_augmented_system(A_sens, b_sens)
 
                     # Predict next values
                     next_eigenvalue[j] = x_sens[0, 0] * delta_OMEGA + current_eigenvalue
