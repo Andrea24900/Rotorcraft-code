@@ -71,6 +71,9 @@ venv.bak/
 # PyCharm
 .idea/
 
+# Claude Code
+.claude/
+
 # Spyder project settings
 .spyderproject
 .spyproject
