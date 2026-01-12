@@ -387,6 +387,20 @@ class ContinuationAnalysis(StabilityAnalysis):
             self.modal_solution[i].frequency = np.imag(eigenvalues)
 
     @staticmethod
+    def _centered_difference(f_plus_h: np.ndarray, f_min_h: np.ndarray, h: float) -> np.ndarray:
+        """Compute centered finite difference: (f(x+h) - f(x-h)) / (2h).
+
+        Args:
+            f_plus_h: Function evaluated at x + h
+            f_min_h: Function evaluated at x - h
+            h: Step size
+
+        Returns:
+            Centered difference approximation of derivative
+        """
+        return (f_plus_h - f_min_h) / (2 * h)
+
+    @staticmethod
     def numerical_sensitivity(
         matrix_type: str,
         A_handle_all: Callable,
@@ -412,20 +426,22 @@ class ContinuationAnalysis(StabilityAnalysis):
         Returns:
             Sensitivity matrix dM/d(parameter)
         """
+        # Validate parameter requirement for parametric continuation
+        if not wrt_omega and par is None:
+            raise ValueError("par must be provided when wrt_omega=False")
+
         if matrix_type == 'SS':
             # State-space sensitivity
             if wrt_omega:
                 # Variation with respect to OMEGA
                 A_plus_h = A_handle_all(OMEGA + step_size_h)
                 A_min_h = A_handle_all(OMEGA - step_size_h)
-                sensitivity = (A_plus_h - A_min_h) / (2 * step_size_h)
             else:
                 # Variation with respect to parameter
-                if par is None:
-                    raise ValueError("par must be provided when wrt_omega=False")
                 A_plus_h = A_handle_all(par + step_size_h, OMEGA)
                 A_min_h = A_handle_all(par - step_size_h, OMEGA)
-                sensitivity = (A_plus_h - A_min_h) / (2 * step_size_h)
+
+            sensitivity = ContinuationAnalysis._centered_difference(A_plus_h, A_min_h, step_size_h)
 
         elif matrix_type == 'HD':
             # Harmonic decomposition sensitivity
@@ -445,13 +461,8 @@ class ContinuationAnalysis(StabilityAnalysis):
                 A_HD_plus_h = StabilityAnalysis.hd_computer(
                     A_plus_h, time_plus_h, number_harmonics, OMEGA + step_size_h
                 )
-
-                sensitivity = (A_HD_plus_h - A_HD_min_h) / (2 * step_size_h)
             else:
                 # Variation with respect to parameter
-                if par is None:
-                    raise ValueError("par must be provided when wrt_omega=False")
-
                 T = 2 * np.pi / OMEGA
                 time = np.linspace(0, T, number_time_instants)
 
@@ -465,7 +476,7 @@ class ContinuationAnalysis(StabilityAnalysis):
                     A_min_h, time, number_harmonics, OMEGA
                 )
 
-                sensitivity = (A_HD_plus_h - A_HD_min_h) / (2 * step_size_h)
+            sensitivity = ContinuationAnalysis._centered_difference(A_HD_plus_h, A_HD_min_h, step_size_h)
 
         elif matrix_type == 'MON':
             # Monodromy matrix sensitivity
@@ -478,13 +489,8 @@ class ContinuationAnalysis(StabilityAnalysis):
                 T_min_h = 2 * np.pi / (OMEGA - step_size_h)
                 A_min_h = lambda t: A_handle_all(t, OMEGA - step_size_h)
                 M_min_h = StabilityAnalysis.monodromy_computer(A_min_h, T_min_h)
-
-                sensitivity = (M_plus_h - M_min_h) / (2 * step_size_h)
             else:
                 # Variation with respect to parameter
-                if par is None:
-                    raise ValueError("par must be provided when wrt_omega=False")
-
                 T = 2 * np.pi / OMEGA
 
                 A_plus_h = lambda t: A_handle_all(t, par + step_size_h, OMEGA)
@@ -493,7 +499,8 @@ class ContinuationAnalysis(StabilityAnalysis):
                 A_min_h = lambda t: A_handle_all(t, par - step_size_h, OMEGA)
                 M_min_h = StabilityAnalysis.monodromy_computer(A_min_h, T)
 
-                sensitivity = (M_plus_h - M_min_h) / (2 * step_size_h)
+            sensitivity = ContinuationAnalysis._centered_difference(M_plus_h, M_min_h, step_size_h)
+
         else:
             raise ValueError(f"Unknown matrix type: {matrix_type}")
 

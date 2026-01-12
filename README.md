@@ -311,6 +311,8 @@ The continuation analysis module has been significantly refactored for improved 
   - `_build_augmented_matrix()`: Constructs augmented system matrix (used in 3 places)
   - `_compute_residual()`: Computes residual for corrector (used in 2 places)
   - `_solve_augmented_system()`: Solves with conditioning check (used in 3 places)
+  - `_centered_difference()`: Computes centered finite differences (used in 6 places)
+- **Simplified sensitivity computation**: Moved validation logic outside nested branches
 - **Reduced code size**: Main continuation method is now ~60% cleaner
 - **Improved maintainability**: Changes to augmented system only need to be made once
 - **Better documentation**: Each helper method has clear docstrings explaining purpose
