@@ -11,7 +11,10 @@
       "Bash(powershell -Command \"Get-Content 'c:\\\\Users\\\\andre\\\\github\\\\rotor_dynamics_python\\\\CONVERSION_GUIDE.md' | Measure-Object -Line | Select-Object -ExpandProperty Lines\":*)",
       "Bash(powershell -Command:*)",
       "Bash(dir:*)",
-      "Bash(del update_scripts.py)"
+      "Bash(del update_scripts.py)",
+      "Bash(git diff:*)",
+      "Bash(grep:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
