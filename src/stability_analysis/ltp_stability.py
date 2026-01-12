@@ -9,7 +9,7 @@ Theoretical Background:
 For a linear time-periodic system: dx/dt = A(t)x, where A(t+T) = A(t)
 
 Floquet theory states that solutions can be expressed as:
-    x(t) = Φ(t)x₀, where Φ(t) is the fundamental solution matrix
+    x(t) = Φ(t)x₀, where Φ(t) is the transition matrix
 
 The monodromy matrix M is defined as: M = Φ(T)
 Its eigenvalues (characteristic multipliers μ) determine stability:
