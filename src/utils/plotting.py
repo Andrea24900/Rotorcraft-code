@@ -199,13 +199,13 @@ class MyPlot:
                 # Show label for even mode_numbers (2, 4, 6, 8, 10, 12)
                 if mode_number % 2 == 0:
                     ax.plot(rpm_values, damping_values,
-                           color=colors_double[mode_idx], marker='o',
+                           color=colors_double[mode_idx % len(colors_double)], marker='o',
                            markersize=plot_property.marker_size,
                            linewidth=plot_property.line_width,
                            label=f'{mode_number // 2}')
                 else:
                     ax.plot(rpm_values, damping_values,
-                           color=colors_double[mode_idx], marker='o',
+                           color=colors_double[mode_idx % len(colors_double)], marker='o',
                            markersize=plot_property.marker_size,
                            linewidth=plot_property.line_width)
 
@@ -332,13 +332,13 @@ class MyPlot:
                 # Show label for even mode_numbers (2, 4, 6, 8, 10, 12)
                 if mode_number % 2 == 0:
                     ax.plot(rpm_values, freq_values,
-                           color=colors_double[mode_idx], marker='o',
+                           color=colors_double[mode_idx % len(colors_double)], marker='o',
                            markersize=plot_property.marker_size,
                            linewidth=plot_property.line_width,
                            label=f'{mode_number // 2}')
                 else:
                     ax.plot(rpm_values, freq_values,
-                           color=colors_double[mode_idx], marker='o',
+                           color=colors_double[mode_idx % len(colors_double)], marker='o',
                            markersize=plot_property.marker_size,
                            linewidth=plot_property.line_width)
 
@@ -361,38 +361,197 @@ class MyPlot:
         modal_participation: List,
         state_index: int,
         mode_index: int,
-        labels: Optional[List[str]] = None,
-        xlimits: Optional[Tuple[float, float]] = None,
-        plot_sum: bool = True
+        xlimits: Optional[Tuple[float, float]] = (0, 400),
+        ylimits: Optional[Tuple[float, float]] = (0, 1),
+        show_legend: bool = True,
+        figure_handle: Optional[plt.Figure] = None
     ) -> plt.Figure:
-        """Plot modal participation factors.
+        """Plot modal participation factors for individual harmonics.
+
+        Plots participation factors vs RPM for each harmonic component separately.
+        Harmonics are styled as: solid lines (negative), dash-dot (zero), dashed (positive).
 
         Args:
-            modal_participation: Modal participation data
-            state_index: Index of state to plot
-            mode_index: Index of mode to plot
-            labels: Optional labels for plot
-            xlimits: Optional x-axis limits
-            plot_sum: Whether to plot sum of participations
+            modal_participation: List of ModalParticipation objects
+            state_index: Index of state to plot (0-based)
+            mode_index: Index of mode to plot (0-based)
+            xlimits: Optional x-axis limits (min_rpm, max_rpm)
+            ylimits: Optional y-axis limits
+            show_legend: Whether to show legend
+            figure_handle: Optional existing figure to plot on
 
         Returns:
             matplotlib Figure object
         """
-        fig, ax = plt.subplots(figsize=(10, 6))
+        if figure_handle is None:
+            fig, ax = plt.subplots(figsize=(10, 6))
+        else:
+            fig = figure_handle
+            ax = fig.gca()
 
-        # TODO: Implement plotting logic from MATLAB version
-        # This is a placeholder
-
-        ax.set_xlabel('Rotor Speed (RPM)', fontsize=15)
-        ax.set_ylabel('Modal Participation', fontsize=15)
         ax.grid(True)
+
+        # Extract data for the specified state and mode
+        rpm_values = np.array([mp.OMEGA_RPM for mp in modal_participation])
+        n_harmonics = modal_participation[0].phi_jkn.shape[2]
+
+        # Extract participation factors: phi_1mode1state[n, rpm]
+        phi_1mode1state = np.zeros((n_harmonics, len(rpm_values)))
+        for i, mp in enumerate(modal_participation):
+            phi_1mode1state[:, i] = mp.phi_jkn[state_index, mode_index, :]
+
+        # Get colors (single vector without duplication)
+        colors_single = color.get_color_vector()
+
+        # Determine middle index (zero harmonic)
+        mid_idx = n_harmonics // 2
+
+        # Create harmonic labels and plot
+        n_harm_side = n_harmonics // 2
+
+        # Plot each harmonic with consistent color and appropriate line style
+        for i in range(n_harmonics):
+            # Calculate harmonic number
+            n_harmonic = i - mid_idx  # e.g., -4, -3, -2, -1, 0, 1, 2, 3, 4
+
+            # Create label
+            if n_harmonic == 0:
+                label = '$n=0$'
+                linestyle = '-.'  # Dash-dot for zero harmonic
+            elif n_harmonic < 0:
+                label = f'$n={n_harmonic:d}$'
+                linestyle = '-'   # Solid for negative harmonics
+            else:
+                label = f'$n=+{n_harmonic:d}$'
+                linestyle = '--'  # Dashed for positive harmonics
+
+            # Use consistent color based on harmonic index
+            color_idx = i % len(colors_single)
+
+            ax.plot(rpm_values, phi_1mode1state[i, :],
+                   linestyle=linestyle,
+                   linewidth=plot_property.line_width,
+                   color=colors_single[color_idx],
+                   label=label)
+
+        ax.set_xlabel(r'$\Omega$ [rpm]', fontsize=plot_property.fontsize_label)
+        # Create clear y-label with state, mode indices
+        ax.set_ylabel(rf'$\phi_{{{state_index},{mode_index},n}}$', fontsize=18)
+
+        if show_legend:
+            ax.legend(fontsize=plot_property.fontsize_legend, loc='center left',
+                     bbox_to_anchor=(1, 0.5))
 
         if xlimits:
             ax.set_xlim(xlimits)
+        if ylimits:
+            ax.set_ylim(ylimits)
 
-        if labels:
-            ax.legend(labels)
+        fig.tight_layout()
+        return fig
 
+    @staticmethod
+    def plot_mod_part_sum(
+        modal_participation: List,
+        state_index: int,
+        mode_index: int,
+        xlimits: Optional[Tuple[float, float]] = (0, 400),
+        ylimits: Optional[Tuple[float, float]] = (0, 1),
+        show_legend: bool = True,
+        figure_handle: Optional[plt.Figure] = None
+    ) -> plt.Figure:
+        """Plot summed modal participation factors (±n harmonics combined).
+
+        Plots participation factors vs RPM with positive and negative harmonics summed.
+        For example, n=±2 combines the contributions of n=-2 and n=+2.
+
+        Args:
+            modal_participation: List of ModalParticipation objects
+            state_index: Index of state to plot (0-based)
+            mode_index: Index of mode to plot (0-based)
+            xlimits: Optional x-axis limits (min_rpm, max_rpm)
+            ylimits: Optional y-axis limits
+            show_legend: Whether to show legend
+            figure_handle: Optional existing figure to plot on
+
+        Returns:
+            matplotlib Figure object
+        """
+        if figure_handle is None:
+            fig, ax = plt.subplots(figsize=(10, 6))
+        else:
+            fig = figure_handle
+            ax = fig.gca()
+
+        ax.grid(True)
+
+        # Extract data for the specified state and mode
+        rpm_values = np.array([mp.OMEGA_RPM for mp in modal_participation])
+        n_harmonics = modal_participation[0].phi_jkn.shape[2]
+
+        # Extract participation factors
+        phi_1mode1state = np.zeros((n_harmonics, len(rpm_values)))
+        for i, mp in enumerate(modal_participation):
+            phi_1mode1state[:, i] = mp.phi_jkn[state_index, mode_index, :]
+
+        # Sum positive and negative harmonics
+        mid_idx = n_harmonics // 2
+        n_summed = mid_idx + 1  # Includes zero harmonic
+        phi_1mode1state_sum = np.zeros((n_summed, len(rpm_values)))
+
+        k = 0
+        for j in range(mid_idx + 1):
+            # Sum symmetric harmonics: phi[j] + phi[n_harmonics-1-j]
+            if j == mid_idx:
+                # Zero harmonic (no pair to sum)
+                phi_1mode1state_sum[k, :] = phi_1mode1state[j, :]
+            else:
+                phi_1mode1state_sum[k, :] = (phi_1mode1state[j, :] +
+                                             phi_1mode1state[n_harmonics - 1 - j, :])
+            k += 1
+
+        # Get colors (single vector without duplication)
+        colors_single = color.get_color_vector()
+
+        # Create labels and plot summed harmonics
+        n_harm_side = n_harmonics // 2
+
+        # Plot each summed harmonic with consistent color and style
+        for i in range(n_summed):
+            # Calculate harmonic number (counting down from max to 0)
+            n_harmonic = n_harm_side - i
+
+            # Determine label and linestyle
+            if n_harmonic == 0:
+                label = '$n=0$'
+                linestyle = '-.'  # Dash-dot for zero harmonic
+            else:
+                label = f'$n=\\pm {n_harmonic}$'
+                linestyle = '-'   # Solid for ±n harmonics
+
+            # Use consistent color
+            color_idx = i % len(colors_single)
+
+            ax.plot(rpm_values, phi_1mode1state_sum[i, :],
+                   linestyle=linestyle,
+                   linewidth=plot_property.line_width,
+                   color=colors_single[color_idx],
+                   label=label)
+
+        ax.set_xlabel(r'$\Omega$ [rpm]', fontsize=plot_property.fontsize_label)
+        # Create clear y-label showing it's the sum of ±n harmonics
+        ax.set_ylabel(rf'$\phi_{{{state_index},{mode_index},\pm n}}$', fontsize=18)
+
+        if show_legend:
+            ax.legend(fontsize=plot_property.fontsize_legend, loc='center left',
+                     bbox_to_anchor=(1, 0.5))
+
+        if xlimits:
+            ax.set_xlim(xlimits)
+        if ylimits:
+            ax.set_ylim(ylimits)
+
+        fig.tight_layout()
         return fig
 
 
