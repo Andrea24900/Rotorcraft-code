@@ -109,7 +109,7 @@ def main():
         ylimits=(damping_min, damping_max)
     )
     plt.figure(fig1.number)
-    plt.title("Damping vs RPM")
+    plt.title("LTI Analysis: Damping vs RPM")
     plt.tight_layout()
 
     # Plot 2: Frequency (generic - dots only, no lines)
@@ -119,7 +119,7 @@ def main():
         ylimits=(freq_min, freq_max)
     )
     plt.figure(fig2.number)
-    plt.title("Frequency vs RPM")
+    plt.title("LTI Analysis: Frequency vs RPM")
     plt.tight_layout()
 
     # Save figures at 600 DPI

@@ -31,50 +31,50 @@ Predictor-corrector algorithms for robust eigenvalue tracking across parameter r
 ### 1. LTI Stability Analysis
 
 ![LTI Damping](results_figures/lti_damping.png)
-*Figure 1: Damping vs RPM for LTI analysis. System is stable (all damping < 0) across the entire RPM range.*
+*Figure 1: LTI Analysis: Damping vs RPM. System is stable (all damping < 0) across the entire RPM range.*
 
 ![LTI Frequency](results_figures/lti_frequency.png)
-*Figure 2: Frequency vs RPM for LTI analysis. Shows natural frequencies of the 12 system modes.*
+*Figure 2: LTI Analysis: Frequency vs RPM. Shows natural frequencies of the 12 system modes.*
 
 ### 2. LTI Continuation Analysis
 
 ![LTI Continuation Damping](results_figures/lti_cont_damping.png)
-*Figure 3: Damping vs RPM with continuation tracking. Smooth eigenvalue branches demonstrate mode identification.*
+*Figure 3: LTI Continuation: Damping vs RPM. Smooth eigenvalue branches demonstrate mode identification.*
 
 ![LTI Continuation Frequency](results_figures/lti_cont_frequency.png)
-*Figure 4: Frequency vs RPM with continuation tracking. Connected lines show individual mode evolution.*
+*Figure 4: LTI Continuation: Frequency vs RPM. Connected lines show individual mode evolution.*
 
 ### 3. LTP Stability Analysis
 
 ![LTP Damping](results_figures/ltp_damping.png)
-*Figure 5: Damping vs RPM for LTP analysis using Floquet theory. Handles periodic coefficients via monodromy matrix.*
+*Figure 5: LTP Analysis: Damping vs RPM (Floquet Theory). Handles periodic coefficients via monodromy matrix.*
 
 ![LTP Frequency](results_figures/ltp_frequency.png)
-*Figure 6: Frequency vs RPM for LTP analysis. Characteristic exponents from Floquet multipliers.*
+*Figure 6: LTP Analysis: Frequency vs RPM (Floquet Theory). Characteristic exponents from Floquet multipliers.*
 
 ### 4. LTP Continuation Analysis
 
 ![LTP Continuation Damping](results_figures/ltp_cont_damping.png)
-*Figure 7: Damping vs RPM with LTP continuation. Robust tracking of Floquet multiplier branches.*
+*Figure 7: LTP Continuation: Damping vs RPM. Robust tracking of Floquet multiplier branches.*
 
 ![LTP Continuation Frequency](results_figures/ltp_cont_frequency.png)
-*Figure 8: Frequency vs RPM with LTP continuation. Smooth mode evolution across parameter space.*
+*Figure 8: LTP Continuation: Frequency vs RPM. Smooth mode evolution across parameter space.*
 
 ### 5. HD Stability Analysis
 
 ![HD Damping](results_figures/hd_damping.png)
-*Figure 9: Damping vs RPM for HD analysis. Frequency-domain approach with N=1 harmonics.*
+*Figure 9: HD Analysis: Damping vs RPM (N=1 harmonics). Frequency-domain approach with N=1 harmonics.*
 
 ![HD Frequency](results_figures/hd_frequency.png)
-*Figure 10: Frequency vs RPM for HD analysis. Shows (1+2N)×n = 36 eigenvalues (complex conjugate pairs) for expanded system.*
+*Figure 10: HD Analysis: Frequency vs RPM (N=1 harmonics). Shows (1+2N)×n = 36 eigenvalues (complex conjugate pairs) for expanded system.*
 
 ### 6. HD Continuation Analysis
 
 ![HD Continuation Damping](results_figures/hd_cont_damping.png)
-*Figure 11: Damping vs RPM with HD continuation. Tracks all 36 eigenvalues of augmented HD matrix.*
+*Figure 11: HD Continuation: Damping vs RPM (N=1 harmonics). Tracks all 36 eigenvalues of augmented HD matrix.*
 
 ![HD Continuation Frequency](results_figures/hd_cont_frequency.png)
-*Figure 12: Frequency vs RPM with HD continuation. Complete tracking of harmonic decomposition modes.*
+*Figure 12: HD Continuation: Frequency vs RPM (N=1 harmonics). Complete tracking of harmonic decomposition modes.*
 
 ## Key Findings
 

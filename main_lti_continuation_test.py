@@ -114,7 +114,7 @@ def main():
             ylimits=(damping_min, damping_max)
         )
         plt.figure(fig1.number)
-        plt.title("Damping vs RPM (Continuation Method)")
+        plt.title("LTI Continuation: Damping vs RPM")
         plt.tight_layout()
 
     # Plot 2: Frequency by mode order (only modes with positive frequencies)
@@ -126,7 +126,7 @@ def main():
             ylimits=(freq_min, freq_max)
         )
         plt.figure(fig2.number)
-        plt.title("Frequency vs RPM (Continuation Method)")
+        plt.title("LTI Continuation: Frequency vs RPM")
         plt.tight_layout()
 
     print("\n" + "="*60)

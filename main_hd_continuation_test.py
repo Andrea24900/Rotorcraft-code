@@ -179,7 +179,7 @@ def main():
             ylimits=(damping_min, damping_max)
         )
         plt.figure(fig1.number)
-        plt.title(f"Damping vs RPM (HD Continuation, N={rotor.problem.number_harmonics})")
+        plt.title(f"HD Continuation: Damping vs RPM (N={rotor.problem.number_harmonics} harmonics)")
         plt.tight_layout()
 
     # Plot 2: Frequency by mode order
@@ -191,7 +191,7 @@ def main():
             ylimits=(freq_min, freq_max)
         )
         plt.figure(fig2.number)
-        plt.title(f"Frequency vs RPM (HD Continuation, N={rotor.problem.number_harmonics})")
+        plt.title(f"HD Continuation: Frequency vs RPM (N={rotor.problem.number_harmonics} harmonics)")
         plt.tight_layout()
 
     print("\n" + "="*60)

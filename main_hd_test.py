@@ -155,7 +155,7 @@ def main():
         ylimits=(damping_min, damping_max)
     )
     plt.figure(fig1.number)
-    plt.title(f"HD Damping vs RPM (N={rotor.problem.number_harmonics} harmonics)")
+    plt.title(f"HD Analysis: Damping vs RPM (N={rotor.problem.number_harmonics} harmonics)")
     plt.tight_layout()
 
     # Plot 2: Frequency (generic - all points)
@@ -165,7 +165,7 @@ def main():
         ylimits=(freq_min, freq_max)
     )
     plt.figure(fig2.number)
-    plt.title(f"HD Frequency vs RPM (N={rotor.problem.number_harmonics} harmonics)")
+    plt.title(f"HD Analysis: Frequency vs RPM (N={rotor.problem.number_harmonics} harmonics)")
     plt.tight_layout()
 
     print("\n" + "="*60)
