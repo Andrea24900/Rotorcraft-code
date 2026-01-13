@@ -73,6 +73,7 @@ venv.bak/
 
 # Claude Code
 .claude/
+tmpclaude-*
 
 # Spyder project settings
 .spyderproject
