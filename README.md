@@ -1,6 +1,6 @@
 # Rotor Dynamics Analysis - Python
 
-[![Version](https://img.shields.io/github/v/release/Andrea24900/rotor_dynamics_python)](https://github.com/Andrea24900/rotor_dynamics_python/releases)
+[![Version](https://img.shields.io/github/v/tag/Andrea24900/rotor_dynamics_python)](https://github.com/Andrea24900/rotor_dynamics_python/tags)
 
 Python implementation of rotorcraft dynamics stability analysis.
 
