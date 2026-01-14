@@ -123,8 +123,8 @@ def main():
     plt.tight_layout()
 
     # Save figures at 600 DPI
-    fig1.savefig("results_figures/lti_damping.png", dpi=600, bbox_inches='tight')
-    fig2.savefig("results_figures/lti_frequency.png", dpi=600, bbox_inches='tight')
+    #fig1.savefig("results_figures/lti_damping.png", dpi=600, bbox_inches='tight')
+    #fig2.savefig("results_figures/lti_frequency.png", dpi=600, bbox_inches='tight')
     print("\n  Figures saved to results_figures/")
 
     print("\n" + "="*60)

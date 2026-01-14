@@ -7,6 +7,7 @@ rotor_definition_script.m.
 
 from dataclasses import dataclass, field
 from typing import Literal
+import numpy as np
 
 
 @dataclass
@@ -53,10 +54,15 @@ class ProblemDefinition:
     """Complete problem definition for rotor dynamics analysis."""
     
     # Rotor configuration
-    number_blades: Literal[3, 4, 5, 7] = 4
+    number_blades: int = 4
     damper_connection: Literal["H2B", "B2B"] = "H2B"
-    damper_activation: Literal["ALL", "ODI", "2DI ADJ", "2DI OPP", "3DI"] = "ODI"  # ODI = One Damper Inoperative
     
+    damper_activation: Literal["ALL", "ODI", "CUSTOM"] = "ODI"  # ODI = One Damper Inoperative
+    
+    # implement a custom damper activation logic (to be bettered)
+    if damper_activation == "CUSTOM":
+        damper_activation_vector: int = np.ndarray[0,1,0,1]
+
     # Solution parameters
     lower_rotor_RPM: float = 20.0
     higher_rotor_RPM: float = 400.0

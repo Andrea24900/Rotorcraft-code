@@ -7,22 +7,23 @@ Builds state-space representation for rotorcraft dynamics analysis.
 import numpy as np
 from typing import Callable
 from .config.problem_definition import ProblemDefinition, create_default_problem
-from .utils.matrix_repositories import build_mass_matrix, build_damping_matrix
+from .utils.matrix_generation_GR import build_mass_matrix, build_damping_matrix
 
 
 class RotorBuild:
     """Main rotor class for building state-space matrices.
 
     This class constructs the state-space representation of a rotorcraft system:
-    - Mass matrix M (constant)
+    - Mass matrix M(t, Ω) (time and speed dependent, via MBC transformation)
     - Damping matrix C(t, Ω) (time and speed dependent)
     - Stiffness matrix K(t, Ω) (time and speed dependent)
     - State matrix A(t, Ω) in standard form
 
     Attributes:
         problem: Problem definition with rotor configuration
-        mass_matrix: Constant mass matrix M
-        mass_matrix_inv: Inverse of mass matrix M
+        mass_matrix_func: Function M(t, Ω) returning mass matrix
+        mass_matrix: Cached mass matrix M evaluated at reference point
+        mass_matrix_inv: Inverse of cached mass matrix M
         state_matrix_function: Function A(t, Ω) returning state matrix
 
     Example:
@@ -39,6 +40,7 @@ class RotorBuild:
             auto_build: If True, automatically build state matrix (default: True)
         """
         self.problem = problem
+        self.mass_matrix_func: Callable[[float, float], np.ndarray] | None = None
         self.mass_matrix: np.ndarray | None = None
         self.mass_matrix_inv: np.ndarray | None = None
         self.state_matrix_function: Callable[[float, float], np.ndarray] | None = None
@@ -50,11 +52,15 @@ class RotorBuild:
         """Initialize mass matrix and state matrix function.
 
         This private method:
-        1. Builds and caches the mass matrix M
-        2. Computes and caches the inverse M^-1
-        3. Creates the state matrix function A(t, Ω)
+        1. Gets the mass matrix function M(t, Ω)
+        2. Evaluates and caches M at reference point (t=0, Ω=1)
+        3. Computes and caches the inverse M^-1
+        4. Creates the state matrix function A(t, Ω)
         """
-        self.mass_matrix = build_mass_matrix(self.problem)
+        # Get mass matrix function handle
+        self.mass_matrix_func = build_mass_matrix(self.problem)
+        # Evaluate at reference point for cached inverse (M is constant in MBC for LTI)
+        self.mass_matrix = self.mass_matrix_func(0.0, 1.0)
         self.mass_matrix_inv = np.linalg.inv(self.mass_matrix)
         self.state_matrix_function = self._build_state_matrix_function()
 
