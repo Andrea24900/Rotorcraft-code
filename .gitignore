@@ -71,6 +71,9 @@ venv.bak/
 # PyCharm
 .idea/
 
+# old code folder
+old code/
+
 # Claude Code
 .claude/
 tmpclaude-*

@@ -121,18 +121,24 @@ Edit `src/config/problem_definition.py`:
 ```python
 @dataclass
 class ProblemDefinition:
-    number_blades: Literal[3, 4, 5, 7] = 4
+    number_blades: int = 4
     damper_connection: Literal["H2B", "B2B"] = "H2B"
-    damper_activation: Literal["ALL", "ODI", ...] = "ODI"  # ODI = One Damper Inoperative
+    damper_activation: Literal["ALL", "ODI", "CUSTOM"] = "ALL"
+    damper_activation_vector: np.ndarray  # For CUSTOM mode, e.g., np.array([0,1,1,1])
 
     lower_rotor_RPM: float = 20.0
     higher_rotor_RPM: float = 400.0
-    number_points: int = 50
+    number_points: int = 100
 
     required_solver: Literal["LTI", "LTP", "HD"] = "LTI"
     number_harmonics: int = 1          # HD analysis
     hd_use_complex: bool = False       # Complex HD formulation
 ```
+
+### Damper Activation Modes
+- **ALL**: All dampers active (LTI system)
+- **ODI**: One Damper Inoperative - first damper disabled (LTP system)
+- **CUSTOM**: User-defined via `damper_activation_vector` (e.g., `np.array([0,1,1,1])` disables first damper)
 
 ## Features
 
@@ -159,6 +165,13 @@ class ProblemDefinition:
 | Modal Participation | 🚧 | Structure exists |
 
 ## Recent Improvements (January 2026)
+
+### System Matrices Refactor
+- **Matrix Generation**: Refactored `matrix_generation_GR.py` with proper MBC transformation
+- **LTP Performance**: Vectorized monodromy integration (single n² ODE instead of n separate integrations)
+- **Damper Activation**: Fixed CUSTOM mode with proper `damper_activation_vector` support
+- **Mass Matrix Reuse**: `build_damping_matrix` accepts pre-computed `mass_matrix_rot` to avoid redundant computation
+- **Integration Tolerances**: Adjusted to (rtol=1e-4, atol=1e-6) for better performance
 
 ### Key Enhancements
 - **Continuation**: Fixed conjugation bug, parametric continuation support, code deduplication
