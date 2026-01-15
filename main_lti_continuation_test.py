@@ -23,6 +23,7 @@ def main():
     rotor = RotorBuild.build_all()
 
     # Override to ensure LTI solver with continuation is used
+    rotor.problem.damper_activation = "ALL"
     rotor.problem.required_solver = "LTI"
     rotor.problem.continuation = "YES"
 

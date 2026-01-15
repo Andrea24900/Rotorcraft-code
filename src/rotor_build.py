@@ -44,7 +44,7 @@ class RotorBuild:
         self.mass_matrix: np.ndarray | None = None
         self.mass_matrix_inv: np.ndarray | None = None
         self.state_matrix_function: Callable[[float, float], np.ndarray] | None = None
-
+        
         if auto_build:
             self._initialize_matrices()
     
@@ -58,9 +58,9 @@ class RotorBuild:
         4. Creates the state matrix function A(t, Ω)
         """
         # Get mass matrix function handle
-        self.mass_matrix_func = build_mass_matrix(self.problem)
+        (self.mass_matrix_func,self.mass_matrix_rot) = build_mass_matrix(self.problem)
         # Evaluate at reference point for cached inverse (M is constant in MBC for LTI)
-        self.mass_matrix = self.mass_matrix_func(0.0, 1.0)
+        self.mass_matrix = self.mass_matrix_func(0.0,1.0)
         self.mass_matrix_inv = np.linalg.inv(self.mass_matrix)
         self.state_matrix_function = self._build_state_matrix_function()
 

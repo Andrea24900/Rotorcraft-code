@@ -84,6 +84,7 @@ def main():
     rotor = RotorBuild.build_all()
 
     # Override to ensure LTP solver is used
+    rotor.problem.damper_activation = "ODI"
     rotor.problem.required_solver = "LTP"
     rotor.problem.continuation = "NO"
 

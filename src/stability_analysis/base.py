@@ -38,8 +38,8 @@ class StabilityAnalysis:
     """
 
     # Integration tolerances for monodromy computation
-    DEFAULT_RTOL = 1e-6
-    DEFAULT_ATOL = 1e-8
+    DEFAULT_RTOL = 1e-4
+    DEFAULT_ATOL = 1e-6
 
     def __init__(self, rotor_build) -> None:
         """Initialize stability analysis.
@@ -188,42 +188,36 @@ class StabilityAnalysis:
 
         n = A_0.shape[0]
 
-        # Performance warning for large systems
-        if n > 50:
-            import warnings
-            warnings.warn(
-                f"Computing monodromy matrix for large system (n={n}). "
-                f"This requires {n} sequential ODE integrations and may take significant time. "
-                f"Consider using a reduced-order model or parallel computing for n > 100.",
-                UserWarning,
-                stacklevel=2
-            )
+        # Vectorized integration: integrate entire fundamental matrix at once
+        # Instead of n separate integrations, we flatten Phi into a vector of size n²
+        # ODE: dPhi/dt = A(t) @ Phi, Phi(0) = I
+        # Vectorized: d(vec(Phi))/dt = vec(A(t) @ Phi)
 
-        phi_0_matrix = np.eye(n)
-        monodromy_matrix_M = np.zeros((n, n))
+        def odefun_monodromy_vectorized(t, phi_vec_flat):
+            """ODE function for vectorized fundamental solution matrix.
 
-        def odefun_monodromy(t, phi_vec, A_func):
-            """ODE function for fundamental solution matrix."""
-            # phi_vec is a single column vector
-            dphi_dt = A_func(t) @ phi_vec
-            return dphi_dt
+            phi_vec_flat: flattened (n²,) vector representing (n,n) matrix column-major
+            Returns: flattened derivative vector (n²,)
+            """
+            Phi = phi_vec_flat.reshape((n, n), order='F')  # reshape to matrix (column-major)
+            dPhi_dt = A_handle_time(t) @ Phi
+            return dPhi_dt.flatten(order='F')  # flatten back to vector
 
-        # Integrate each column of the fundamental solution matrix
-        for j in range(n):
-            phi_0 = phi_0_matrix[:, j]
+        # Initial condition: identity matrix flattened
+        phi_0_flat = np.eye(n).flatten(order='F')
 
-            sol = solve_ivp(
-                lambda t, phi: odefun_monodromy(t, phi, A_handle_time),
-                [0, period_T],
-                phi_0,
-                method='DOP853',
-                rtol=rtol,
-                atol=atol
-            )
+        # Single integration for entire fundamental matrix
+        sol = solve_ivp(
+            odefun_monodromy_vectorized,
+            [0, period_T],
+            phi_0_flat,
+            method='DOP853',
+            rtol=rtol,
+            atol=atol
+        )
 
-            # Extract final value
-            phi_T = sol.y[:, -1]
-            monodromy_matrix_M[:, j] = phi_T
+        # Extract final value and reshape to monodromy matrix
+        monodromy_matrix_M = sol.y[:, -1].reshape((n, n), order='F')
 
         return monodromy_matrix_M
     
