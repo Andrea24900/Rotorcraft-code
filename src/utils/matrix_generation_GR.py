@@ -89,12 +89,13 @@ def build_mass_matrix(
 
 
 def build_damping_matrix(
-    problem: ProblemDefinition
+    problem: ProblemDefinition, mass_matrix_rot = None
 ) -> Tuple[Callable[[float, float], np.ndarray], Callable[[float, float], np.ndarray]]:
     """Build damping and stiffness matrices as function handles.
 
     Args:
         problem: Problem definition containing rotor characteristics
+        mass_matrix_rot: the mass_matrix in rotating frame
 
     Returns:
         Tuple of (damping_matrix_C, stiffness_matrix_K) as function handles
@@ -114,10 +115,9 @@ def build_damping_matrix(
     hub_stiffness_x = rotor_chars.hub_stiffness_Kx
     hub_stiffness_y = rotor_chars.hub_stiffness_Ky
 
-    # add a check for the presence of a mass_matrix_rot from previous computation 
-
-    # if no cached matrix: creation of the mass matrix 
-    (mass_matrix,mass_matrix_rot) = build_mass_matrix(problem)
+    # if no cached matrix is present, compute it
+    if mass_matrix_rot is None:
+        (_, mass_matrix_rot) = build_mass_matrix(problem)
 
     # working principle of this matrix generator
     # 1) generate C and K without dampers

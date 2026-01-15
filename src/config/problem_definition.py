@@ -57,11 +57,11 @@ class ProblemDefinition:
     number_blades: int = 4
     damper_connection: Literal["H2B", "B2B"] = "H2B"
     
-    damper_activation: Literal["ALL", "ODI", "CUSTOM"] = "ODI"  # ODI = One Damper Inoperative
+    damper_activation: Literal["ALL", "ODI", "CUSTOM"] = "ALL"  # ODI = One Damper Inoperative
     
     # implement a custom damper activation logic (to be bettered)
-    if damper_activation == "CUSTOM":
-        damper_activation_vector: int = np.ndarray[0,1,0,1]
+    
+    damper_activation_vector: np.ndarray = field(default_factory=lambda: np.array([1,1,1,1]))
 
     # Solution parameters
     lower_rotor_RPM: float = 20.0
@@ -87,6 +87,10 @@ class ProblemDefinition:
     def __post_init__(self):
         """Initialize derived parameters after instantiation."""
         self._initialize_rotor_characteristics()
+        if self.damper_activation == "CUSTOM":
+            if len(self.damper_activation_vector) != self.number_blades:
+                raise ValueError(f"damper_activation_vector length must match number_blades")
+
     
     def _initialize_rotor_characteristics(self):
         """Initialize rotor characteristics based on configuration."""

@@ -125,8 +125,7 @@ class RotorBuild:
             raise RuntimeError("Mass matrix inverse not initialized")
 
         # Get damping and stiffness function handles
-        C_func, K_func = build_damping_matrix(self.problem)
-
+        C_func, K_func = build_damping_matrix(self.problem, mass_matrix_rot=self.mass_matrix_rot)
         # Get system size
         n = M_inv.shape[0]
 
