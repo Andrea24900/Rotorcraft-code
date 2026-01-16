@@ -39,19 +39,22 @@ def test_hd_initialization():
     assert len(hd.modal_solution) == 0
 
 
-def test_hd_inherits_from_ltp():
-    """Test that HDStability properly inherits from LTPStability."""
-    from src.stability_analysis.ltp_stability import LTPStability
+def test_hd_inherits_from_stability_analysis():
+    """Test that HDStability properly inherits from StabilityAnalysis.
+
+    Note: HDStability inherits directly from StabilityAnalysis, not LTPStability.
+    HD and LTP are parallel approaches for time-periodic systems, not parent/child.
+    """
     from src.stability_analysis.base import StabilityAnalysis
 
     rotor = RotorBuild.build_all()
     hd = HDStability(rotor)
 
-    assert isinstance(hd, LTPStability)
     assert isinstance(hd, StabilityAnalysis)
-    # Should have inherited methods
+    # Should have inherited methods from StabilityAnalysis
     assert hasattr(hd, 'assign_range_OMEGA')
     assert hasattr(hd, 'assign_period_T')
+    assert hasattr(hd, 'hd_computer')  # Static method from base class
 
 
 # ============================================================================
@@ -68,8 +71,7 @@ def test_hd_single_point_basic():
     hd = HDStability(rotor)
 
     OMEGA = 25.0  # rad/s
-    T = 2 * np.pi / OMEGA
-    eigensol = hd.hd_single_point(OMEGA, T)
+    eigensol = hd.hd_single_point(OMEGA)
 
     # Check return type
     assert isinstance(eigensol, dict)
@@ -98,8 +100,7 @@ def test_hd_single_point_multiple_harmonics():
     hd = HDStability(rotor)
 
     OMEGA = 50.0
-    T = 2 * np.pi / OMEGA
-    eigensol = hd.hd_single_point(OMEGA, T)
+    eigensol = hd.hd_single_point(OMEGA)
 
     # Check expanded system size
     n_states = 2 * rotor.mass_matrix.shape[0]
@@ -118,8 +119,7 @@ def test_hd_single_point_complex_formulation():
     hd = HDStability(rotor)
 
     OMEGA = 30.0
-    T = 2 * np.pi / OMEGA
-    eigensol = hd.hd_single_point(OMEGA, T)
+    eigensol = hd.hd_single_point(OMEGA)
 
     # Should return eigenvalues (may be complex)
     assert isinstance(eigensol['eigenvalues'], np.ndarray)
@@ -139,17 +139,16 @@ def test_hd_real_vs_complex_comparison():
     rotor.problem.time_samples = 100
 
     OMEGA = 25.0
-    T = 2 * np.pi / OMEGA
 
     # Test with real formulation
     rotor.problem.hd_use_complex = False
     hd_real = HDStability(rotor)
-    eigensol_real = hd_real.hd_single_point(OMEGA, T)
+    eigensol_real = hd_real.hd_single_point(OMEGA)
 
     # Test with complex formulation
     rotor.problem.hd_use_complex = True
     hd_complex = HDStability(rotor)
-    eigensol_complex = hd_complex.hd_single_point(OMEGA, T)
+    eigensol_complex = hd_complex.hd_single_point(OMEGA)
 
     # Both should produce same dimension results
     assert eigensol_real['eigenvalues'].shape == eigensol_complex['eigenvalues'].shape
@@ -211,7 +210,7 @@ def test_hd_single_point_negative_omega():
     hd = HDStability(rotor)
 
     with pytest.raises(ValueError, match="OMEGA must be positive"):
-        hd.hd_single_point(-10.0, 1.0)
+        hd.hd_single_point(-10.0)
 
 
 def test_hd_single_point_zero_omega():
@@ -221,17 +220,7 @@ def test_hd_single_point_zero_omega():
     hd = HDStability(rotor)
 
     with pytest.raises(ValueError, match="OMEGA must be positive"):
-        hd.hd_single_point(0.0, 1.0)
-
-
-def test_hd_single_point_negative_T():
-    """Test that negative T raises ValueError."""
-    rotor = RotorBuild.build_all()
-    rotor.problem.number_harmonics = 1
-    hd = HDStability(rotor)
-
-    with pytest.raises(ValueError, match="T .* must be positive"):
-        hd.hd_single_point(25.0, -1.0)
+        hd.hd_single_point(0.0)
 
 
 def test_hd_single_point_invalid_harmonics():
@@ -242,10 +231,9 @@ def test_hd_single_point_invalid_harmonics():
     hd = HDStability(rotor)
 
     OMEGA = 25.0
-    T = 2 * np.pi / OMEGA
 
     with pytest.raises(ValueError, match="number_harmonics must be integer >= 1"):
-        hd.hd_single_point(OMEGA, T)
+        hd.hd_single_point(OMEGA)
 
 
 def test_hd_single_point_invalid_time_samples():
@@ -256,10 +244,9 @@ def test_hd_single_point_invalid_time_samples():
     hd = HDStability(rotor)
 
     OMEGA = 25.0
-    T = 2 * np.pi / OMEGA
 
     with pytest.raises(ValueError, match="time_samples must be integer >= 10"):
-        hd.hd_single_point(OMEGA, T)
+        hd.hd_single_point(OMEGA)
 
 
 # ============================================================================

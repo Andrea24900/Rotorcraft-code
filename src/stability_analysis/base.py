@@ -421,11 +421,11 @@ class StabilityAnalysis:
             OMEGA: Fundamental frequency
 
         Returns:
-            Complex HD matrix A_HB
+            Complex HD matrix A_HD
         """
         state_number = A_handle_time(0).shape[0]
-        size_A_HB = (1 + 2 * number_harmonics) * state_number
-        A_HB = np.zeros((size_A_HB, size_A_HB), dtype=complex)
+        size_A_HD = (1 + 2 * number_harmonics) * state_number
+        A_HD = np.zeros((size_A_HD, size_A_HD), dtype=complex)
 
         # Compute time realizations of A(t) - vectorized for better performance
         time_realisation_A = np.array([A_handle_time(t) for t in time])

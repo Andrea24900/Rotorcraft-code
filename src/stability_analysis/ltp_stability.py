@@ -1,28 +1,4 @@
-"""LTP stability analysis class using Floquet theory.
-
-This module implements Linear Time-Periodic (LTP) stability analysis for rotor
-systems with time-varying coefficients. It uses Floquet theory to determine
-system stability through monodromy matrix computation.
-
-Theoretical Background:
-----------------------
-For a linear time-periodic system: dx/dt = A(t)x, where A(t+T) = A(t)
-
-Floquet theory states that solutions can be expressed as:
-    x(t) = Φ(t)x₀, where Φ(t) is the transition matrix
-
-The monodromy matrix M is defined as: M = Φ(T)
-Its eigenvalues (characteristic multipliers μ) determine stability:
-    - |μ| < 1: Stable
-    - |μ| > 1: Unstable
-    - |μ| = 1: Marginally stable
-
-Characteristic exponents λ are related to multipliers by: μ = e^(λT)
-    - Real part (σ): σ = (1/2T) * ln(|μ|²) → damping
-    - Imaginary part (ω): ω = (1/T) * atan2(Im(μ), Re(μ)) → frequency
-
-Converted from MATLAB LTP_stability.m classdef.
-"""
+"""LTP stability analysis class using Floquet theory."""
 
 import numpy as np
 from typing import Dict
@@ -32,121 +8,34 @@ from .base import StabilityAnalysis
 class LTPStability(StabilityAnalysis):
     """Linear Time-Periodic stability analysis using Floquet theory.
 
-    This class analyzes the stability of rotor systems with time-periodic
-    coefficients (e.g., due to blade passing effects, asymmetric rotor
-    properties, or periodic excitation). It computes the monodromy matrix
-    by integrating the fundamental solution matrix over one period and
-    extracts characteristic exponents to determine system stability.
+    For systems with dx/dt = A(t)x where A(t+T) = A(t).
+    Computes monodromy matrix M = Φ(T) and extracts characteristic multipliers μ.
 
-    Key Features:
-    ------------
-    - Monodromy matrix computation via numerical integration
-    - Characteristic multiplier and exponent extraction
-    - Support for multiple operating points (RPM sweep)
-    - Compatible with continuation methods
+    Stability: |μ| < 1 stable, |μ| > 1 unstable.
+    Exponents: σ = (1/2T)ln(|μ|²), ω = (1/T)atan2(Im(μ), Re(μ))
 
-    Attributes:
-    ----------
-    rotor_build : RotorBuild
-        Rotor system configuration and state matrices
-    modal_solution : list[ModalSolution]
-        List of solutions at each operating point, containing:
-        - OMEGA: Rotor speed (rad/s)
-        - OMEGA_RPM: Rotor speed (RPM)
-        - T: Period (s)
-        - char_solution: Dict with multipliers and exponents
-        - damping: Real part of characteristic exponents (σ)
-        - frequency: Imaginary part of characteristic exponents (ω)
-
-    Methods:
-    -------
-    ltp_single_point(OMEGA, T)
-        Compute characteristic exponents at a single operating point
-    ltp_full_range()
-        Compute characteristic exponents over full RPM range
-
-    Example:
-    -------
-    >>> rotor = RotorBuild.build_all()
-    >>> rotor.problem.required_solver = "LTP"
-    >>> ltp = LTPStability(rotor)
-    >>> ltp = ltp.ltp_full_range()
-    >>> # Check stability
-    >>> max_damping = max([np.max(sol.damping) for sol in ltp.modal_solution])
-    >>> is_stable = max_damping < 0
+    Returns from ltp_single_point:
+        {'char_multipliers': ndarray, 'real_char_exp': ndarray, 'imag_char_exp': ndarray}
     """
 
     def __init__(self, rotor_build) -> None:
-        """Initialize LTP stability analysis.
-
-        Args:
-            rotor_build: RotorBuild object containing rotor configuration,
-                        state matrix functions, and problem definition
-        """
+        """Initialize LTP stability analysis."""
         super().__init__(rotor_build)
     
-    def ltp_single_point(self, OMEGA: float, T: float) -> Dict[str, np.ndarray]:
+    def ltp_single_point(self, OMEGA: float) -> Dict[str, np.ndarray]:
         """Compute characteristic multipliers and exponents at single operating point.
 
-        This method computes the monodromy matrix M = Φ(T) by integrating each
-        column of the fundamental solution matrix over one period. The eigenvalues
-        of M (characteristic multipliers) are then converted to characteristic
-        exponents which represent the system's damping and frequency.
-
-        Algorithm:
-        ---------
-        1. Create time-dependent state matrix handle A(t, OMEGA)
-        2. Compute monodromy matrix M by integrating: dΦ/dt = A(t)Φ, Φ(0) = I
-        3. Extract characteristic multipliers: μ = eig(M)
-        4. Convert to characteristic exponents:
-           - Real part (damping): σ = (1/2T) * ln(|μ|²)
-           - Imaginary part (frequency): ω = (1/T) * atan2(Im(μ), Re(μ))
-
         Args:
-        ----
-        OMEGA : float
-            Rotor speed (rad/s). Must be positive.
-        T : float
-            Period of oscillation (s), typically T = 2π/OMEGA. Must be positive.
+            OMEGA: Rotor speed (rad/s). Must be positive.
 
         Returns:
-        -------
-        Dict[str, np.ndarray]
-            Dictionary containing:
-            - 'char_multipliers': Complex array of shape (n,) with characteristic
-              multipliers (μ). These are eigenvalues of monodromy matrix.
-            - 'real_char_exp': Real array of shape (n,) with real part of
-              characteristic exponents (σ) - damping indicators
-            - 'imag_char_exp': Real array of shape (n,) with imaginary part of
-              characteristic exponents (ω) - oscillation frequencies
+            Dict with 'char_multipliers' (n,), 'real_char_exp' (n,), 'imag_char_exp' (n,).
+            real_char_exp is damping (σ < 0 stable), imag_char_exp is frequency.
 
         Raises:
-        ------
-        TypeError
-            If OMEGA or T are not numeric
-        ValueError
-            If OMEGA <= 0 or T <= 0
-        RuntimeError
-            If monodromy matrix computation or eigenvalue extraction fails
-
-        Notes:
-        -----
-        - Negative real exponents (σ < 0) indicate stable modes
-        - Positive real exponents (σ > 0) indicate unstable modes
-        - Imaginary exponents represent oscillation frequencies
-        - For rotors, typically T = 2π/OMEGA (one revolution period)
-        - Monodromy computation can be expensive for large systems
-        - Uses inherited monodromy_computer from StabilityAnalysis base class
-
-        Example:
-        -------
-        >>> ltp = LTPStability(rotor_build)
-        >>> OMEGA = 25.0  # rad/s
-        >>> T = 2 * np.pi / OMEGA
-        >>> char_sol = ltp.ltp_single_point(OMEGA, T)
-        >>> multipliers = char_sol['char_multipliers']
-        >>> damping = char_sol['real_char_exp']
-        >>> is_stable = np.all(damping < 0)
+            TypeError: If OMEGA is not numeric.
+            ValueError: If OMEGA <= 0.
+            RuntimeError: If computation fails.
         """
         # Input validation
         if not isinstance(OMEGA, (int, float, np.number)):
@@ -155,23 +44,8 @@ class LTPStability(StabilityAnalysis):
         if OMEGA <= 0:
             raise ValueError(f"OMEGA must be positive, got {OMEGA}")
 
-        if not isinstance(T, (int, float, np.number)):
-            raise TypeError(f"T must be numeric, got {type(T).__name__}")
-
-        if T <= 0:
-            raise ValueError(f"T (period) must be positive, got {T}")
-
-        # Validate consistency between OMEGA and T
-        expected_T = 2 * np.pi / OMEGA
-        if not np.isclose(T, expected_T, rtol=0.1):
-            import warnings
-            warnings.warn(
-                f"Period T={T:.6f}s does not match expected value "
-                f"2π/OMEGA={expected_T:.6f}s (OMEGA={OMEGA:.4f} rad/s). "
-                f"Ensure T is correct for your application.",
-                UserWarning,
-                stacklevel=2
-            )
+        # Compute period from OMEGA
+        T = 2 * np.pi / OMEGA
 
         # Create time-dependent state matrix handle
         try:
@@ -236,83 +110,22 @@ class LTPStability(StabilityAnalysis):
     def ltp_full_range(self) -> 'LTPStability':
         """Compute characteristic exponents over full RPM range.
 
-        This method performs a sweep of operating points across the specified
-        RPM range, computing characteristic exponents at each point using
-        Floquet theory. The results are stored in the modal_solution attribute.
-
-        Process:
-        -------
-        1. Generate array of OMEGA values from problem definition using
-           assign_range_OMEGA() method (inherited from base class)
-        2. Compute corresponding periods T = 2π/OMEGA for each point
-        3. For each operating point:
-           - Compute monodromy matrix via numerical integration
-           - Extract characteristic multipliers (eigenvalues of M)
-           - Convert to characteristic exponents
-           - Store damping and frequency values
+        Populates modal_solution with damping (real_char_exp), frequency (imag_char_exp),
+        and char_solution at each operating point.
 
         Returns:
-        -------
-        LTPStability
-            Self with populated modal_solution list containing results at
-            each operating point. Enables method chaining.
-
-        Attributes Modified:
-        -------------------
-        modal_solution : list[ModalSolution]
-            Populated with characteristic exponents at each RPM point.
-            Length equals self.rotor_build.problem.number_points.
-
-            Each entry contains:
-            - OMEGA: Rotor speed (rad/s)
-            - OMEGA_RPM: Rotor speed (RPM)
-            - T: Period (s) = 2π/OMEGA
-            - char_solution: Full solution dictionary with multipliers and exponents
-            - damping: Real characteristic exponents (σ) - stability indicators
-            - frequency: Imaginary characteristic exponents (ω) - oscillation frequencies
+            Self with populated modal_solution list.
 
         Raises:
-        ------
-        RuntimeError
-            If monodromy computation or characteristic exponent extraction
-            fails at any operating point
-
-        Notes:
-        -----
-        - This method can be computationally expensive for many points
-        - Each point requires integration of n columns of the fundamental matrix
-        - Each monodromy computation requires n ODE integrations over period T
-        - For n DOF system, expect n complex conjugate pairs of exponents
-        - Use continuation methods for more efficient tracking of specific modes
-        - Method uses method chaining pattern for fluent interface
-        - Integration tolerance controlled by base class defaults
-          (DEFAULT_RTOL=1e-6, DEFAULT_ATOL=1e-8)
-
-        Example:
-        -------
-        >>> rotor = RotorBuild.build_all()
-        >>> rotor.problem.required_solver = "LTP"
-        >>> rotor.problem.lower_rotor_RPM = 1000
-        >>> rotor.problem.higher_rotor_RPM = 5000
-        >>> rotor.problem.number_points = 20
-        >>> ltp = LTPStability(rotor)
-        >>> ltp = ltp.ltp_full_range()
-        >>> # Check stability at all points
-        >>> max_damping = max([np.max(sol.damping) for sol in ltp.modal_solution])
-        >>> is_stable = max_damping < 0
-        >>> print(f"System stable: {is_stable}")
+            RuntimeError: If computation fails at any point.
         """
-        # Assign OMEGA range and periods
+        # Assign OMEGA range
         self.assign_range_OMEGA()
-        self.assign_period_T()
 
         # Compute characteristic solutions at each point
         for i in range(self.rotor_build.problem.number_points):
             try:
-                char_solution = self.ltp_single_point(
-                    self.modal_solution[i].OMEGA,
-                    self.modal_solution[i].T
-                )
+                char_solution = self.ltp_single_point(self.modal_solution[i].OMEGA)
 
                 # Store results
                 self.modal_solution[i].char_solution = char_solution
@@ -323,8 +136,7 @@ class LTPStability(StabilityAnalysis):
                 raise RuntimeError(
                     f"LTP analysis failed at point {i+1}/{self.rotor_build.problem.number_points}, "
                     f"OMEGA={self.modal_solution[i].OMEGA:.2f} rad/s "
-                    f"({self.modal_solution[i].OMEGA_RPM:.2f} RPM), "
-                    f"T={self.modal_solution[i].T:.6f}s: {e}"
+                    f"({self.modal_solution[i].OMEGA_RPM:.2f} RPM): {e}"
                 ) from e
 
         return self

@@ -63,8 +63,7 @@ def test_ltp_single_point_basic():
     ltp = LTPStability(rotor)
 
     OMEGA = 25.0  # rad/s
-    T = 2 * np.pi / OMEGA
-    char_sol = ltp.ltp_single_point(OMEGA, T)
+    char_sol = ltp.ltp_single_point(OMEGA)
 
     # Check return type
     assert isinstance(char_sol, dict)
@@ -90,8 +89,7 @@ def test_ltp_single_point_multipliers_complex():
     ltp = LTPStability(rotor)
 
     OMEGA = 50.0
-    T = 2 * np.pi / OMEGA
-    char_sol = ltp.ltp_single_point(OMEGA, T)
+    char_sol = ltp.ltp_single_point(OMEGA)
 
     multipliers = char_sol['char_multipliers']
 
@@ -107,8 +105,7 @@ def test_ltp_single_point_exponents_real():
     ltp = LTPStability(rotor)
 
     OMEGA = 100.0
-    T = 2 * np.pi / OMEGA
-    char_sol = ltp.ltp_single_point(OMEGA, T)
+    char_sol = ltp.ltp_single_point(OMEGA)
 
     real_exp = char_sol['real_char_exp']
     imag_exp = char_sol['imag_char_exp']
@@ -127,8 +124,7 @@ def test_ltp_single_point_different_speeds():
     exponent_sets = []
 
     for omega in speeds:
-        T = 2 * np.pi / omega
-        char_sol = ltp.ltp_single_point(omega, T)
+        char_sol = ltp.ltp_single_point(omega)
         exponent_sets.append(char_sol['real_char_exp'])
 
     # Exponents should be different at different speeds
@@ -148,7 +144,7 @@ def test_ltp_single_point_negative_omega():
     ltp = LTPStability(rotor)
 
     with pytest.raises(ValueError, match="OMEGA must be positive"):
-        ltp.ltp_single_point(-10.0, 1.0)
+        ltp.ltp_single_point(-10.0)
 
 
 def test_ltp_single_point_zero_omega():
@@ -157,25 +153,7 @@ def test_ltp_single_point_zero_omega():
     ltp = LTPStability(rotor)
 
     with pytest.raises(ValueError, match="OMEGA must be positive"):
-        ltp.ltp_single_point(0.0, 1.0)
-
-
-def test_ltp_single_point_negative_T():
-    """Test that negative T raises ValueError."""
-    rotor = RotorBuild.build_all()
-    ltp = LTPStability(rotor)
-
-    with pytest.raises(ValueError, match="T .* must be positive"):
-        ltp.ltp_single_point(25.0, -1.0)
-
-
-def test_ltp_single_point_zero_T():
-    """Test that zero T raises ValueError."""
-    rotor = RotorBuild.build_all()
-    ltp = LTPStability(rotor)
-
-    with pytest.raises(ValueError, match="T .* must be positive"):
-        ltp.ltp_single_point(25.0, 0.0)
+        ltp.ltp_single_point(0.0)
 
 
 def test_ltp_single_point_non_numeric_omega():
@@ -183,27 +161,11 @@ def test_ltp_single_point_non_numeric_omega():
     rotor = RotorBuild.build_all()
     ltp = LTPStability(rotor)
 
-    T = 0.1
+    with pytest.raises(TypeError, match="OMEGA must be numeric"):
+        ltp.ltp_single_point("not_a_number")
 
     with pytest.raises(TypeError, match="OMEGA must be numeric"):
-        ltp.ltp_single_point("not_a_number", T)
-
-    with pytest.raises(TypeError, match="OMEGA must be numeric"):
-        ltp.ltp_single_point(None, T)
-
-
-def test_ltp_single_point_non_numeric_T():
-    """Test that non-numeric T raises TypeError."""
-    rotor = RotorBuild.build_all()
-    ltp = LTPStability(rotor)
-
-    OMEGA = 25.0
-
-    with pytest.raises(TypeError, match="T must be numeric"):
-        ltp.ltp_single_point(OMEGA, "not_a_number")
-
-    with pytest.raises(TypeError, match="T must be numeric"):
-        ltp.ltp_single_point(OMEGA, None)
+        ltp.ltp_single_point(None)
 
 
 def test_ltp_single_point_numpy_scalars():
@@ -212,31 +174,10 @@ def test_ltp_single_point_numpy_scalars():
     ltp = LTPStability(rotor)
 
     OMEGA = np.float64(25.0)
-    T = np.float32(2 * np.pi / 25.0)
 
     # Should not raise exceptions
-    char_sol = ltp.ltp_single_point(OMEGA, T)
+    char_sol = ltp.ltp_single_point(OMEGA)
     assert isinstance(char_sol, dict)
-
-
-def test_ltp_single_point_inconsistent_omega_T():
-    """Test warning when T doesn't match 2π/OMEGA."""
-    import warnings
-
-    rotor = RotorBuild.build_all()
-    ltp = LTPStability(rotor)
-
-    OMEGA = 25.0
-    T_wrong = 1.0  # Should be ~0.251 for OMEGA=25
-
-    # Should issue a warning
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
-        char_sol = ltp.ltp_single_point(OMEGA, T_wrong)
-
-        # Check that a warning was issued
-        assert len(w) >= 1
-        assert any("does not match expected value" in str(warning.message) for warning in w)
 
 
 # ============================================================================
@@ -272,14 +213,12 @@ def test_ltp_full_range_modal_solution_structure():
         # Check required attributes
         assert hasattr(modal_sol, 'OMEGA')
         assert hasattr(modal_sol, 'OMEGA_RPM')
-        assert hasattr(modal_sol, 'T')
         assert hasattr(modal_sol, 'damping')
         assert hasattr(modal_sol, 'frequency')
         assert hasattr(modal_sol, 'char_solution')
 
-        # Check OMEGA and T are positive
+        # Check OMEGA is positive
         assert modal_sol.OMEGA > 0
-        assert modal_sol.T > 0
 
         # Check arrays are populated
         assert len(modal_sol.damping) > 0
@@ -312,21 +251,6 @@ def test_ltp_full_range_rpm_values():
     else:  # L2R
         assert np.isclose(rpm_values[0], 1000.0, atol=1.0)
         assert np.isclose(rpm_values[-1], 2000.0, atol=1.0)
-
-
-def test_ltp_full_range_period_calculation():
-    """Test that periods are correctly calculated."""
-    rotor = RotorBuild.build_all()
-    rotor.problem.number_points = 3
-
-    ltp = LTPStability(rotor)
-    ltp = ltp.ltp_full_range()
-
-    # Check that T = 2π/OMEGA at each point
-    for modal_sol in ltp.modal_solution:
-        expected_T = 2 * np.pi / modal_sol.OMEGA
-        assert np.isclose(modal_sol.T, expected_T, rtol=1e-12), \
-            f"Period should be 2π/OMEGA, got {modal_sol.T}, expected {expected_T}"
 
 
 def test_ltp_full_range_exponent_relationship():
@@ -443,7 +367,7 @@ def test_damping_from_multipliers():
     for modal_sol in ltp.modal_solution:
         multipliers = modal_sol.char_solution['char_multipliers']
         damping = modal_sol.damping
-        T = modal_sol.T
+        T = 2 * np.pi / modal_sol.OMEGA  # Compute T from OMEGA
 
         # Verify relationship: σ = (1/2T) * ln(|μ|²)
         expected_damping = (1 / (2 * T)) * np.log(np.abs(multipliers)**2)
@@ -463,7 +387,7 @@ def test_frequency_from_multipliers():
     for modal_sol in ltp.modal_solution:
         multipliers = modal_sol.char_solution['char_multipliers']
         frequency = modal_sol.frequency
-        T = modal_sol.T
+        T = 2 * np.pi / modal_sol.OMEGA  # Compute T from OMEGA
 
         # Verify relationship: ω = (1/T) * atan2(Im(μ), Re(μ))
         expected_frequency = (1 / T) * np.arctan2(
@@ -535,10 +459,9 @@ def test_ltp_single_point_very_small_omega():
     ltp = LTPStability(rotor)
 
     OMEGA = 1e-2  # Very small
-    T = 2 * np.pi / OMEGA
 
     # Should work with very small positive values
-    char_sol = ltp.ltp_single_point(OMEGA, T)
+    char_sol = ltp.ltp_single_point(OMEGA)
     assert isinstance(char_sol, dict)
     assert 'char_multipliers' in char_sol
 
@@ -549,10 +472,9 @@ def test_ltp_single_point_very_large_omega():
     ltp = LTPStability(rotor)
 
     OMEGA = 500.0  # Large value
-    T = 2 * np.pi / OMEGA
 
     # Should work with large values
-    char_sol = ltp.ltp_single_point(OMEGA, T)
+    char_sol = ltp.ltp_single_point(OMEGA)
     assert isinstance(char_sol, dict)
     assert 'char_multipliers' in char_sol
 
@@ -571,7 +493,7 @@ def test_consistency_single_vs_range():
 
     # Compare with single point computation
     for modal_sol in ltp.modal_solution:
-        single_result = ltp.ltp_single_point(modal_sol.OMEGA, modal_sol.T)
+        single_result = ltp.ltp_single_point(modal_sol.OMEGA)
 
         # Characteristic multipliers should match
         assert np.allclose(
