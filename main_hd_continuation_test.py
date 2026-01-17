@@ -90,6 +90,8 @@ def main():
 
     # Override to ensure HD solver with continuation is used
     rotor.problem.required_solver = "HD"
+    rotor.problem.hd_use_complex = True
+    rotor.problem.damper_activation = "ODI"
     rotor.problem.continuation = "YES"
     rotor.problem.number_harmonics = 1  # Start with 1 harmonic
 

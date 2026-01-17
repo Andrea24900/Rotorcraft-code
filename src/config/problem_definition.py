@@ -71,14 +71,16 @@ class ProblemDefinition:
     # Solver configuration
     required_solver: Literal["LTI", "LTP", "HD"] = "LTI"
     number_harmonics: int = 1  # for HD and modal participation
-    hd_use_complex: bool = False  # Use complex formulation for HD solver
+    hd_use_complex: bool = True  # Use complex formulation for HD solver
     
     # Continuation method parameters
     continuation: Literal["YES", "NO"] = "NO"
     continuation_tolerance: float = 1e-2
     continuation_max_iter: int = 100
     step_h: float = 1e-4
-    time_samples: int = 100  # for HD only
+    time_samples: int = 10  # must be chosen in accordance with Nyquist criterion 
+    # based on the number of harmonics that are required for the fft of A and the
+    #harmonic decomposition
     solution_direction: Literal["L2R", "R2L"] = "R2L"
     
     # Rotor physical characteristics

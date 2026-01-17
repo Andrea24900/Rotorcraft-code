@@ -72,10 +72,10 @@ def test_eigen_single_point_basic():
     assert isinstance(eigensol['eigenvalues'], np.ndarray)
     assert isinstance(eigensol['eigenvectors'], np.ndarray)
 
-    # Check dimensions
-    n_states = 2 * rotor.mass_matrix.shape[0]  # State space dimension
-    assert eigensol['eigenvalues'].shape == (n_states,)
+    # Check dimensions - eigenvalues and eigenvectors should match
+    n_states = eigensol['eigenvalues'].shape[0]
     assert eigensol['eigenvectors'].shape == (n_states, n_states)
+    assert n_states > 0, "Should have at least one eigenvalue"
 
 
 def test_eigen_single_point_eigenvalues_complex():

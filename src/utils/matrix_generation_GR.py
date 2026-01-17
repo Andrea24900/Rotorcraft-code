@@ -17,16 +17,16 @@ import numpy as np
 from typing import Callable, Tuple
 from ..config.problem_definition import ProblemDefinition
 
-def build_mass_matrix(
+def build_MCK_matrices(
     problem: ProblemDefinition,mbc_matrices = None
-) -> np.ndarray:
-    """Build mass matrix for the rotor system. If the MBC matrices are not created, build them.
+) -> Tuple [np.ndarray,np.ndarray,np.ndarray]:
+    """Build M,C,K matrices for the rotor system. If the MBC matrices are not created, build them.
 
     Args:
         problem: Problem definition containing rotor characteristics
 
     Returns:
-        mass_matrix, mass_matrix_rot (function handles in Omega,t)
+        mass_matrix, damping_matrix, stiffness_matrix (function handles in Omega,t)
 
     Note:
         Matrix dimensions depend on number of blades (Nb blade states and 2 hub ones):
@@ -38,74 +38,10 @@ def build_mass_matrix(
     rotor_chars = problem.rotor_characteristics
 
     # Extract rotor characteristics for clarity
-    blade_inertia = rotor_chars.blade_inertia_Ib
     blade_mass = rotor_chars.blade_mass_Mb
-    blade_static_moment = rotor_chars.blade_static_Sb
+    blade_inertia = rotor_chars.blade_inertia_Ib
     hub_mass_x = rotor_chars.hub_mass_Mx
     hub_mass_y = rotor_chars.hub_mass_My
-
-    # Total hub mass including blades
-    total_hub_mass_x = hub_mass_x + blade_mass * num_blades
-    total_hub_mass_y = hub_mass_y + blade_mass * num_blades
-
-    def mass_matrix_rot(time: float, rotor_omega:float) -> np.ndarray:
-        # Define the four blocks which compose the mass matrix
-        # Upper Left
-        diagonal = blade_inertia*np.ones(num_blades)
-        upper_left = np.diag(diagonal)
-        # Lower right
-        lower_right = np.array([
-            [total_hub_mass_x,0],
-            [0,total_hub_mass_y]
-            ])
-        # Time varying terms (which use a psi azimuth angle time function)
-        # the upper right term is a Nb*2 array containing periodic functions
-        left_vec=np.zeros(num_blades)
-        right_vec=np.zeros(num_blades)
-        for blade_index in range(1,num_blades+1):
-            psi = azimuth_angle(blade_index,num_blades)
-            left_vec[blade_index-1]=np.sin(psi(rotor_omega,time))
-            right_vec[blade_index-1]=-np.cos(psi(rotor_omega,time))
-        upper_right = blade_static_moment*np.column_stack([left_vec,right_vec])
-        # the lower left term is a 2*Nb array
-        upper_vec=left_vec
-        lower_vec=right_vec
-        lower_left = blade_static_moment*np.vstack([upper_vec,lower_vec])
-        
-        #generation of mass matrix (partially in rotating frame)
-        mass_matrix_result = np.block([[upper_left,upper_right],[lower_left,lower_right]])
-
-        return mass_matrix_result
-
-    def mass_matrix(time:float, rotor_omega:float):
-
-        # rotation of the matrix in the proper frame
-        mbc_matrix = build_mbc_matrix(problem, time, rotor_omega)
-        mass_matrix_result = np.transpose(mbc_matrix)@mass_matrix_rot(time, rotor_omega)@mbc_matrix
-
-        return mass_matrix_result
-    
-    return mass_matrix,mass_matrix_rot
-
-
-def build_damping_matrix(
-    problem: ProblemDefinition, mass_matrix_rot = None
-) -> Tuple[Callable[[float, float], np.ndarray], Callable[[float, float], np.ndarray]]:
-    """Build damping and stiffness matrices as function handles.
-
-    Args:
-        problem: Problem definition containing rotor characteristics
-        mass_matrix_rot: the mass_matrix in rotating frame
-
-    Returns:
-        Tuple of (damping_matrix_C, stiffness_matrix_K) as function handles
-        Both functions take (t, rotor_omega) as arguments and return matrices
-
-    """
-    num_blades = problem.number_blades
-    rotor_chars = problem.rotor_characteristics
-
-    # Extract commonly used parameters for clarity
     blade_static_moment = rotor_chars.blade_static_Sb
     lag_hinge_offset = rotor_chars.lag_hinge_offset_e
     nominal_damping = rotor_chars.nominal_damping_Cd
@@ -114,106 +50,139 @@ def build_damping_matrix(
     hub_damping_y = rotor_chars.hub_damping_Cy
     hub_stiffness_x = rotor_chars.hub_stiffness_Kx
     hub_stiffness_y = rotor_chars.hub_stiffness_Ky
+    # Total hub mass including blades
+    total_hub_mass_x = hub_mass_x + blade_mass * num_blades
+    total_hub_mass_y = hub_mass_y + blade_mass * num_blades
 
-    # if no cached matrix is present, compute it
-    if mass_matrix_rot is None:
-        (_, mass_matrix_rot) = build_mass_matrix(problem)
-
-    # working principle of this matrix generator
-    # 1) generate C and K without dampers
-    # 2) sum the damping and stiffness matrices with the chosen damper configuration
-    # 3) transform the resulting matrices through the MBC transformation
-
-    
-    def damping_matrix_rot(time:float ,rotor_omega:float):
-        # 1) C without dampers
-        #block generation of matrix
-        upper_left = np.diag(np.zeros(num_blades))
-        # Lower right
-        lower_right = np.array([
-            [hub_damping_x,0],
-            [0,hub_damping_y]
-            ])
-        # Time varying terms (which use a psi azimuth angle time function)
-        # the upper right term is a Nb*2 array containing zeros
-        upper_right = np.zeros((num_blades,2))
-        # the lower left term is a 2*Nb array with periodic terms
-        upper_vec=np.zeros(num_blades)
-        lower_vec=np.zeros(num_blades)
-        for blade_index in range(1,num_blades+1):
-            psi = azimuth_angle(blade_index,num_blades)
-            upper_vec[blade_index-1]=2*rotor_omega*blade_static_moment*np.cos(psi(rotor_omega,time))
-            lower_vec[blade_index-1]=2*rotor_omega*blade_static_moment*np.sin(psi(rotor_omega,time))
-        lower_left = np.vstack([upper_vec,lower_vec])
-        #generation of mass matrix (partially in rotating frame)
-        damping_matrix_partial = np.block([[upper_left,upper_right],[lower_left,lower_right]])
-        
-        # 2) C with the addition of the dampers
-        damping_matrix_addition = np.zeros((num_blades+2,num_blades+2))
-        if problem.damper_connection == "H2B":
-            diagonal = damping_activation_H2B(problem)
-            damping_matrix_addition[0:num_blades,0:num_blades] = np.diag(diagonal)
-        #elif problem.damper_connection == "B2B":
-            # B2B damper connection logic to be implemented
-            
-        # summation of matrices
-        damping_matrix_result = damping_matrix_partial+damping_matrix_addition
-        # 3) transformation through MBC
-        return damping_matrix_result
-
-    def damping_matrix_C(time,rotor_omega):
-        # build the MBC matrices
-        mbc_matrix = build_mbc_matrix(problem,time,rotor_omega)
-        mbc_matrix_derivative = build_mbc_matrix_derivative(problem,time,rotor_omega)
-        # complete the tranformation
-        damping_matrix_result = np.transpose(mbc_matrix)@damping_matrix_rot(time,rotor_omega)@mbc_matrix + 2*np.transpose(mbc_matrix)@mass_matrix_rot(time,rotor_omega)@mbc_matrix_derivative
-        return damping_matrix_result
-    
-    # the damping matrix is now ready, we move to the stiffness one    
-    def stiffness_matrix_K(time:float ,rotor_omega:float):
-        # 1) K without dampers
-            #block generation of matrix
-        diagonal = lag_hinge_offset*rotor_omega**2*blade_static_moment*np.ones(num_blades)
-        upper_left = np.diag(diagonal)
+   
+    def MCK_matrices(time: float, rotor_omega:float) -> Tuple [np.ndarray,np.ndarray,np.ndarray]:
+     
+        # define mass_matrix in rotating frame
+        def mass_matrix_rot(time: float, rotor_omega:float) -> np.ndarray:
+            # Define the four blocks which compose the mass matrix
+            # Upper Left
+            diagonal = blade_inertia*np.ones(num_blades)
+            upper_left = np.diag(diagonal)
             # Lower right
-        lower_right = np.array([
-                [hub_stiffness_x,0],
-                [0,hub_stiffness_y]
+            lower_right = np.array([
+                [total_hub_mass_x,0],
+                [0,total_hub_mass_y]
                 ])
-        # Time varying terms (which use a psi azimuth angle time function)
-        # the upper right term is a Nb*2 array containing zeros
-        upper_right = np.zeros((num_blades,2))
-        # the lower left term is a 2*Nb array with periodic terms
-        upper_vec=np.zeros(num_blades)
-        lower_vec=np.zeros(num_blades)
-        for blade_index in range(1,num_blades+1):
-            psi = azimuth_angle(blade_index,num_blades)
-            upper_vec[blade_index-1]=-rotor_omega**2*blade_static_moment*np.sin(psi(rotor_omega,time))
-            lower_vec[blade_index-1]=rotor_omega**2*blade_static_moment*np.cos(psi(rotor_omega,time))
-        lower_left = np.vstack([upper_vec,lower_vec])
-        #generation of mass matrix (partially in rotating frame)
-        stiffness_matrix_partial = np.block([[upper_left,upper_right],[lower_left,lower_right]])
+            # Time varying terms (which use a psi azimuth angle time function)
+            # the upper right term is a Nb*2 array containing periodic functions
+            left_vec=np.zeros(num_blades)
+            right_vec=np.zeros(num_blades)
+            for blade_index in range(1,num_blades+1):
+                psi = azimuth_angle(blade_index,num_blades)
+                left_vec[blade_index-1]=np.sin(psi(rotor_omega,time))
+                right_vec[blade_index-1]=-np.cos(psi(rotor_omega,time))
+            upper_right = blade_static_moment*np.column_stack([left_vec,right_vec])
+            # the lower left term is a 2*Nb array
+            upper_vec=left_vec
+            lower_vec=right_vec
+            lower_left = blade_static_moment*np.vstack([upper_vec,lower_vec])
             
-        # 2) K with the addition of the dampers
-        stiffness_matrix_addition = np.zeros((num_blades+2,num_blades+2))
-        if problem.damper_connection == "H2B":
-            diagonal = nominal_stiffness*np.ones(num_blades)
-            stiffness_matrix_addition[0:num_blades,0:num_blades] = np.diag(diagonal)
-        #elif problem.damper_connection == "B2B":
+            #generation of mass matrix (partially in rotating frame)
+            mass_matrix_result = np.block([[upper_left,upper_right],[lower_left,lower_right]])
+
+            return mass_matrix_result
+        
+        # define damping matrix in rotating frame 
+        def damping_matrix_rot(time:float ,rotor_omega:float):
+            # 1) C without dampers
+            #block generation of matrix
+            upper_left = np.diag(np.zeros(num_blades))
+            # Lower right
+            lower_right = np.array([
+                [hub_damping_x,0],
+                [0,hub_damping_y]
+                ])
+            # Time varying terms (which use a psi azimuth angle time function)
+            # the upper right term is a Nb*2 array containing zeros
+            upper_right = np.zeros((num_blades,2))
+            # the lower left term is a 2*Nb array with periodic terms
+            upper_vec=np.zeros(num_blades)
+            lower_vec=np.zeros(num_blades)
+            for blade_index in range(1,num_blades+1):
+                psi = azimuth_angle(blade_index,num_blades)
+                upper_vec[blade_index-1]=2*rotor_omega*blade_static_moment*np.cos(psi(rotor_omega,time))
+                lower_vec[blade_index-1]=2*rotor_omega*blade_static_moment*np.sin(psi(rotor_omega,time))
+            lower_left = np.vstack([upper_vec,lower_vec])
+            #generation of mass matrix (partially in rotating frame)
+            damping_matrix_partial = np.block([[upper_left,upper_right],[lower_left,lower_right]])
+            
+            # 2) C with the addition of the dampers
+            damping_matrix_addition = np.zeros((num_blades+2,num_blades+2))
+            if problem.damper_connection == "H2B":
+                diagonal = damping_activation_H2B(problem)
+                damping_matrix_addition[0:num_blades,0:num_blades] = np.diag(diagonal)
+            #elif problem.damper_connection == "B2B":
                 # B2B damper connection logic to be implemented
                 
             # summation of matrices
-        stiffness_matrix_result= stiffness_matrix_partial+stiffness_matrix_addition
+            damping_matrix_result = damping_matrix_partial+damping_matrix_addition
             # 3) transformation through MBC
-            # build the MBC matrices
+            return damping_matrix_result
+        
+        # definition of stiffness matrix in rotating frame 
+        def stiffness_matrix_rot(time:float, rotor_omega:float):
+            # 1) K without dampers
+                #block generation of matrix
+            diagonal = lag_hinge_offset*rotor_omega**2*blade_static_moment*np.ones(num_blades)
+            upper_left = np.diag(diagonal)
+                # Lower right
+            lower_right = np.array([
+                    [hub_stiffness_x,0],
+                    [0,hub_stiffness_y]
+                    ])
+            # Time varying terms (which use a psi azimuth angle time function)
+            # the upper right term is a Nb*2 array containing zeros
+            upper_right = np.zeros((num_blades,2))
+            # the lower left term is a 2*Nb array with periodic terms
+            upper_vec=np.zeros(num_blades)
+            lower_vec=np.zeros(num_blades)
+            for blade_index in range(1,num_blades+1):
+                psi = azimuth_angle(blade_index,num_blades)
+                upper_vec[blade_index-1]=-rotor_omega**2*blade_static_moment*np.sin(psi(rotor_omega,time))
+                lower_vec[blade_index-1]=rotor_omega**2*blade_static_moment*np.cos(psi(rotor_omega,time))
+            lower_left = np.vstack([upper_vec,lower_vec])
+            #generation of mass matrix (partially in rotating frame)
+            stiffness_matrix_partial = np.block([[upper_left,upper_right],[lower_left,lower_right]])
+                
+            # 2) K with the addition of the dampers
+            stiffness_matrix_addition = np.zeros((num_blades+2,num_blades+2))
+            if problem.damper_connection == "H2B":
+                diagonal = nominal_stiffness*np.ones(num_blades)
+                stiffness_matrix_addition[0:num_blades,0:num_blades] = np.diag(diagonal)
+            #elif problem.damper_connection == "B2B":
+                    # B2B damper connection logic to be implemented
+                    
+                # summation of matrices
+            stiffness_matrix_result= stiffness_matrix_partial+stiffness_matrix_addition
+        
+            return stiffness_matrix_result
+        
+        #generation of MBC matrices
         mbc_matrix = build_mbc_matrix(problem,time,rotor_omega)
         mbc_matrix_derivative = build_mbc_matrix_derivative(problem,time,rotor_omega)
         mbc_matrix_derivative_second = build_mbc_matrix_derivative_second(problem,time,rotor_omega)
-            # complete the tranformation
-        stiffness_matrix_result = np.transpose(mbc_matrix)@stiffness_matrix_result@mbc_matrix+ np.transpose(mbc_matrix)@damping_matrix_rot(time,rotor_omega)@mbc_matrix_derivative + np.transpose(mbc_matrix)@mass_matrix_rot(time,rotor_omega)@mbc_matrix_derivative_second
-        return stiffness_matrix_result
+        mbc_matrix_transpose = np.transpose(mbc_matrix)
+
+        #evaluation of the system matrices
+
+        mass_matrix_rot_eval = mass_matrix_rot(time, rotor_omega)
+        damping_matrix_rot_eval = damping_matrix_rot(time,rotor_omega)
+        stiffness_matrix_rot_eval = stiffness_matrix_rot(time,rotor_omega)
+
+        # rotation of the matrices
+        mass_matrix = mbc_matrix_transpose@mass_matrix_rot_eval@mbc_matrix
+        damping_matrix = mbc_matrix_transpose@damping_matrix_rot_eval@mbc_matrix + 2*mbc_matrix_transpose@mass_matrix_rot_eval@mbc_matrix_derivative
+        stiffness_matrix = mbc_matrix_transpose@stiffness_matrix_rot_eval@mbc_matrix+ mbc_matrix_transpose@damping_matrix_rot_eval@mbc_matrix_derivative + mbc_matrix_transpose@mass_matrix_rot_eval@mbc_matrix_derivative_second
         
-    return damping_matrix_C, stiffness_matrix_K
+        
+        return mass_matrix,damping_matrix,stiffness_matrix
+    
+    return MCK_matrices
 
 def azimuth_angle(
         blade_index: int,

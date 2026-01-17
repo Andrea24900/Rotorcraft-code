@@ -292,23 +292,15 @@ class StabilityAnalysis:
         # Transpose to shape (state_number, state_number, len(time))
         time_realisation_A = np.transpose(time_realisation_A, (1, 2, 0))
 
-        # Compute FFT coefficients for each element
-        # Storage: A_coeff[:,:,0] = A_0, A_coeff[:,:,2*i] = A_ic, A_coeff[:,:,2*i+1] = A_is
+        # Compute FFT coefficients (vectorized along time axis)
+        # Storage: A_coeff[:,:,0] = A_0, A_coeff[:,:,2*i-1] = A_ic, A_coeff[:,:,2*i] = A_is
+        full_transform = np.fft.fft(time_realisation_A, axis=2) / len(time)
+
         A_coeff = np.zeros((state_number, state_number, 2 * number_harmonics + 1))
-
-        for j in range(state_number):
-            for k in range(state_number):
-                # FFT of A[j,k](t)
-                full_transform = np.fft.fft(time_realisation_A[j, k, :]) / len(time)
-
-                # Extract coefficients: A_0, A_1c, A_1s, A_2c, A_2s, ...
-                A_coeff[j, k, 0] = full_transform[0].real  # A_0
-
-                index_coeff = 1
-                for n in range(1, number_harmonics + 1):
-                    A_coeff[j, k, index_coeff] = 2 * full_transform[n].real  # A_nc
-                    A_coeff[j, k, index_coeff + 1] = -2 * full_transform[n].imag  # A_ns
-                    index_coeff += 2
+        A_coeff[:, :, 0] = full_transform[:, :, 0].real  # A_0
+        for n in range(1, number_harmonics + 1):
+            A_coeff[:, :, 2*n - 1] = 2 * full_transform[:, :, n].real   # A_nc
+            A_coeff[:, :, 2*n] = -2 * full_transform[:, :, n].imag      # A_ns
 
         # Assignment of first diagonal block (H0M)
         A_HD[0:state_number, 0:state_number] = StabilityAnalysis._H0M_assign(A_coeff)
@@ -432,12 +424,8 @@ class StabilityAnalysis:
         # Transpose to shape (state_number, state_number, len(time))
         time_realisation_A = np.transpose(time_realisation_A, (1, 2, 0))
 
-        # Compute FFT coefficients for each element
-        A_coeff = np.zeros((state_number, state_number, len(time)), dtype=complex)
-
-        for j in range(state_number):
-            for k in range(state_number):
-                A_coeff[j, k, :] = np.fft.fft(time_realisation_A[j, k, :]) / len(time)
+        # Compute FFT coefficients (vectorized along time axis)
+        A_coeff = np.fft.fft(time_realisation_A, axis=2) / len(time)
 
         # k is used to cycle the harmonics from -N to N (columns)
         # j is used to cycle the blocks in the A matrix (rows)

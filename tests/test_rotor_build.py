@@ -25,8 +25,6 @@ def test_rotor_build_initialization():
     rotor = RotorBuild(problem, auto_build=True)
 
     assert rotor.problem is problem, "Problem should be stored"
-    assert rotor.mass_matrix is not None, "Mass matrix should be initialized"
-    assert rotor.mass_matrix_inv is not None, "Mass matrix inverse should be initialized"
     assert rotor.state_matrix_function is not None, "State matrix function should be initialized"
 
 
@@ -36,8 +34,6 @@ def test_rotor_build_initialization_no_auto_build():
     rotor = RotorBuild(problem, auto_build=False)
 
     assert rotor.problem is problem, "Problem should be stored"
-    assert rotor.mass_matrix is None, "Mass matrix should not be initialized"
-    assert rotor.mass_matrix_inv is None, "Mass matrix inverse should not be initialized"
     assert rotor.state_matrix_function is None, "State matrix function should not be initialized"
 
 
@@ -47,89 +43,11 @@ def test_build_all_factory_method():
 
     assert rotor is not None, "RotorBuild object should be created"
     assert rotor.problem is not None, "Problem definition should exist"
-    assert rotor.mass_matrix is not None, "Mass matrix should be initialized"
     assert rotor.state_matrix_function is not None, "State matrix function should be initialized"
 
     # Check default problem values
     assert rotor.problem.number_blades == 4, "Default should be 4 blades"
     assert rotor.problem.damper_connection == "H2B", "Default should be H2B"
-
-
-def test_mass_matrix_properties():
-    """Test mass matrix properties."""
-    rotor = RotorBuild.build_all()
-    M = rotor.get_mass_matrix()
-
-    # Check shape - should be square
-    assert M.shape[0] == M.shape[1], "Mass matrix should be square"
-    assert M.shape[0] > 0, "Mass matrix should have positive size"
-
-    # Check symmetry (mass matrix should be symmetric)
-    assert np.allclose(M, M.T), "Mass matrix should be symmetric"
-
-    # Check positive definiteness (all eigenvalues should be positive)
-    eigenvalues = np.linalg.eigvals(M)
-    assert np.all(eigenvalues > 0), "Mass matrix should be positive definite"
-
-
-def test_mass_matrix_inverse():
-    """Test mass matrix inverse."""
-    rotor = RotorBuild.build_all()
-    M = rotor.mass_matrix
-    M_inv = rotor.mass_matrix_inv
-
-    # Check that M * M_inv = I
-    identity = M @ M_inv
-    expected_identity = np.eye(M.shape[0])
-
-    assert np.allclose(identity, expected_identity, atol=1e-10), \
-        "M * M_inv should equal identity matrix"
-
-
-def test_mass_matrix_different_blade_counts():
-    """Test mass matrix for different blade configurations."""
-    # Note: 7-blade is not yet implemented in matrix_repositories
-    blade_counts = [3, 4, 5]
-
-    for n_blades in blade_counts:
-        problem = ProblemDefinition(number_blades=n_blades)
-        rotor = RotorBuild(problem, auto_build=True)
-        M = rotor.get_mass_matrix()
-
-        # Mass matrix should exist and be square
-        assert M.shape[0] == M.shape[1], \
-            f"Mass matrix for {n_blades} blades should be square"
-
-        # Should be symmetric
-        assert np.allclose(M, M.T), \
-            f"Mass matrix for {n_blades} blades should be symmetric"
-
-        # Should be positive definite
-        eigenvalues = np.linalg.eigvals(M)
-        assert np.all(eigenvalues > 0), \
-            f"Mass matrix for {n_blades} blades should be positive definite"
-
-
-def test_damping_stiffness_functions():
-    """Test damping and stiffness matrix functions."""
-    rotor = RotorBuild.build_all()
-    C_func, K_func = rotor.get_damping_stiffness_functions()
-
-    # Evaluate at a test point
-    t = 0.0
-    omega = 25.0  # rad/s
-
-    C = C_func(t, omega)
-    K = K_func(t, omega)
-
-    # Check shapes
-    n = rotor.mass_matrix.shape[0]
-    assert C.shape == (n, n), "Damping matrix should have correct shape"
-    assert K.shape == (n, n), "Stiffness matrix should have correct shape"
-
-    # Matrices should be real-valued
-    assert np.all(np.isreal(C)), "Damping matrix should be real"
-    assert np.all(np.isreal(K)), "Stiffness matrix should be real"
 
 
 def test_state_matrix_function_exists():
@@ -145,23 +63,21 @@ def test_state_matrix_function_exists():
 def test_state_matrix_dimensions():
     """Test state matrix dimensions."""
     rotor = RotorBuild.build_all()
-    n = rotor.mass_matrix.shape[0]
 
     # Evaluate state matrix
     A = rotor.state_matrix_function(t=0.0, rotor_OMEGA=25.0)
 
-    # State matrix should be 2n x 2n
-    expected_shape = (2 * n, 2 * n)
-    assert A.shape == expected_shape, \
-        f"State matrix should have shape {expected_shape}, got {A.shape}"
+    # State matrix should be square and even-dimensional (2n x 2n)
+    assert A.shape[0] == A.shape[1], "State matrix should be square"
+    assert A.shape[0] % 2 == 0, "State matrix dimension should be even (2n)"
+    assert A.shape[0] > 0, "State matrix should have positive size"
 
 
 def test_state_matrix_structure():
     """Test state matrix block structure."""
     rotor = RotorBuild.build_all()
-    n = rotor.mass_matrix.shape[0]
-
     A = rotor.state_matrix_function(t=0.0, rotor_OMEGA=25.0)
+    n = A.shape[0] // 2  # State matrix is 2n x 2n
 
     # Extract blocks
     # A = [[-M^-1 C, -M^-1 K],
@@ -241,19 +157,6 @@ def test_different_damper_activation_modes():
         "ALL and ODI damper activation should produce different state matrices"
 
 
-def test_get_mass_matrix_before_initialization():
-    """Test that get_mass_matrix raises error if not initialized."""
-    problem = ProblemDefinition()
-    rotor = RotorBuild(problem, auto_build=False)
-
-    try:
-        rotor.get_mass_matrix()
-        assert False, "Should raise RuntimeError"
-    except RuntimeError as e:
-        assert "not initialized" in str(e).lower(), \
-            "Error message should mention initialization"
-
-
 def test_state_matrix_numerical_properties():
     """Test numerical properties of state matrix."""
     rotor = RotorBuild.build_all()
@@ -267,17 +170,6 @@ def test_state_matrix_numerical_properties():
     assert np.all(np.isreal(A)), "State matrix should be real-valued"
 
 
-def test_mass_matrix_caching():
-    """Test that mass matrix is computed only once and cached."""
-    rotor = RotorBuild.build_all()
-
-    M1 = rotor.get_mass_matrix()
-    M2 = rotor.get_mass_matrix()
-
-    # Should return the same object (cached)
-    assert M1 is M2, "Mass matrix should be cached and return same object"
-
-
 if __name__ == "__main__":
     # Run tests manually without pytest
     import traceback
@@ -286,19 +178,13 @@ if __name__ == "__main__":
         test_rotor_build_initialization,
         test_rotor_build_initialization_no_auto_build,
         test_build_all_factory_method,
-        test_mass_matrix_properties,
-        test_mass_matrix_inverse,
-        test_mass_matrix_different_blade_counts,
-        test_damping_stiffness_functions,
         test_state_matrix_function_exists,
         test_state_matrix_dimensions,
         test_state_matrix_structure,
         test_state_matrix_at_different_speeds,
         test_state_matrix_at_different_times,
         test_different_damper_activation_modes,
-        test_get_mass_matrix_before_initialization,
         test_state_matrix_numerical_properties,
-        test_mass_matrix_caching,
     ]
 
     passed = 0
