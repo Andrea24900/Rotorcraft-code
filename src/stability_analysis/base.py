@@ -95,8 +95,8 @@ class StabilityAnalysis:
     
     @staticmethod
     def monodromy_computer(
-        A_handle_time: Callable[[float], np.ndarray],
-        period_T: float,
+        A_handle: Callable[[float, float], np.ndarray],
+        OMEGA: float,
         rtol: float = None,
         atol: float = None
     ) -> np.ndarray:
@@ -104,13 +104,13 @@ class StabilityAnalysis:
 
         The monodromy matrix M characterizes the stability of time-periodic systems.
         It is defined as the fundamental solution matrix evaluated at one period:
-        M = Φ(T), where dΦ/dt = A(t)Φ and Φ(0) = I.
+        M = Φ(T), where dΦ/dt = A(Ω,t)Φ and Φ(0) = I.
 
         Algorithm:
         ---------
-        For a system dx/dt = A(t)x with period T:
+        For a system dx/dt = A(Ω,t)x with period T = 2π/Ω:
         1. Initialize fundamental matrix: Φ(0) = I (identity matrix)
-        2. Integrate each column j: dΦⱼ/dt = A(t)Φⱼ from t=0 to t=T
+        2. Integrate each column j: dΦⱼ/dt = A(Ω,t)Φⱼ from t=0 to t=T
         3. Assemble columns into monodromy matrix: M = [Φ₁(T), Φ₂(T), ..., Φₙ(T)]
         4. Eigenvalues of M are characteristic multipliers μ
         5. Stability: |μ| < 1 → stable, |μ| > 1 → unstable
@@ -124,10 +124,11 @@ class StabilityAnalysis:
 
         Args:
         ----
-        A_handle_time : Callable[[float], np.ndarray]
-            Function handle A(t) that returns the n×n state matrix at time t
-        period_T : float
-            Period of oscillation (s), typically T = 2π/OMEGA for rotor systems
+        A_handle : Callable[[float, float], np.ndarray]
+            Function handle A(OMEGA, t) that returns the n×n state matrix
+            at angular velocity OMEGA and time t
+        OMEGA : float
+            Angular velocity (rad/s). Period is computed as T = 2π/OMEGA
         rtol : float, optional
             Relative tolerance for integration (default: DEFAULT_RTOL)
         atol : float, optional
@@ -141,7 +142,7 @@ class StabilityAnalysis:
         Raises:
         ------
         ValueError
-            If period_T <= 0 or A_handle_time(0) is not square
+            If OMEGA <= 0 or A_handle(OMEGA, 0) is not square
 
         Notes:
         -----
@@ -153,32 +154,35 @@ class StabilityAnalysis:
 
         Example:
         -------
-        >>> A = lambda t: np.array([[0, 1], [-1 - 0.1*np.sin(t), -0.1]])
-        >>> T = 2 * np.pi  # Period of time-varying term
-        >>> M = StabilityAnalysis.monodromy_computer(A, T)
+        >>> A = lambda Om, t: np.array([[0, 1], [-1 - 0.1*np.sin(Om*t), -0.1]])
+        >>> OMEGA = 1.0  # rad/s
+        >>> M = StabilityAnalysis.monodromy_computer(A, OMEGA)
         >>> multipliers = np.linalg.eigvals(M)
         >>> is_stable = np.all(np.abs(multipliers) < 1)
         """
         # Input validation
-        if period_T <= 0:
-            raise ValueError(f"period_T must be positive, got {period_T}")
+        if OMEGA <= 0:
+            raise ValueError(f"OMEGA must be positive, got {OMEGA}")
+
+        # Compute period from angular velocity
+        period_T = 2 * np.pi / OMEGA
 
         try:
-            A_0 = A_handle_time(0)
+            A_0 = A_handle(OMEGA, 0)
         except Exception as e:
-            raise ValueError(f"A_handle_time(0) failed: {e}")
+            raise ValueError(f"A_handle(OMEGA, 0) failed: {e}")
 
         if A_0 is None:
-            raise ValueError("A_handle_time(0) returned None")
+            raise ValueError("A_handle(OMEGA, 0) returned None")
 
         if not isinstance(A_0, np.ndarray):
-            raise ValueError(f"A_handle_time must return numpy array, got {type(A_0)}")
+            raise ValueError(f"A_handle must return numpy array, got {type(A_0)}")
 
         if A_0.ndim != 2:
-            raise ValueError(f"A_handle_time must return 2D array, got {A_0.ndim}D")
+            raise ValueError(f"A_handle must return 2D array, got {A_0.ndim}D")
 
         if A_0.shape[0] != A_0.shape[1]:
-            raise ValueError(f"A_handle_time must return square matrix, got shape {A_0.shape}")
+            raise ValueError(f"A_handle must return square matrix, got shape {A_0.shape}")
 
         # Set default tolerances
         if rtol is None:
@@ -200,7 +204,7 @@ class StabilityAnalysis:
             Returns: flattened derivative vector (n²,)
             """
             Phi = phi_vec_flat.reshape((n, n), order='F')  # reshape to matrix (column-major)
-            dPhi_dt = A_handle_time(t) @ Phi
+            dPhi_dt = A_handle(OMEGA, t) @ Phi
             return dPhi_dt.flatten(order='F')  # flatten back to vector
 
         # Initial condition: identity matrix flattened
@@ -223,22 +227,23 @@ class StabilityAnalysis:
     
     @staticmethod
     def hd_computer(
-        A_handle_time: Callable[[float], np.ndarray],
-        time: np.ndarray,
-        number_harmonics: int,
+        A_handle: Callable[[float, float], np.ndarray],
         OMEGA: float,
+        number_harmonics: int,
+        time_samples: int,
         use_complex: bool = False
     ) -> np.ndarray:
         """Compute the state matrix for HD analysis.
 
         This method constructs the expanded HD matrix by computing
-        Fourier coefficients of the time-periodic state matrix A(t).
+        Fourier coefficients of the time-periodic state matrix A(Ω,t).
 
         Args:
-            A_handle_time: Function handle A(t)
-            time: Time vector for sampling
+            A_handle: Function handle A(OMEGA, t) that returns the n×n state matrix
+                at angular velocity OMEGA and time t
+            OMEGA: Angular velocity (rad/s). Period is computed as T = 2π/OMEGA
             number_harmonics: Number of harmonics to include
-            OMEGA: Fundamental frequency
+            time_samples: Number of time samples for FFT computation
             use_complex: If True, use complex formulation (default: False)
 
         Returns:
@@ -246,6 +251,13 @@ class StabilityAnalysis:
 
         Raises:
             ValueError: If inputs are invalid
+
+        Example:
+        -------
+        >>> A = lambda Om, t: np.array([[0, 1], [-1 - 0.1*np.sin(Om*t), -0.1]])
+        >>> OMEGA = 1.0  # rad/s
+        >>> A_HD = StabilityAnalysis.hd_computer(A, OMEGA, number_harmonics=2, time_samples=100)
+        >>> eigenvalues = np.linalg.eigvals(A_HD)
         """
         # Input validation
         if number_harmonics < 1:
@@ -254,41 +266,42 @@ class StabilityAnalysis:
         if OMEGA <= 0:
             raise ValueError(f"OMEGA must be positive, got {OMEGA}")
 
-        if not isinstance(time, np.ndarray):
-            raise ValueError(f"time must be numpy array, got {type(time)}")
+        if not isinstance(time_samples, (int, np.integer)) or time_samples < 2:
+            raise ValueError(f"time_samples must be integer >= 2, got {time_samples}")
 
-        if time.size < 2:
-            raise ValueError(f"time array must have at least 2 points, got {time.size}")
+        # Compute period and time vector
+        period_T = 2 * np.pi / OMEGA
+        time = np.linspace(0, period_T, time_samples)
 
         try:
-            A_0 = A_handle_time(0)
+            A_0 = A_handle(OMEGA, 0)
         except Exception as e:
-            raise ValueError(f"A_handle_time(0) failed: {e}")
+            raise ValueError(f"A_handle(OMEGA, 0) failed: {e}")
 
         if A_0 is None:
-            raise ValueError("A_handle_time(0) returned None")
+            raise ValueError("A_handle(OMEGA, 0) returned None")
 
         if not isinstance(A_0, np.ndarray):
-            raise ValueError(f"A_handle_time must return numpy array, got {type(A_0)}")
+            raise ValueError(f"A_handle must return numpy array, got {type(A_0)}")
 
         if A_0.ndim != 2:
-            raise ValueError(f"A_handle_time must return 2D array, got {A_0.ndim}D")
+            raise ValueError(f"A_handle must return 2D array, got {A_0.ndim}D")
 
         if A_0.shape[0] != A_0.shape[1]:
-            raise ValueError(f"A_handle_time must return square matrix, got shape {A_0.shape}")
+            raise ValueError(f"A_handle must return square matrix, got shape {A_0.shape}")
 
         # Dispatch to complex or real formulation
         if use_complex:
             return StabilityAnalysis.hd_computer_complex(
-                A_handle_time, time, number_harmonics, OMEGA
+                A_handle, OMEGA, number_harmonics, time_samples
             )
 
         state_number = A_0.shape[0]
         size_A_HD = (1 + 2 * number_harmonics) * state_number
         A_HD = np.zeros((size_A_HD, size_A_HD))
 
-        # Compute time realizations of A(t) - vectorized for better performance
-        time_realisation_A = np.array([A_handle_time(t) for t in time])
+        # Compute time realizations of A(OMEGA, t) - vectorized for better performance
+        time_realisation_A = np.array([A_handle(OMEGA, t) for t in time])
         # Transpose to shape (state_number, state_number, len(time))
         time_realisation_A = np.transpose(time_realisation_A, (1, 2, 0))
 
@@ -395,10 +408,10 @@ class StabilityAnalysis:
 
     @staticmethod
     def hd_computer_complex(
-        A_handle_time: Callable[[float], np.ndarray],
-        time: np.ndarray,
+        A_handle: Callable[[float, float], np.ndarray],
+        OMEGA: float,
         number_harmonics: int,
-        OMEGA: float
+        time_samples: int
     ) -> np.ndarray:
         """Compute HD matrix using complex formulation.
 
@@ -407,20 +420,25 @@ class StabilityAnalysis:
         internally by hd_computer when use_complex=True.
 
         Args:
-            A_handle_time: Function handle A(t)
-            time: Time vector for sampling
+            A_handle: Function handle A(OMEGA, t) that returns the n×n state matrix
+                at angular velocity OMEGA and time t
+            OMEGA: Angular velocity (rad/s). Period is computed as T = 2π/OMEGA
             number_harmonics: Number of harmonics to include
-            OMEGA: Fundamental frequency
+            time_samples: Number of time samples for FFT computation
 
         Returns:
             Complex HD matrix A_HD
         """
-        state_number = A_handle_time(0).shape[0]
+        # Compute period and time vector
+        period_T = 2 * np.pi / OMEGA
+        time = np.linspace(0, period_T, time_samples)
+
+        state_number = A_handle(OMEGA, 0).shape[0]
         size_A_HD = (1 + 2 * number_harmonics) * state_number
         A_HD = np.zeros((size_A_HD, size_A_HD), dtype=complex)
 
-        # Compute time realizations of A(t) - vectorized for better performance
-        time_realisation_A = np.array([A_handle_time(t) for t in time])
+        # Compute time realizations of A(OMEGA, t) - vectorized for better performance
+        time_realisation_A = np.array([A_handle(OMEGA, t) for t in time])
         # Transpose to shape (state_number, state_number, len(time))
         time_realisation_A = np.transpose(time_realisation_A, (1, 2, 0))
 

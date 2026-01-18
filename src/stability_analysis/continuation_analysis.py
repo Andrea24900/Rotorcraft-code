@@ -276,19 +276,17 @@ class ContinuationAnalysis(StabilityAnalysis):
 
     def _setup_LTP_initial(self) -> Tuple[np.ndarray, np.ndarray, int]:
         """Setup initial LTP problem."""
-        T = 2 * np.pi / self.modal_solution[0].OMEGA
-        A_time_OMEGA = lambda t, omega: self.rotor_build.state_matrix_function(t, omega)
-        A_time = lambda t: A_time_OMEGA(t, self.modal_solution[0].OMEGA)
+        A_handle = lambda Om, t: self.rotor_build.state_matrix_function(t, Om)
 
         A = self.monodromy_computer(
-            A_time, T,
+            A_handle, self.modal_solution[0].OMEGA,
             rtol=self.rotor_build.problem.ode_rtol,
             atol=self.rotor_build.problem.ode_atol
         )
         problem_size = A.shape[0]
 
         dM_dOMEGA = self.numerical_sensitivity(
-            'MON', A_time_OMEGA,
+            'MON', A_handle,
             self.rotor_build.problem.step_h,
             self.modal_solution[0].OMEGA,
             ode_rtol=self.rotor_build.problem.ode_rtol,
@@ -299,19 +297,16 @@ class ContinuationAnalysis(StabilityAnalysis):
 
     def _setup_HD_initial(self) -> Tuple[np.ndarray, np.ndarray, int]:
         """Setup initial HD problem."""
-        T = 2 * np.pi / self.modal_solution[0].OMEGA
-        time = np.linspace(0, T, self.rotor_build.problem.time_samples)
+        A_handle = lambda Om, t: self.rotor_build.state_matrix_function(t, Om)
 
-        A_time_OMEGA = lambda t, omega: self.rotor_build.state_matrix_function(t, omega)
-        A_time = lambda t: A_time_OMEGA(t, self.modal_solution[0].OMEGA)
-
-        A = self.hd_computer(A_time, time,
+        A = self.hd_computer(A_handle,
+                            self.modal_solution[0].OMEGA,
                             self.rotor_build.problem.number_harmonics,
-                            self.modal_solution[0].OMEGA)
+                            self.rotor_build.problem.time_samples)
         problem_size = A.shape[0]
 
         dM_dOMEGA = self.numerical_sensitivity(
-            'HD', A_time_OMEGA,
+            'HD', A_handle,
             self.rotor_build.problem.step_h,
             self.modal_solution[0].OMEGA,
             wrt_omega=True,
@@ -336,18 +331,16 @@ class ContinuationAnalysis(StabilityAnalysis):
 
     def _compute_LTP_matrices(self, i: int) -> Tuple[np.ndarray, np.ndarray]:
         """Compute LTP matrices at operating point i."""
-        T = 2 * np.pi / self.modal_solution[i].OMEGA
-        A_time_OMEGA = lambda t, omega: self.rotor_build.state_matrix_function(t, omega)
-        A_time = lambda t: A_time_OMEGA(t, self.modal_solution[i].OMEGA)
+        A_handle = lambda Om, t: self.rotor_build.state_matrix_function(t, Om)
 
         A = self.monodromy_computer(
-            A_time, T,
+            A_handle, self.modal_solution[i].OMEGA,
             rtol=self.rotor_build.problem.ode_rtol,
             atol=self.rotor_build.problem.ode_atol
         )
 
         dM_dOMEGA = self.numerical_sensitivity(
-            'MON', A_time_OMEGA,
+            'MON', A_handle,
             self.rotor_build.problem.step_h,
             self.modal_solution[i].OMEGA,
             ode_rtol=self.rotor_build.problem.ode_rtol,
@@ -358,19 +351,16 @@ class ContinuationAnalysis(StabilityAnalysis):
 
     def _compute_HD_matrices(self, i: int) -> Tuple[np.ndarray, np.ndarray, int]:
         """Compute HD matrices at operating point i."""
-        T = 2 * np.pi / self.modal_solution[i].OMEGA
-        time = np.linspace(0, T, self.rotor_build.problem.time_samples)
+        A_handle = lambda Om, t: self.rotor_build.state_matrix_function(t, Om)
 
-        A_time_OMEGA = lambda t, omega: self.rotor_build.state_matrix_function(t, omega)
-        A_time = lambda t: A_time_OMEGA(t, self.modal_solution[i].OMEGA)
-
-        A = self.hd_computer(A_time, time,
+        A = self.hd_computer(A_handle,
+                            self.modal_solution[i].OMEGA,
                             self.rotor_build.problem.number_harmonics,
-                            self.modal_solution[i].OMEGA)
+                            self.rotor_build.problem.time_samples)
         problem_size = A.shape[0]
 
         dM_dOMEGA = self.numerical_sensitivity(
-            'HD', A_time_OMEGA,
+            'HD', A_handle,
             self.rotor_build.problem.step_h,
             self.modal_solution[i].OMEGA,
             wrt_omega=True,
@@ -461,66 +451,57 @@ class ContinuationAnalysis(StabilityAnalysis):
 
         elif matrix_type == 'HD':
             # Harmonic decomposition sensitivity
+            # A_handle_all is expected to be A(OMEGA, t)
             number_time_instants = HD_parameters[0]
             number_harmonics = HD_parameters[1]
 
             if wrt_omega:
                 # Variation with respect to OMEGA
-                time_min_h = np.linspace(0, 2 * np.pi / (OMEGA - step_size_h), number_time_instants)
-                A_min_h = lambda t: A_handle_all(t, OMEGA - step_size_h)
                 A_HD_min_h = StabilityAnalysis.hd_computer(
-                    A_min_h, time_min_h, number_harmonics, OMEGA - step_size_h
+                    A_handle_all, OMEGA - step_size_h, number_harmonics, number_time_instants
                 )
 
-                time_plus_h = np.linspace(0, 2 * np.pi / (OMEGA + step_size_h), number_time_instants)
-                A_plus_h = lambda t: A_handle_all(t, OMEGA + step_size_h)
                 A_HD_plus_h = StabilityAnalysis.hd_computer(
-                    A_plus_h, time_plus_h, number_harmonics, OMEGA + step_size_h
+                    A_handle_all, OMEGA + step_size_h, number_harmonics, number_time_instants
                 )
             else:
                 # Variation with respect to parameter
-                T = 2 * np.pi / OMEGA
-                time = np.linspace(0, T, number_time_instants)
-
-                A_plus_h = lambda t: A_handle_all(t, par + step_size_h, OMEGA)
+                # A_handle_all is expected to be A(par, OMEGA, t) in this case
+                A_plus_h = lambda Om, t: A_handle_all(par + step_size_h, Om, t)
                 A_HD_plus_h = StabilityAnalysis.hd_computer(
-                    A_plus_h, time, number_harmonics, OMEGA
+                    A_plus_h, OMEGA, number_harmonics, number_time_instants
                 )
 
-                A_min_h = lambda t: A_handle_all(t, par - step_size_h, OMEGA)
+                A_min_h = lambda Om, t: A_handle_all(par - step_size_h, Om, t)
                 A_HD_min_h = StabilityAnalysis.hd_computer(
-                    A_min_h, time, number_harmonics, OMEGA
+                    A_min_h, OMEGA, number_harmonics, number_time_instants
                 )
 
             sensitivity = ContinuationAnalysis._centered_difference(A_HD_plus_h, A_HD_min_h, step_size_h)
 
         elif matrix_type == 'MON':
             # Monodromy matrix sensitivity
+            # A_handle_all is expected to be A(OMEGA, t)
             if wrt_omega:
                 # Variation with respect to OMEGA
-                T_plus_h = 2 * np.pi / (OMEGA + step_size_h)
-                A_plus_h = lambda t: A_handle_all(t, OMEGA + step_size_h)
                 M_plus_h = StabilityAnalysis.monodromy_computer(
-                    A_plus_h, T_plus_h, rtol=ode_rtol, atol=ode_atol
+                    A_handle_all, OMEGA + step_size_h, rtol=ode_rtol, atol=ode_atol
                 )
 
-                T_min_h = 2 * np.pi / (OMEGA - step_size_h)
-                A_min_h = lambda t: A_handle_all(t, OMEGA - step_size_h)
                 M_min_h = StabilityAnalysis.monodromy_computer(
-                    A_min_h, T_min_h, rtol=ode_rtol, atol=ode_atol
+                    A_handle_all, OMEGA - step_size_h, rtol=ode_rtol, atol=ode_atol
                 )
             else:
                 # Variation with respect to parameter
-                T = 2 * np.pi / OMEGA
-
-                A_plus_h = lambda t: A_handle_all(t, par + step_size_h, OMEGA)
+                # A_handle_all is expected to be A(par, OMEGA, t) in this case
+                A_plus_h = lambda Om, t: A_handle_all(par + step_size_h, Om, t)
                 M_plus_h = StabilityAnalysis.monodromy_computer(
-                    A_plus_h, T, rtol=ode_rtol, atol=ode_atol
+                    A_plus_h, OMEGA, rtol=ode_rtol, atol=ode_atol
                 )
 
-                A_min_h = lambda t: A_handle_all(t, par - step_size_h, OMEGA)
+                A_min_h = lambda Om, t: A_handle_all(par - step_size_h, Om, t)
                 M_min_h = StabilityAnalysis.monodromy_computer(
-                    A_min_h, T, rtol=ode_rtol, atol=ode_atol
+                    A_min_h, OMEGA, rtol=ode_rtol, atol=ode_atol
                 )
 
             sensitivity = ContinuationAnalysis._centered_difference(M_plus_h, M_min_h, step_size_h)

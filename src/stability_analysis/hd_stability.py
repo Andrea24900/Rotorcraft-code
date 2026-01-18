@@ -80,29 +80,21 @@ class HDStability(StabilityAnalysis):
                 f"time_samples must be integer >= 10, got {time_samples}"
             )
 
-        # Create time-dependent state matrix handle
+        # Create time-dependent state matrix handle A(OMEGA, t)
         try:
-            A = lambda t: self.rotor_build.state_matrix_function(t, OMEGA)
+            A = lambda Om, t: self.rotor_build.state_matrix_function(t, Om)
         except Exception as e:
             raise RuntimeError(
                 f"Failed to create state matrix handle at OMEGA={OMEGA}: {e}"
-            ) from e
-
-        # Time vector for sampling using problem definition
-        try:
-            time = np.linspace(0, T, time_samples)
-        except Exception as e:
-            raise RuntimeError(
-                f"Failed to create time vector: {e}"
             ) from e
 
         # Compute Harmonic Decomposition matrix
         try:
             A_HD = StabilityAnalysis.hd_computer(
                 A,
-                time,
-                number_harmonics,
                 OMEGA,
+                number_harmonics,
+                time_samples,
                 use_complex=self.rotor_build.problem.hd_use_complex
             )
         except Exception as e:

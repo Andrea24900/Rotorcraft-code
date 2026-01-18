@@ -46,10 +46,10 @@ def test_monodromy_computer_simple_system():
     # Simple 2x2 time-invariant system: dx/dt = A*x
     # A = [[0, 1], [-1, -0.1]]
     # Analytical solution exists for verification
-    A_func = lambda t: np.array([[0, 1], [-1, -0.1]])
-    T = 2 * np.pi
+    A_func = lambda Om, t: np.array([[0, 1], [-1, -0.1]])
+    OMEGA = 1.0  # rad/s, period T = 2*pi
 
-    M = StabilityAnalysis.monodromy_computer(A_func, T)
+    M = StabilityAnalysis.monodromy_computer(A_func, OMEGA)
 
     # Check dimensions
     assert M.shape == (2, 2), "Monodromy matrix should be 2x2"
@@ -65,10 +65,10 @@ def test_monodromy_computer_simple_system():
 def test_monodromy_computer_time_periodic_system():
     """Test monodromy computer with a time-periodic system."""
     # Time-periodic system with sinusoidal coefficient
-    A_func = lambda t: np.array([[0, 1], [-1 - 0.1*np.sin(t), -0.1]])
-    T = 2 * np.pi  # Period matches the sinusoidal term
+    A_func = lambda Om, t: np.array([[0, 1], [-1 - 0.1*np.sin(Om*t), -0.1]])
+    OMEGA = 1.0  # rad/s, period T = 2*pi
 
-    M = StabilityAnalysis.monodromy_computer(A_func, T)
+    M = StabilityAnalysis.monodromy_computer(A_func, OMEGA)
 
     # Check dimensions
     assert M.shape == (2, 2)
@@ -80,11 +80,11 @@ def test_monodromy_computer_time_periodic_system():
 
 def test_monodromy_computer_custom_tolerances():
     """Test monodromy computer with custom tolerances."""
-    A_func = lambda t: np.array([[0, 1], [-1, -0.1]])
-    T = 2 * np.pi
+    A_func = lambda Om, t: np.array([[0, 1], [-1, -0.1]])
+    OMEGA = 1.0  # rad/s
 
     # Use custom tolerances
-    M = StabilityAnalysis.monodromy_computer(A_func, T, rtol=1e-8, atol=1e-10)
+    M = StabilityAnalysis.monodromy_computer(A_func, OMEGA, rtol=1e-8, atol=1e-10)
 
     assert M.shape == (2, 2)
     assert np.all(np.isreal(M))
@@ -93,10 +93,10 @@ def test_monodromy_computer_custom_tolerances():
 def test_monodromy_computer_identity_system():
     """Test monodromy computer with identity system (dΦ/dt = 0)."""
     # System: dx/dt = 0 => Φ(t) = Φ(0) = I
-    A_func = lambda t: np.zeros((2, 2))
-    T = 1.0
+    A_func = lambda Om, t: np.zeros((2, 2))
+    OMEGA = 2 * np.pi  # rad/s, gives T = 1.0
 
-    M = StabilityAnalysis.monodromy_computer(A_func, T)
+    M = StabilityAnalysis.monodromy_computer(A_func, OMEGA)
 
     # Monodromy matrix should be identity
     assert np.allclose(M, np.eye(2), atol=1e-6), \
@@ -105,14 +105,14 @@ def test_monodromy_computer_identity_system():
 
 def test_monodromy_computer_3x3_system():
     """Test monodromy computer with a 3x3 system."""
-    A_func = lambda t: np.array([
+    A_func = lambda Om, t: np.array([
         [0, 1, 0],
         [0, 0, 1],
         [-1, -1, -1]
     ])
-    T = 2 * np.pi
+    OMEGA = 1.0  # rad/s
 
-    M = StabilityAnalysis.monodromy_computer(A_func, T)
+    M = StabilityAnalysis.monodromy_computer(A_func, OMEGA)
 
     assert M.shape == (3, 3)
     eigenvalues = np.linalg.eigvals(M)
@@ -123,25 +123,25 @@ def test_monodromy_computer_3x3_system():
 # Test Monodromy Computer - Input Validation
 # ============================================================================
 
-def test_monodromy_negative_period():
-    """Test that negative period raises ValueError."""
-    A_func = lambda t: np.array([[0, 1], [-1, -0.1]])
+def test_monodromy_negative_omega():
+    """Test that negative OMEGA raises ValueError."""
+    A_func = lambda Om, t: np.array([[0, 1], [-1, -0.1]])
 
-    with pytest.raises(ValueError, match="period_T must be positive"):
+    with pytest.raises(ValueError, match="OMEGA must be positive"):
         StabilityAnalysis.monodromy_computer(A_func, -1.0)
 
 
-def test_monodromy_zero_period():
-    """Test that zero period raises ValueError."""
-    A_func = lambda t: np.array([[0, 1], [-1, -0.1]])
+def test_monodromy_zero_omega():
+    """Test that zero OMEGA raises ValueError."""
+    A_func = lambda Om, t: np.array([[0, 1], [-1, -0.1]])
 
-    with pytest.raises(ValueError, match="period_T must be positive"):
+    with pytest.raises(ValueError, match="OMEGA must be positive"):
         StabilityAnalysis.monodromy_computer(A_func, 0.0)
 
 
 def test_monodromy_non_square_matrix():
     """Test that non-square matrix raises ValueError."""
-    A_func = lambda t: np.array([[0, 1, 2], [-1, -0.1, 0]])  # 2x3 matrix
+    A_func = lambda Om, t: np.array([[0, 1, 2], [-1, -0.1, 0]])  # 2x3 matrix
 
     with pytest.raises(ValueError, match="square matrix"):
         StabilityAnalysis.monodromy_computer(A_func, 1.0)
@@ -149,7 +149,7 @@ def test_monodromy_non_square_matrix():
 
 def test_monodromy_non_2d_array():
     """Test that non-2D array raises ValueError."""
-    A_func = lambda t: np.array([0, 1, -1])  # 1D array
+    A_func = lambda Om, t: np.array([0, 1, -1])  # 1D array
 
     with pytest.raises(ValueError, match="2D array"):
         StabilityAnalysis.monodromy_computer(A_func, 1.0)
@@ -157,7 +157,7 @@ def test_monodromy_non_2d_array():
 
 def test_monodromy_invalid_function():
     """Test that invalid function raises ValueError."""
-    A_func = lambda t: None  # Returns None instead of array
+    A_func = lambda Om, t: None  # Returns None instead of array
 
     with pytest.raises(ValueError):
         StabilityAnalysis.monodromy_computer(A_func, 1.0)
@@ -169,13 +169,12 @@ def test_monodromy_invalid_function():
 
 def test_hd_computer_basic():
     """Test HD computer with basic time-periodic system."""
-    A_func = lambda t: np.array([[0, 1], [-1 - 0.1*np.sin(t), -0.1]])
+    A_func = lambda Om, t: np.array([[0, 1], [-1 - 0.1*np.sin(Om*t), -0.1]])
     OMEGA = 1.0
-    T = 2 * np.pi / OMEGA
-    time = np.linspace(0, T, 100)
     number_harmonics = 1
+    time_samples = 100
 
-    A_HD = StabilityAnalysis.hd_computer(A_func, time, number_harmonics, OMEGA)
+    A_HD = StabilityAnalysis.hd_computer(A_func, OMEGA, number_harmonics, time_samples)
 
     # For n=2 original state variables and N=1 harmonic (user-defined): HD matrix size = (1 + 2*N) * n = 6
     expected_size = (1 + 2 * number_harmonics) * 2
@@ -187,13 +186,12 @@ def test_hd_computer_basic():
 
 def test_hd_computer_multiple_harmonics():
     """Test HD computer with multiple harmonics."""
-    A_func = lambda t: np.array([[0, 1], [-1 - 0.1*np.sin(t), -0.1]])
+    A_func = lambda Om, t: np.array([[0, 1], [-1 - 0.1*np.sin(Om*t), -0.1]])
     OMEGA = 1.0
-    T = 2 * np.pi / OMEGA
-    time = np.linspace(0, T, 200)
     number_harmonics = 3
+    time_samples = 200
 
-    A_HD = StabilityAnalysis.hd_computer(A_func, time, number_harmonics, OMEGA)
+    A_HD = StabilityAnalysis.hd_computer(A_func, OMEGA, number_harmonics, time_samples)
 
     # For n=2 original state variables and N=3 harmonics (user-defined): HD matrix size = (1 + 2*N) * n = 14
     expected_size = (1 + 2 * number_harmonics) * 2
@@ -202,17 +200,16 @@ def test_hd_computer_multiple_harmonics():
 
 def test_hd_computer_3x3_system():
     """Test HD computer with 3x3 system."""
-    A_func = lambda t: np.array([
+    A_func = lambda Om, t: np.array([
         [0, 1, 0],
         [0, 0, 1],
-        [-1 - 0.1*np.sin(t), -1, -1]
+        [-1 - 0.1*np.sin(Om*t), -1, -1]
     ])
     OMEGA = 1.0
-    T = 2 * np.pi / OMEGA
-    time = np.linspace(0, T, 100)
     number_harmonics = 2
+    time_samples = 100
 
-    A_HD = StabilityAnalysis.hd_computer(A_func, time, number_harmonics, OMEGA)
+    A_HD = StabilityAnalysis.hd_computer(A_func, OMEGA, number_harmonics, time_samples)
 
     # For n=3 original state variables and N=2 harmonics (user-defined): HD matrix size = (1 + 2*N) * n = 15
     expected_size = (1 + 2 * number_harmonics) * 3
@@ -225,13 +222,12 @@ def test_hd_computer_3x3_system():
 
 def test_hd_computer_complex():
     """Test HD computer with complex formulation."""
-    A_func = lambda t: np.array([[0, 1], [-1 - 0.1*np.sin(t), -0.1]])
+    A_func = lambda Om, t: np.array([[0, 1], [-1 - 0.1*np.sin(Om*t), -0.1]])
     OMEGA = 1.0
-    T = 2 * np.pi / OMEGA
-    time = np.linspace(0, T, 100)
     number_harmonics = 1
+    time_samples = 100
 
-    A_HD = StabilityAnalysis.hd_computer(A_func, time, number_harmonics, OMEGA, use_complex=True)
+    A_HD = StabilityAnalysis.hd_computer(A_func, OMEGA, number_harmonics, time_samples, use_complex=True)
 
     # Same size as real formulation
     expected_size = (1 + 2 * number_harmonics) * 2
@@ -243,13 +239,12 @@ def test_hd_computer_complex():
 
 def test_hd_computer_complex_direct_call():
     """Test calling hd_computer_complex directly."""
-    A_func = lambda t: np.array([[0, 1], [-1 - 0.1*np.sin(t), -0.1]])
+    A_func = lambda Om, t: np.array([[0, 1], [-1 - 0.1*np.sin(Om*t), -0.1]])
     OMEGA = 1.0
-    T = 2 * np.pi / OMEGA
-    time = np.linspace(0, T, 100)
     number_harmonics = 2
+    time_samples = 100
 
-    A_HD = StabilityAnalysis.hd_computer_complex(A_func, time, number_harmonics, OMEGA)
+    A_HD = StabilityAnalysis.hd_computer_complex(A_func, OMEGA, number_harmonics, time_samples)
 
     expected_size = (1 + 2 * number_harmonics) * 2
     assert A_HD.shape == (expected_size, expected_size)
@@ -262,63 +257,65 @@ def test_hd_computer_complex_direct_call():
 
 def test_hd_computer_invalid_harmonics():
     """Test that invalid number of harmonics raises ValueError."""
-    A_func = lambda t: np.array([[0, 1], [-1, -0.1]])
-    time = np.linspace(0, 1, 100)
+    A_func = lambda Om, t: np.array([[0, 1], [-1, -0.1]])
     OMEGA = 1.0
+    time_samples = 100
 
     with pytest.raises(ValueError, match="number_harmonics must be >= 1"):
-        StabilityAnalysis.hd_computer(A_func, time, 0, OMEGA)
+        StabilityAnalysis.hd_computer(A_func, OMEGA, 0, time_samples)
 
     with pytest.raises(ValueError, match="number_harmonics must be >= 1"):
-        StabilityAnalysis.hd_computer(A_func, time, -1, OMEGA)
+        StabilityAnalysis.hd_computer(A_func, OMEGA, -1, time_samples)
 
 
 def test_hd_computer_invalid_omega():
     """Test that invalid OMEGA raises ValueError."""
-    A_func = lambda t: np.array([[0, 1], [-1, -0.1]])
-    time = np.linspace(0, 1, 100)
+    A_func = lambda Om, t: np.array([[0, 1], [-1, -0.1]])
+    time_samples = 100
 
     with pytest.raises(ValueError, match="OMEGA must be positive"):
-        StabilityAnalysis.hd_computer(A_func, time, 1, 0.0)
+        StabilityAnalysis.hd_computer(A_func, 0.0, 1, time_samples)
 
     with pytest.raises(ValueError, match="OMEGA must be positive"):
-        StabilityAnalysis.hd_computer(A_func, time, 1, -1.0)
+        StabilityAnalysis.hd_computer(A_func, -1.0, 1, time_samples)
 
 
-def test_hd_computer_invalid_time_array():
-    """Test that invalid time array raises ValueError."""
-    A_func = lambda t: np.array([[0, 1], [-1, -0.1]])
+def test_hd_computer_invalid_time_samples():
+    """Test that invalid time_samples raises ValueError."""
+    A_func = lambda Om, t: np.array([[0, 1], [-1, -0.1]])
     OMEGA = 1.0
 
-    # Not a numpy array
-    with pytest.raises(ValueError, match="time must be numpy array"):
-        StabilityAnalysis.hd_computer(A_func, [0, 1, 2], 1, OMEGA)
-
     # Too few points
-    with pytest.raises(ValueError, match="at least 2 points"):
-        StabilityAnalysis.hd_computer(A_func, np.array([0]), 1, OMEGA)
+    with pytest.raises(ValueError, match="time_samples must be integer >= 2"):
+        StabilityAnalysis.hd_computer(A_func, OMEGA, 1, 1)
+
+    # Not an integer
+    with pytest.raises(ValueError, match="time_samples must be integer >= 2"):
+        StabilityAnalysis.hd_computer(A_func, OMEGA, 1, 1.5)
 
 
 def test_hd_computer_non_square_matrix():
     """Test that non-square matrix raises ValueError."""
-    A_func = lambda t: np.array([[0, 1, 2], [-1, -0.1, 0]])  # 2x3
-    time = np.linspace(0, 1, 100)
+    A_func = lambda Om, t: np.array([[0, 1, 2], [-1, -0.1, 0]])  # 2x3
     OMEGA = 1.0
+    time_samples = 100
 
     with pytest.raises(ValueError, match="square matrix"):
-        StabilityAnalysis.hd_computer(A_func, time, 1, OMEGA)
+        StabilityAnalysis.hd_computer(A_func, OMEGA, 1, time_samples)
 
 
 def test_hd_computer_complex_invalid_inputs():
-    """Test that hd_computer_complex validates inputs."""
-    A_func = lambda t: np.array([[0, 1], [-1, -0.1]])
-    time = np.linspace(0, 1, 100)
+    """Test that hd_computer_complex validates inputs via hd_computer."""
+    A_func = lambda Om, t: np.array([[0, 1], [-1, -0.1]])
+    time_samples = 100
 
+    # Note: hd_computer_complex is now called via hd_computer with use_complex=True
+    # The validation happens in hd_computer
     with pytest.raises(ValueError, match="OMEGA must be positive"):
-        StabilityAnalysis.hd_computer_complex(A_func, time, 1, -1.0)
+        StabilityAnalysis.hd_computer(A_func, -1.0, 1, time_samples, use_complex=True)
 
     with pytest.raises(ValueError, match="number_harmonics must be >= 1"):
-        StabilityAnalysis.hd_computer_complex(A_func, time, 0, 1.0)
+        StabilityAnalysis.hd_computer(A_func, 1.0, 0, time_samples, use_complex=True)
 
 
 # ============================================================================
@@ -450,11 +447,10 @@ def test_monodromy_with_rotor_system():
     """Test monodromy computer with actual rotor state matrix."""
     rotor = RotorBuild.build_all()
     OMEGA = 25.0  # rad/s
-    T = 2 * np.pi / OMEGA
 
-    A_func = lambda t: rotor.state_matrix_function(t, OMEGA)
+    A_func = lambda Om, t: rotor.state_matrix_function(t, Om)
 
-    M = StabilityAnalysis.monodromy_computer(A_func, T)
+    M = StabilityAnalysis.monodromy_computer(A_func, OMEGA)
 
     # Check dimensions - monodromy matrix should be square
     assert M.shape[0] == M.shape[1], "Monodromy matrix should be square"
@@ -466,13 +462,12 @@ def test_hd_with_rotor_system():
     """Test HD computer with actual rotor state matrix."""
     rotor = RotorBuild.build_all()
     OMEGA = 25.0  # rad/s
-    T = 2 * np.pi / OMEGA
-    time = np.linspace(0, T, 100)
     number_harmonics = 1
+    time_samples = 100
 
-    A_func = lambda t: rotor.state_matrix_function(t, OMEGA)
+    A_func = lambda Om, t: rotor.state_matrix_function(t, Om)
 
-    A_HD = StabilityAnalysis.hd_computer(A_func, time, number_harmonics, OMEGA)
+    A_HD = StabilityAnalysis.hd_computer(A_func, OMEGA, number_harmonics, time_samples)
 
     # Check dimensions - HD matrix should be square
     assert A_HD.shape[0] == A_HD.shape[1], "HD matrix should be square"
@@ -484,11 +479,11 @@ def test_hd_with_rotor_system():
 # ============================================================================
 
 def test_very_small_period():
-    """Test monodromy with very small period."""
-    A_func = lambda t: np.array([[0, 1], [-1, -0.1]])
-    T = 1e-6
+    """Test monodromy with very small period (large OMEGA)."""
+    A_func = lambda Om, t: np.array([[0, 1], [-1, -0.1]])
+    OMEGA = 2 * np.pi / 1e-6  # Very large OMEGA gives T = 1e-6
 
-    M = StabilityAnalysis.monodromy_computer(A_func, T)
+    M = StabilityAnalysis.monodromy_computer(A_func, OMEGA)
 
     # Should be close to identity for very small T
     assert M.shape == (2, 2)
@@ -498,13 +493,12 @@ def test_very_small_period():
 
 def test_very_large_harmonics():
     """Test HD computer with many harmonics (stress test)."""
-    A_func = lambda t: np.array([[0, 1], [-1 - 0.1*np.sin(t), -0.1]])
+    A_func = lambda Om, t: np.array([[0, 1], [-1 - 0.1*np.sin(Om*t), -0.1]])
     OMEGA = 1.0
-    T = 2 * np.pi / OMEGA
-    time = np.linspace(0, T, 500)
     number_harmonics = 10
+    time_samples = 500
 
-    A_HD = StabilityAnalysis.hd_computer(A_func, time, number_harmonics, OMEGA)
+    A_HD = StabilityAnalysis.hd_computer(A_func, OMEGA, number_harmonics, time_samples)
 
     expected_size = (1 + 2 * number_harmonics) * 2
     assert A_HD.shape == (expected_size, expected_size)
@@ -515,13 +509,13 @@ def test_performance_warning_large_system():
     import warnings
 
     # Create a large system (n=60 > 50)
-    A_func = lambda t: np.zeros((60, 60))
-    T = 1.0
+    A_func = lambda Om, t: np.zeros((60, 60))
+    OMEGA = 2 * np.pi  # rad/s, gives T = 1.0
 
     # Capture warnings
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
-        M = StabilityAnalysis.monodromy_computer(A_func, T)
+        M = StabilityAnalysis.monodromy_computer(A_func, OMEGA)
 
         # Check that a UserWarning was issued
         assert len(w) == 1
@@ -535,13 +529,13 @@ def test_no_warning_small_system():
     import warnings
 
     # Create a small system (n=10 < 50)
-    A_func = lambda t: np.zeros((10, 10))
-    T = 1.0
+    A_func = lambda Om, t: np.zeros((10, 10))
+    OMEGA = 2 * np.pi  # rad/s, gives T = 1.0
 
     # Capture warnings
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
-        M = StabilityAnalysis.monodromy_computer(A_func, T)
+        M = StabilityAnalysis.monodromy_computer(A_func, OMEGA)
 
         # Check that no warning was issued
         assert len(w) == 0
@@ -562,8 +556,8 @@ if __name__ == "__main__":
         test_monodromy_computer_custom_tolerances,
         test_monodromy_computer_identity_system,
         test_monodromy_computer_3x3_system,
-        test_monodromy_negative_period,
-        test_monodromy_zero_period,
+        test_monodromy_negative_omega,
+        test_monodromy_zero_omega,
         test_monodromy_non_square_matrix,
         test_monodromy_non_2d_array,
         test_monodromy_invalid_function,
@@ -574,7 +568,7 @@ if __name__ == "__main__":
         test_hd_computer_complex_direct_call,
         test_hd_computer_invalid_harmonics,
         test_hd_computer_invalid_omega,
-        test_hd_computer_invalid_time_array,
+        test_hd_computer_invalid_time_samples,
         test_hd_computer_non_square_matrix,
         test_hd_computer_complex_invalid_inputs,
         test_modal_solution_initialization,

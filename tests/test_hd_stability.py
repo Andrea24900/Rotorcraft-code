@@ -401,7 +401,7 @@ if __name__ == "__main__":
     # List all test functions
     test_functions = [
         test_hd_initialization,
-        test_hd_inherits_from_ltp,
+        test_hd_inherits_from_stability_analysis,
         test_hd_single_point_basic,
         test_hd_single_point_multiple_harmonics,
         test_hd_single_point_complex_formulation,
@@ -409,7 +409,6 @@ if __name__ == "__main__":
         test_hd_full_range_with_complex,
         test_hd_single_point_negative_omega,
         test_hd_single_point_zero_omega,
-        test_hd_single_point_negative_T,
         test_hd_single_point_invalid_harmonics,
         test_hd_single_point_invalid_time_samples,
         test_hd_full_range_basic,

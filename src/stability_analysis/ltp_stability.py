@@ -47,9 +47,9 @@ class LTPStability(StabilityAnalysis):
         # Compute period from OMEGA
         T = 2 * np.pi / OMEGA
 
-        # Create time-dependent state matrix handle
+        # Create time-dependent state matrix handle A(OMEGA, t)
         try:
-            A = lambda t: self.rotor_build.state_matrix_function(t, OMEGA)
+            A = lambda Om, t: self.rotor_build.state_matrix_function(t, Om)
         except Exception as e:
             raise RuntimeError(
                 f"Failed to create state matrix handle at OMEGA={OMEGA}: {e}"
@@ -58,7 +58,7 @@ class LTPStability(StabilityAnalysis):
         # Compute monodromy matrix
         try:
             monodromy_matrix_M = self.monodromy_computer(
-                A, T,
+                A, OMEGA,
                 rtol=self.rotor_build.problem.ode_rtol,
                 atol=self.rotor_build.problem.ode_atol
             )
