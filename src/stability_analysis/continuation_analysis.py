@@ -280,13 +280,19 @@ class ContinuationAnalysis(StabilityAnalysis):
         A_time_OMEGA = lambda t, omega: self.rotor_build.state_matrix_function(t, omega)
         A_time = lambda t: A_time_OMEGA(t, self.modal_solution[0].OMEGA)
 
-        A = self.monodromy_computer(A_time, T)
+        A = self.monodromy_computer(
+            A_time, T,
+            rtol=self.rotor_build.problem.ode_rtol,
+            atol=self.rotor_build.problem.ode_atol
+        )
         problem_size = A.shape[0]
 
         dM_dOMEGA = self.numerical_sensitivity(
             'MON', A_time_OMEGA,
             self.rotor_build.problem.step_h,
-            self.modal_solution[0].OMEGA
+            self.modal_solution[0].OMEGA,
+            ode_rtol=self.rotor_build.problem.ode_rtol,
+            ode_atol=self.rotor_build.problem.ode_atol
         )
 
         return A, dM_dOMEGA, problem_size
@@ -334,12 +340,18 @@ class ContinuationAnalysis(StabilityAnalysis):
         A_time_OMEGA = lambda t, omega: self.rotor_build.state_matrix_function(t, omega)
         A_time = lambda t: A_time_OMEGA(t, self.modal_solution[i].OMEGA)
 
-        A = self.monodromy_computer(A_time, T)
+        A = self.monodromy_computer(
+            A_time, T,
+            rtol=self.rotor_build.problem.ode_rtol,
+            atol=self.rotor_build.problem.ode_atol
+        )
 
         dM_dOMEGA = self.numerical_sensitivity(
             'MON', A_time_OMEGA,
             self.rotor_build.problem.step_h,
-            self.modal_solution[i].OMEGA
+            self.modal_solution[i].OMEGA,
+            ode_rtol=self.rotor_build.problem.ode_rtol,
+            ode_atol=self.rotor_build.problem.ode_atol
         )
 
         return A, dM_dOMEGA
@@ -408,7 +420,9 @@ class ContinuationAnalysis(StabilityAnalysis):
         OMEGA: float,
         wrt_omega: bool = True,
         par: float = None,
-        HD_parameters: list = None
+        HD_parameters: list = None,
+        ode_rtol: float = 1e-4,
+        ode_atol: float = 1e-6
     ) -> np.ndarray:
         """Compute numerical sensitivity matrix for continuation.
 
@@ -422,6 +436,8 @@ class ContinuationAnalysis(StabilityAnalysis):
             wrt_omega: If True, compute derivative w.r.t. OMEGA; if False, w.r.t. par
             par: Parameter value (required if wrt_omega=False)
             HD_parameters: [time_samples, number_harmonics] for HD method
+            ode_rtol: Relative tolerance for ODE integration (MON only)
+            ode_atol: Absolute tolerance for ODE integration (MON only)
 
         Returns:
             Sensitivity matrix dM/d(parameter)
@@ -484,20 +500,28 @@ class ContinuationAnalysis(StabilityAnalysis):
                 # Variation with respect to OMEGA
                 T_plus_h = 2 * np.pi / (OMEGA + step_size_h)
                 A_plus_h = lambda t: A_handle_all(t, OMEGA + step_size_h)
-                M_plus_h = StabilityAnalysis.monodromy_computer(A_plus_h, T_plus_h)
+                M_plus_h = StabilityAnalysis.monodromy_computer(
+                    A_plus_h, T_plus_h, rtol=ode_rtol, atol=ode_atol
+                )
 
                 T_min_h = 2 * np.pi / (OMEGA - step_size_h)
                 A_min_h = lambda t: A_handle_all(t, OMEGA - step_size_h)
-                M_min_h = StabilityAnalysis.monodromy_computer(A_min_h, T_min_h)
+                M_min_h = StabilityAnalysis.monodromy_computer(
+                    A_min_h, T_min_h, rtol=ode_rtol, atol=ode_atol
+                )
             else:
                 # Variation with respect to parameter
                 T = 2 * np.pi / OMEGA
 
                 A_plus_h = lambda t: A_handle_all(t, par + step_size_h, OMEGA)
-                M_plus_h = StabilityAnalysis.monodromy_computer(A_plus_h, T)
+                M_plus_h = StabilityAnalysis.monodromy_computer(
+                    A_plus_h, T, rtol=ode_rtol, atol=ode_atol
+                )
 
                 A_min_h = lambda t: A_handle_all(t, par - step_size_h, OMEGA)
-                M_min_h = StabilityAnalysis.monodromy_computer(A_min_h, T)
+                M_min_h = StabilityAnalysis.monodromy_computer(
+                    A_min_h, T, rtol=ode_rtol, atol=ode_atol
+                )
 
             sensitivity = ContinuationAnalysis._centered_difference(M_plus_h, M_min_h, step_size_h)
 

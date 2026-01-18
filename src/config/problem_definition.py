@@ -78,10 +78,14 @@ class ProblemDefinition:
     continuation_tolerance: float = 1e-2
     continuation_max_iter: int = 100
     step_h: float = 1e-4
-    time_samples: int = 10  # must be chosen in accordance with Nyquist criterion 
+    time_samples: int = 10  # must be chosen in accordance with Nyquist criterion
     # based on the number of harmonics that are required for the fft of A and the
-    #harmonic decomposition
+    # harmonic decomposition
     solution_direction: Literal["L2R", "R2L"] = "R2L"
+
+    # ODE integration tolerances (for LTP monodromy matrix computation)
+    ode_rtol: float = 1e-4  # relative tolerance
+    ode_atol: float = 1e-6  # absolute tolerance
     
     # Rotor physical characteristics
     rotor_characteristics: RotorCharacteristics = field(default_factory=RotorCharacteristics)

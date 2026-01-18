@@ -57,7 +57,11 @@ class LTPStability(StabilityAnalysis):
 
         # Compute monodromy matrix
         try:
-            monodromy_matrix_M = self.monodromy_computer(A, T)
+            monodromy_matrix_M = self.monodromy_computer(
+                A, T,
+                rtol=self.rotor_build.problem.ode_rtol,
+                atol=self.rotor_build.problem.ode_atol
+            )
         except Exception as e:
             raise RuntimeError(
                 f"Monodromy matrix computation failed at OMEGA={OMEGA:.2f} rad/s, "

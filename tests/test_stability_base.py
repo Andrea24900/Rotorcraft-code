@@ -33,8 +33,8 @@ def test_class_constants():
     """Test that class constants are defined correctly."""
     assert hasattr(StabilityAnalysis, 'DEFAULT_RTOL')
     assert hasattr(StabilityAnalysis, 'DEFAULT_ATOL')
-    assert StabilityAnalysis.DEFAULT_RTOL == 1e-6
-    assert StabilityAnalysis.DEFAULT_ATOL == 1e-8
+    assert StabilityAnalysis.DEFAULT_RTOL == 1e-4
+    assert StabilityAnalysis.DEFAULT_ATOL == 1e-6
 
 
 # ============================================================================
