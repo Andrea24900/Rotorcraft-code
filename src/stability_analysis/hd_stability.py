@@ -8,7 +8,7 @@ from .base import StabilityAnalysis
 class HDStability(StabilityAnalysis):
     """Harmonic Decomposition (HD) stability analysis.
 
-    Alternative to LTP for time-periodic systems. Expands A(t) using Fourier series
+    Alternative to LTP for time-periodic systems. Expands A(Ω,t) using Fourier series
     and solves an augmented algebraic eigenvalue problem (no ODE integration).
 
     HD matrix size: (1 + 2N) × n where N = number_harmonics, n = state dimension.
@@ -80,9 +80,9 @@ class HDStability(StabilityAnalysis):
                 f"time_samples must be integer >= 10, got {time_samples}"
             )
 
-        # Create time-dependent state matrix handle A(OMEGA, t)
+        # Create time-dependent state matrix handle A_handle(OMEGA, t)
         try:
-            A = lambda Om, t: self.rotor_build.state_matrix_function(t, Om)
+            A_handle = lambda Om, t: self.rotor_build.state_matrix_function(t, Om)
         except Exception as e:
             raise RuntimeError(
                 f"Failed to create state matrix handle at OMEGA={OMEGA}: {e}"
@@ -91,7 +91,7 @@ class HDStability(StabilityAnalysis):
         # Compute Harmonic Decomposition matrix
         try:
             A_HD = StabilityAnalysis.hd_computer(
-                A,
+                A_handle,
                 OMEGA,
                 number_harmonics,
                 time_samples,

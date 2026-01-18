@@ -154,9 +154,9 @@ class StabilityAnalysis:
 
         Example:
         -------
-        >>> A = lambda Om, t: np.array([[0, 1], [-1 - 0.1*np.sin(Om*t), -0.1]])
+        >>> A_handle = lambda Om, t: np.array([[0, 1], [-1 - 0.1*np.sin(Om*t), -0.1]])
         >>> OMEGA = 1.0  # rad/s
-        >>> M = StabilityAnalysis.monodromy_computer(A, OMEGA)
+        >>> M = StabilityAnalysis.monodromy_computer(A_handle, OMEGA)
         >>> multipliers = np.linalg.eigvals(M)
         >>> is_stable = np.all(np.abs(multipliers) < 1)
         """
@@ -254,9 +254,9 @@ class StabilityAnalysis:
 
         Example:
         -------
-        >>> A = lambda Om, t: np.array([[0, 1], [-1 - 0.1*np.sin(Om*t), -0.1]])
+        >>> A_handle = lambda Om, t: np.array([[0, 1], [-1 - 0.1*np.sin(Om*t), -0.1]])
         >>> OMEGA = 1.0  # rad/s
-        >>> A_HD = StabilityAnalysis.hd_computer(A, OMEGA, number_harmonics=2, time_samples=100)
+        >>> A_HD = StabilityAnalysis.hd_computer(A_handle, OMEGA, number_harmonics=2, time_samples=100)
         >>> eigenvalues = np.linalg.eigvals(A_HD)
         """
         # Input validation

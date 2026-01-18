@@ -8,7 +8,7 @@ from .base import StabilityAnalysis
 class LTPStability(StabilityAnalysis):
     """Linear Time-Periodic stability analysis using Floquet theory.
 
-    For systems with dx/dt = A(t)x where A(t+T) = A(t).
+    For systems with dx/dt = A(Ω,t)x where A(Ω,t+T) = A(Ω,t) and T = 2π/Ω.
     Computes monodromy matrix M = Φ(T) and extracts characteristic multipliers μ.
 
     Stability: |μ| < 1 stable, |μ| > 1 unstable.
@@ -47,9 +47,9 @@ class LTPStability(StabilityAnalysis):
         # Compute period from OMEGA
         T = 2 * np.pi / OMEGA
 
-        # Create time-dependent state matrix handle A(OMEGA, t)
+        # Create time-dependent state matrix handle A_handle(OMEGA, t)
         try:
-            A = lambda Om, t: self.rotor_build.state_matrix_function(t, Om)
+            A_handle = lambda Om, t: self.rotor_build.state_matrix_function(t, Om)
         except Exception as e:
             raise RuntimeError(
                 f"Failed to create state matrix handle at OMEGA={OMEGA}: {e}"
@@ -58,7 +58,7 @@ class LTPStability(StabilityAnalysis):
         # Compute monodromy matrix
         try:
             monodromy_matrix_M = self.monodromy_computer(
-                A, OMEGA,
+                A_handle, OMEGA,
                 rtol=self.rotor_build.problem.ode_rtol,
                 atol=self.rotor_build.problem.ode_atol
             )
