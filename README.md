@@ -30,10 +30,10 @@ rotor_dynamics_python/
 ### From Release (Recommended)
 ```bash
 # Install specific version
-pip install git+https://github.com/Andrea24900/rotor_dynamics_python.git@v1.0.0
+pip install git+https://github.com/Andrea24900/rotor_dynamics_python.git@v1.0.1
 
 # Or clone specific version
-git clone --branch v1.0.0 https://github.com/Andrea24900/rotor_dynamics_python.git
+git clone --branch v1.0.1 https://github.com/Andrea24900/rotor_dynamics_python.git
 cd rotor_dynamics_python
 pip install -e ".[dev]"
 ```
@@ -166,7 +166,18 @@ class ProblemDefinition:
 
 ## Recent Improvements (January 2026)
 
-### System Matrices Refactor
+### v1.0.1 - API Simplification & Code Cleanup
+- **Simplified API Signatures**:
+  - `ltp_single_point(OMEGA)` and `hd_single_point(OMEGA)` now only require OMEGA; period T computed internally as `T = 2π/OMEGA`
+  - `monodromy_computer(A_handle, OMEGA, rtol, atol)` signature with OMEGA instead of T
+  - `hd_computer(A_handle, OMEGA, number_harmonics, time_samples, use_complex)` signature
+- **Unified Matrix Generation**: New `build_MCK_matrices()` function in `matrix_generation_GR.py` replaces separate `build_mass_matrix` and `build_damping_matrix` functions
+- **Configurable Integration Tolerances**: Added `ode_rtol` and `ode_atol` parameters to `ProblemDefinition` for ODE solver control
+- **Docstring Cleanup**: Reduced verbose docstrings to concise documentation while preserving essential information
+- **Removed Legacy Code**: Deleted MATLAB `OOP_build/` directory and obsolete `matrix_repositories.py`
+- **HDStability Inheritance**: Now inherits directly from `StabilityAnalysis` instead of `LTPStability`
+
+### v1.0.0 - System Matrices Refactor
 - **Matrix Generation**: Refactored `matrix_generation_GR.py` with proper MBC transformation
 - **LTP Performance**: Vectorized monodromy integration (single n² ODE instead of n separate integrations)
 - **Damper Activation**: Fixed CUSTOM mode with proper `damper_activation_vector` support
@@ -245,7 +256,7 @@ If you use this software in your research, please cite:
   author = {Bassi, Andrea},
   title = {Rotor Dynamics Analysis - Python},
   year = {2026},
-  version = {1.0.0},
+  version = {1.0.1},
   url = {https://github.com/Andrea24900/rotor_dynamics_python}
 }
 
