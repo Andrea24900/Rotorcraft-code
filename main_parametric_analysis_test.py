@@ -41,7 +41,8 @@ def main():
     # Create base problem with all dampers active (symmetric -> LTI valid)
     problem = create_default_problem()
     problem.damper_activation = "ALL"
-    problem.number_blades = 4
+    problem.number_blades = 1
+    problem.number_harmonics = 1
 
     print(f"Configuration:")
     print(f"  - Number of blades: {problem.number_blades}")
@@ -162,7 +163,6 @@ def main():
     problem_custom = create_default_problem()
     problem_custom.damper_activation = "CUSTOM"
     problem_custom.damper_activation_vector = np.array([1.0, 1.0, 1.0, 1.0])
-
     print(f"Configuration:")
     print(f"  - Damper activation: {problem_custom.damper_activation}")
     print(f"  - Initial activation vector: {problem_custom.damper_activation_vector}")
@@ -172,6 +172,7 @@ def main():
         """Set the first damper to a fraction of nominal, others remain at 100%."""
         problem.damper_activation = "CUSTOM"
         problem.damper_activation_vector = np.array([ratio, 1.0, 1.0, 1.0])
+        
 
     # Sweep parameters
     omega_sweep = np.linspace(100, 350, 40)

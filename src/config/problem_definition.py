@@ -66,7 +66,7 @@ class ProblemDefinition:
     # Solution parameters
     lower_rotor_RPM: float = 20.0
     higher_rotor_RPM: float = 400.0
-    number_points: int = 100
+    number_points: int = 200
     
     # Solver configuration
     required_solver: Literal["LTI", "LTP", "HD"] = "LTI"
@@ -75,7 +75,7 @@ class ProblemDefinition:
     
     # Continuation method parameters
     continuation: Literal["YES", "NO"] = "NO"
-    continuation_tolerance: float = 1e-2
+    continuation_tolerance: float = 1e-3
     continuation_max_iter: int = 100
     step_h: float = 1e-4
     time_samples: int = 10  # must be chosen in accordance with Nyquist criterion
@@ -84,8 +84,8 @@ class ProblemDefinition:
     solution_direction: Literal["L2R", "R2L"] = "R2L"
 
     # ODE integration tolerances (for LTP monodromy matrix computation)
-    ode_rtol: float = 1e-4  # relative tolerance
-    ode_atol: float = 1e-6  # absolute tolerance
+    ode_rtol: float = 1e-5  # relative tolerance
+    ode_atol: float = 1e-7  # absolute tolerance
     
     # Rotor physical characteristics
     rotor_characteristics: RotorCharacteristics = field(default_factory=RotorCharacteristics)
