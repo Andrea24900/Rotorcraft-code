@@ -87,6 +87,7 @@ def main():
 
     # Override to ensure HD solver is used
     rotor.problem.required_solver = "HD"
+    rotor.problem.damper_activation = "ODI"
     rotor.problem.number_harmonics = 1  # Start with 1 harmonic
 
     print(f"  [OK] Rotor system built successfully")

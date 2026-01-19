@@ -11,15 +11,22 @@ The example shows:
 4. Demonstrating the periodicity check with an invalid configuration
 """
 
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from src.config.problem_definition import ProblemDefinition, create_default_problem
 from src.analysis.parameter_analysis import ParametricAnalysis
 from src.utils.plotting import MyPlot
 
+# Output directory for figures
+FIGURES_DIR = "results_figures"
+
 
 def main():
     """Run parametric analysis examples."""
+
+    # Create output directory if it doesn't exist
+    os.makedirs(FIGURES_DIR, exist_ok=True)
 
     print("=" * 70)
     print("Parametric Stability Analysis - Damper Coefficient Sweep")
@@ -51,7 +58,7 @@ def main():
 
     # Define sweep parameters
     omega_range_RPM = np.linspace(50, 400, 40)  # 40 points from 50 to 400 RPM
-    damping_range = np.linspace(500, 8000, 25)  # 25 points from 500 to 8000 Nms/rad
+    damping_range = np.linspace(500, 8000, 40)  # 25 points from 500 to 8000 Nms/rad
 
     # Run the sweep
     print(f"\nRunning parametric sweep...")
@@ -167,8 +174,8 @@ def main():
         problem.damper_activation_vector = np.array([ratio, 1.0, 1.0, 1.0])
 
     # Sweep parameters
-    omega_sweep = np.linspace(100, 350, 25)
-    damper_ratios = np.linspace(0.0, 1.0, 15)
+    omega_sweep = np.linspace(100, 350, 30)
+    damper_ratios = np.linspace(0.0, 1.0, 30)
 
     # -------------------------------------------------------------------------
     # Run HD analysis
@@ -218,6 +225,22 @@ def main():
     fig5.tight_layout()
 
     # =========================================================================
+    # Save figures
+    # =========================================================================
+    print("\n[Saving Figures]")
+    print("-" * 70)
+
+    # Save stability map (damper coefficient)
+    fig1_path = os.path.join(FIGURES_DIR, "parametric_stability_map_Cd.png")
+    fig1.savefig(fig1_path, dpi=600, bbox_inches='tight')
+    print(f"  Saved: {fig1_path}")
+
+    # Save effectiveness ratio stability map (HD with LTP boundary)
+    fig5_path = os.path.join(FIGURES_DIR, "parametric_stability_map_effectiveness_ratio.png")
+    fig5.savefig(fig5_path, dpi=600, bbox_inches='tight')
+    print(f"  Saved: {fig5_path}")
+
+    # =========================================================================
     # Summary
     # =========================================================================
     print("\n" + "=" * 70)
@@ -229,6 +252,10 @@ def main():
     print("  Fig 3: Damping slices at selected parameter values")
     print("  Fig 4: Stability boundary with filled regions")
     print("  Fig 5: Stability map (first damper effectiveness sweep)")
+
+    print(f"\nSaved figures to '{FIGURES_DIR}/':")
+    print(f"  - parametric_stability_map_Cd.png")
+    print(f"  - parametric_stability_map_effectiveness_ratio.png")
 
     # Find critical damping at a specific RPM
     critical_rpm = 250.0

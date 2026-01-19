@@ -464,7 +464,7 @@ class MyPlot:
         # Filled contour plot
         cf = ax.contourf(OMEGA_grid, PARAM_grid, damping, levels=levels, cmap=cmap)
         cbar = fig.colorbar(cf, ax=ax)
-        cbar.set_label(r'Damping $\sigma$ $\mathrm{[1/s]}$', fontsize=plot_property.fontsize_label)
+        cbar.set_label(r'Damping $\lambda$ $\mathrm{[1/s]}$', fontsize=plot_property.fontsize_label)
 
         # Stability boundary (damping = 0) for main analysis
         if show_stability_boundary:
@@ -632,7 +632,7 @@ class MyPlot:
                   label='Stability boundary')
 
         ax.set_xlabel(r'$\Omega$ $\mathrm{[RPM]}$', fontsize=plot_property.fontsize_label)
-        ax.set_ylabel(r'Damping $\sigma$ $\mathrm{[1/s]}$', fontsize=plot_property.fontsize_label)
+        ax.set_ylabel(r'Damping $\lambda$ $\mathrm{[1/s]}$', fontsize=plot_property.fontsize_label)
 
         if title is None:
             title = f"Damping vs Rotor Speed ({parametric_analysis.solver_type} solver)"
@@ -721,8 +721,8 @@ class MyPlot:
             "blade_mass_Mb": r"Blade Mass $M_b$ $\mathrm{[kg]}$",
             "blade_inertia_Ib": r"Blade Inertia $I_b$ $\mathrm{[kg \cdot m^2]}$",
             "lag_hinge_offset_e": r"Lag Hinge Offset $e$ $\mathrm{[m]}$",
-            "damper_1_ratio": r"First Damper Effectiveness $\eta_1 = C_{d,1}/C_{d,nom}$ $\mathrm{[-]}$",
-            "damper_ratio": r"Damper Effectiveness $\eta = C_d/C_{d,nom}$ $\mathrm{[-]}$",
+            "damper_1_ratio": r"First Damper Effectiveness $\varepsilon_1 = C_{d,1}/C_{d,nom}$ $\mathrm{[-]}$",
+            "damper_ratio": r"Damper Effectiveness $\varepsilon = C_d/C_{d,nom}$ $\mathrm{[-]}$",
         }
         return label_map.get(parameter_name, parameter_name)
 
