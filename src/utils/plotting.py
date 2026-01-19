@@ -395,6 +395,337 @@ class MyPlot:
 
         return fig
 
+    @staticmethod
+    def plot_parametric_stability_map(
+        parametric_analysis,
+        figsize: Tuple[float, float] = (10, 8),
+        cmap: str = "RdYlGn_r",
+        levels: int = 50,
+        show_stability_boundary: bool = True,
+        reference_analysis=None,
+        reference_label: Optional[str] = None,
+        reference_color: str = "blue",
+        reference_linestyle: str = "-",
+        title: Optional[str] = None,
+        xlabel: Optional[str] = None,
+        ylabel: Optional[str] = None,
+        figure_handle: Optional[plt.Figure] = None
+    ) -> plt.Figure:
+        """Plot stability map from parametric analysis.
+
+        Creates a filled contour plot showing damping (stability) as a function
+        of rotor speed and the swept parameter. Red regions indicate instability
+        (positive damping), green regions indicate stability (negative damping).
+
+        Args:
+            parametric_analysis: ParametricAnalysis object with completed sweep
+            figsize: Figure size (width, height) in inches
+            cmap: Colormap name. Default "RdYlGn_r" shows red=unstable, green=stable
+            levels: Number of contour levels for smooth gradients
+            show_stability_boundary: If True, draw dashed black line at damping=0
+            reference_analysis: Optional second ParametricAnalysis to overlay its
+                               stability boundary (e.g., LTP boundary on HD plot)
+            reference_label: Label for the reference boundary in legend
+            reference_color: Color for reference boundary line
+            reference_linestyle: Line style for reference boundary
+            title: Custom title. If None, auto-generated from solver type
+            xlabel: Custom x-axis label. If None, uses "Rotor Speed [RPM]"
+            ylabel: Custom y-axis label. If None, auto-generated from parameter name
+            figure_handle: Optional existing figure to plot on
+
+        Returns:
+            matplotlib Figure object
+
+        Example:
+            >>> analysis_hd = ParametricAnalysis(problem)
+            >>> analysis_hd.sweep(solver_type="HD", ...)
+            >>> analysis_ltp = ParametricAnalysis(problem)
+            >>> analysis_ltp.sweep(solver_type="LTP", ...)
+            >>> fig = MyPlot.plot_parametric_stability_map(
+            ...     analysis_hd,
+            ...     reference_analysis=analysis_ltp,
+            ...     reference_label="LTP boundary"
+            ... )
+        """
+        if figure_handle is None:
+            fig, ax = plt.subplots(figsize=figsize)
+        else:
+            fig = figure_handle
+            ax = fig.gca()
+
+        # Get data matrices
+        damping = parametric_analysis.get_damping_matrix()
+        omega_rpm = parametric_analysis.omega_values_RPM
+        param_vals = parametric_analysis.parameter_values
+
+        # Create meshgrid for contour plotting
+        OMEGA_grid, PARAM_grid = np.meshgrid(omega_rpm, param_vals)
+
+        # Filled contour plot
+        cf = ax.contourf(OMEGA_grid, PARAM_grid, damping, levels=levels, cmap=cmap)
+        cbar = fig.colorbar(cf, ax=ax)
+        cbar.set_label(r'Damping $\sigma$ $\mathrm{[1/s]}$', fontsize=plot_property.fontsize_label)
+
+        # Stability boundary (damping = 0) for main analysis
+        if show_stability_boundary:
+            cs = ax.contour(OMEGA_grid, PARAM_grid, damping, levels=[0],
+                           colors='black', linewidths=2, linestyles='--')
+            # Add to legend manually
+            boundary_label = f"{parametric_analysis.solver_type} boundary"
+            ax.plot([], [], 'k--', linewidth=2, label=boundary_label)
+
+        # Overlay reference analysis stability boundary if provided
+        if reference_analysis is not None:
+            ref_damping = reference_analysis.get_damping_matrix()
+            ref_omega_rpm = reference_analysis.omega_values_RPM
+            ref_param_vals = reference_analysis.parameter_values
+
+            REF_OMEGA_grid, REF_PARAM_grid = np.meshgrid(ref_omega_rpm, ref_param_vals)
+
+            cs_ref = ax.contour(REF_OMEGA_grid, REF_PARAM_grid, ref_damping, levels=[0],
+                               colors=reference_color, linewidths=2.5,
+                               linestyles=reference_linestyle)
+
+            # Add to legend
+            if reference_label is None:
+                reference_label = f"{reference_analysis.solver_type} boundary"
+            ax.plot([], [], color=reference_color, linestyle=reference_linestyle,
+                   linewidth=2.5, label=reference_label)
+
+        # Labels
+        if xlabel is None:
+            xlabel = r'$\Omega$ $\mathrm{[RPM]}$'
+        ax.set_xlabel(xlabel, fontsize=plot_property.fontsize_label)
+
+        if ylabel is None:
+            ylabel = MyPlot._format_parameter_label(parametric_analysis.parameter_name)
+        ax.set_ylabel(ylabel, fontsize=plot_property.fontsize_label)
+
+        if title is None:
+            title = f"Stability Map ({parametric_analysis.solver_type} solver)"
+        ax.set_title(title, fontsize=plot_property.fontsize_label + 2)
+
+        ax.grid(True, alpha=0.3)
+
+        # Show legend if we have boundaries
+        if show_stability_boundary or reference_analysis is not None:
+            ax.legend(loc='best', fontsize=plot_property.fontsize_legend)
+
+        return fig
+
+    @staticmethod
+    def plot_parametric_frequency_map(
+        parametric_analysis,
+        figsize: Tuple[float, float] = (10, 8),
+        cmap: str = "viridis",
+        levels: int = 50,
+        title: Optional[str] = None,
+        xlabel: Optional[str] = None,
+        ylabel: Optional[str] = None,
+        figure_handle: Optional[plt.Figure] = None
+    ) -> plt.Figure:
+        """Plot frequency map from parametric analysis.
+
+        Creates a filled contour plot showing the frequency of the least damped
+        mode as a function of rotor speed and the swept parameter.
+
+        Args:
+            parametric_analysis: ParametricAnalysis object with completed sweep
+            figsize: Figure size (width, height) in inches
+            cmap: Colormap name
+            levels: Number of contour levels
+            title: Custom title. If None, auto-generated from solver type
+            xlabel: Custom x-axis label
+            ylabel: Custom y-axis label
+            figure_handle: Optional existing figure to plot on
+
+        Returns:
+            matplotlib Figure object
+        """
+        if figure_handle is None:
+            fig, ax = plt.subplots(figsize=figsize)
+        else:
+            fig = figure_handle
+            ax = fig.gca()
+
+        # Get data matrices
+        frequency = parametric_analysis.get_frequency_matrix()
+        omega_rpm = parametric_analysis.omega_values_RPM
+        param_vals = parametric_analysis.parameter_values
+
+        # Create meshgrid
+        OMEGA_grid, PARAM_grid = np.meshgrid(omega_rpm, param_vals)
+
+        # Filled contour plot
+        cf = ax.contourf(OMEGA_grid, PARAM_grid, frequency, levels=levels, cmap=cmap)
+        cbar = fig.colorbar(cf, ax=ax)
+        cbar.set_label(r'Frequency $\omega$ $\mathrm{[rad/s]}$', fontsize=plot_property.fontsize_label)
+
+        # Labels
+        if xlabel is None:
+            xlabel = r'$\Omega$ $\mathrm{[RPM]}$'
+        ax.set_xlabel(xlabel, fontsize=plot_property.fontsize_label)
+
+        if ylabel is None:
+            ylabel = MyPlot._format_parameter_label(parametric_analysis.parameter_name)
+        ax.set_ylabel(ylabel, fontsize=plot_property.fontsize_label)
+
+        if title is None:
+            title = f"Frequency Map ({parametric_analysis.solver_type} solver)"
+        ax.set_title(title, fontsize=plot_property.fontsize_label + 2)
+
+        ax.grid(True, alpha=0.3)
+
+        return fig
+
+    @staticmethod
+    def plot_parametric_damping_slices(
+        parametric_analysis,
+        param_indices: Optional[List[int]] = None,
+        figsize: Tuple[float, float] = (10, 6),
+        title: Optional[str] = None,
+        figure_handle: Optional[plt.Figure] = None
+    ) -> plt.Figure:
+        """Plot damping vs rotor speed for selected parameter values.
+
+        Creates line plots showing how damping evolves with rotor speed
+        for specific values of the swept parameter.
+
+        Args:
+            parametric_analysis: ParametricAnalysis object with completed sweep
+            param_indices: List of parameter indices to plot. If None, plots
+                          5 evenly spaced values across the parameter range.
+            figsize: Figure size (width, height) in inches
+            title: Custom title
+            figure_handle: Optional existing figure to plot on
+
+        Returns:
+            matplotlib Figure object
+        """
+        if figure_handle is None:
+            fig, ax = plt.subplots(figsize=figsize)
+        else:
+            fig = figure_handle
+            ax = fig.gca()
+
+        # Select parameter indices if not provided
+        if param_indices is None:
+            n = len(parametric_analysis.parameter_values)
+            param_indices = list(np.linspace(0, n-1, min(5, n), dtype=int))
+
+        colors_vec = color.get_color_vector()
+
+        for i, idx in enumerate(param_indices):
+            damping = [parametric_analysis.results[idx][j].damping
+                      for j in range(len(parametric_analysis.omega_values))]
+            param_val = parametric_analysis.parameter_values[idx]
+            label = f"{parametric_analysis.parameter_name} = {param_val:.4g}"
+
+            ax.plot(parametric_analysis.omega_values_RPM, damping,
+                   color=colors_vec[i % len(colors_vec)],
+                   linewidth=plot_property.line_width,
+                   marker='o', markersize=plot_property.marker_size,
+                   label=label)
+
+        # Stability boundary
+        ax.axhline(y=0, color='k', linestyle='--', linewidth=plot_property.dash_width,
+                  label='Stability boundary')
+
+        ax.set_xlabel(r'$\Omega$ $\mathrm{[RPM]}$', fontsize=plot_property.fontsize_label)
+        ax.set_ylabel(r'Damping $\sigma$ $\mathrm{[1/s]}$', fontsize=plot_property.fontsize_label)
+
+        if title is None:
+            title = f"Damping vs Rotor Speed ({parametric_analysis.solver_type} solver)"
+        ax.set_title(title, fontsize=plot_property.fontsize_label + 2)
+
+        ax.legend(fontsize=plot_property.fontsize_legend, loc='best')
+        ax.grid(True, alpha=0.3)
+
+        return fig
+
+    @staticmethod
+    def plot_parametric_stability_boundary(
+        parametric_analysis,
+        figsize: Tuple[float, float] = (10, 6),
+        fill_unstable: bool = True,
+        title: Optional[str] = None,
+        figure_handle: Optional[plt.Figure] = None
+    ) -> plt.Figure:
+        """Plot stability boundary curve.
+
+        Extracts and plots the stability boundary (damping=0 contour) showing
+        the critical parameter value as a function of rotor speed.
+
+        Args:
+            parametric_analysis: ParametricAnalysis object with completed sweep
+            figsize: Figure size (width, height) in inches
+            fill_unstable: If True, shade the unstable region
+            title: Custom title
+            figure_handle: Optional existing figure to plot on
+
+        Returns:
+            matplotlib Figure object
+        """
+        if figure_handle is None:
+            fig, ax = plt.subplots(figsize=figsize)
+        else:
+            fig = figure_handle
+            ax = fig.gca()
+
+        damping = parametric_analysis.get_damping_matrix()
+        omega_rpm = parametric_analysis.omega_values_RPM
+        param_vals = parametric_analysis.parameter_values
+
+        OMEGA_grid, PARAM_grid = np.meshgrid(omega_rpm, param_vals)
+
+        # Extract stability boundary contour
+        cs = ax.contour(OMEGA_grid, PARAM_grid, damping, levels=[0],
+                       colors='black', linewidths=2)
+
+        # Fill unstable region if requested
+        if fill_unstable:
+            ax.contourf(OMEGA_grid, PARAM_grid, damping, levels=[0, damping.max()],
+                       colors=['red'], alpha=0.3)
+            ax.contourf(OMEGA_grid, PARAM_grid, damping, levels=[damping.min(), 0],
+                       colors=['green'], alpha=0.3)
+
+        ax.set_xlabel(r'$\Omega$ $\mathrm{[RPM]}$', fontsize=plot_property.fontsize_label)
+        ax.set_ylabel(MyPlot._format_parameter_label(parametric_analysis.parameter_name),
+                     fontsize=plot_property.fontsize_label)
+
+        if title is None:
+            title = f"Stability Boundary ({parametric_analysis.solver_type} solver)"
+        ax.set_title(title, fontsize=plot_property.fontsize_label + 2)
+
+        ax.grid(True, alpha=0.3)
+
+        return fig
+
+    @staticmethod
+    def _format_parameter_label(parameter_name: str) -> str:
+        """Format parameter name for axis label.
+
+        Args:
+            parameter_name: Raw parameter name from analysis
+
+        Returns:
+            Formatted label with units if known
+        """
+        label_map = {
+            "nominal_damping_Cd": r"Damper Coefficient $C_d$ $\mathrm{[Nms/rad]}$",
+            "nominal_stiffness_Kd": r"Damper Stiffness $K_d$ $\mathrm{[Nm/rad]}$",
+            "hub_damping_Cx": r"Hub Damping $C_x$ $\mathrm{[Ns/m]}$",
+            "hub_damping_Cy": r"Hub Damping $C_y$ $\mathrm{[Ns/m]}$",
+            "hub_stiffness_Kx": r"Hub Stiffness $K_x$ $\mathrm{[N/m]}$",
+            "hub_stiffness_Ky": r"Hub Stiffness $K_y$ $\mathrm{[N/m]}$",
+            "blade_mass_Mb": r"Blade Mass $M_b$ $\mathrm{[kg]}$",
+            "blade_inertia_Ib": r"Blade Inertia $I_b$ $\mathrm{[kg \cdot m^2]}$",
+            "lag_hinge_offset_e": r"Lag Hinge Offset $e$ $\mathrm{[m]}$",
+            "damper_1_ratio": r"First Damper Effectiveness $\eta_1 = C_{d,1}/C_{d,nom}$ $\mathrm{[-]}$",
+            "damper_ratio": r"Damper Effectiveness $\eta = C_d/C_{d,nom}$ $\mathrm{[-]}$",
+        }
+        return label_map.get(parameter_name, parameter_name)
+
 
 # Initialize global instances for convenience
 plot_property = PlotProperties()
