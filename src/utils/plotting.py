@@ -8,16 +8,33 @@ import matplotlib.pyplot as plt
 from dataclasses import dataclass
 from typing import Optional, List, Tuple
 
+# Configure matplotlib to use LaTeX-style fonts (Computer Modern)
+# and publication-quality settings
+plt.rcParams.update({
+    'text.usetex': False,  # Set True if LaTeX is installed for full LaTeX rendering
+    'font.family': 'serif',
+    'font.serif': ['Computer Modern Roman', 'CMU Serif', 'DejaVu Serif'],
+    'mathtext.fontset': 'cm',  # Computer Modern for math text
+    'axes.unicode_minus': False,
+    'axes.labelsize': 18,
+    'axes.titlesize': 20,
+    'xtick.labelsize': 14,
+    'ytick.labelsize': 14,
+    'legend.fontsize': 14,
+    'figure.titlesize': 20,
+})
+
 
 @dataclass
 class PlotProperties:
-    """Plot styling properties."""
-    
-    marker_size: int = 4
+    """Plot styling properties for publication-quality figures."""
+
+    marker_size: int = 6
     line_width: float = 2.0
-    fontsize_legend: int = 11
-    dash_width: float = 1.5
-    fontsize_label: int = 15
+    fontsize_legend: int = 14
+    dash_width: float = 2.0
+    fontsize_label: int = 18
+    fontsize_tick: int = 14
 
 
 @dataclass
@@ -125,8 +142,8 @@ class MyPlot:
                    color='blue', marker='*', markersize=plot_property.marker_size,
                    linestyle='None')
 
-        ax.set_xlabel(r'$\Omega$ [rpm]', fontsize=plot_property.fontsize_label)
-        ax.set_ylabel(r'$\lambda$ [-]', fontsize=plot_property.fontsize_label)
+        ax.set_xlabel(r'$\Omega$ $\mathrm{[rpm]}$', fontsize=plot_property.fontsize_label)
+        ax.set_ylabel(r'$\lambda$ $\mathrm{[1/s]}$', fontsize=plot_property.fontsize_label)
 
         if xlimits:
             ax.set_xlim(xlimits)
@@ -209,8 +226,8 @@ class MyPlot:
                            markersize=plot_property.marker_size,
                            linewidth=plot_property.line_width)
 
-        ax.set_xlabel(r'$\Omega$ [rpm]', fontsize=plot_property.fontsize_label)
-        ax.set_ylabel(r'$\lambda$ [-]', fontsize=plot_property.fontsize_label)
+        ax.set_xlabel(r'$\Omega$ $\mathrm{[rpm]}$', fontsize=plot_property.fontsize_label)
+        ax.set_ylabel(r'$\lambda$ $\mathrm{[1/s]}$', fontsize=plot_property.fontsize_label)
 
         if modes is not None:
             ax.legend(fontsize=plot_property.fontsize_legend, loc='center left',
@@ -258,8 +275,8 @@ class MyPlot:
                    color='blue', marker='*', markersize=plot_property.marker_size,
                    linestyle='None')
 
-        ax.set_xlabel(r'$\Omega$ [rpm]', fontsize=plot_property.fontsize_label)
-        ax.set_ylabel(r'$\omega$ [rad/s]', fontsize=plot_property.fontsize_label)
+        ax.set_xlabel(r'$\Omega$ $\mathrm{[rpm]}$', fontsize=plot_property.fontsize_label)
+        ax.set_ylabel(r'$\omega$ $\mathrm{[rad/s]}$', fontsize=plot_property.fontsize_label)
 
         if xlimits:
             ax.set_xlim(xlimits)
@@ -342,8 +359,8 @@ class MyPlot:
                            markersize=plot_property.marker_size,
                            linewidth=plot_property.line_width)
 
-        ax.set_xlabel(r'$\Omega$ [rpm]', fontsize=plot_property.fontsize_label)
-        ax.set_ylabel(r'$\omega$ [rad/s]', fontsize=plot_property.fontsize_label)
+        ax.set_xlabel(r'$\Omega$ $\mathrm{[rpm]}$', fontsize=plot_property.fontsize_label)
+        ax.set_ylabel(r'$\omega$ $\mathrm{[rad/s]}$', fontsize=plot_property.fontsize_label)
 
         if modes is not None:
             ax.legend(fontsize=plot_property.fontsize_legend, loc='center left',
@@ -383,8 +400,8 @@ class MyPlot:
         # TODO: Implement plotting logic from MATLAB version
         # This is a placeholder
 
-        ax.set_xlabel('Rotor Speed (RPM)', fontsize=15)
-        ax.set_ylabel('Modal Participation', fontsize=15)
+        ax.set_xlabel(r'$\Omega$ $\mathrm{[rpm]}$', fontsize=plot_property.fontsize_label)
+        ax.set_ylabel(r'Modal Participation $\mathrm{[-]}$', fontsize=plot_property.fontsize_label)
         ax.grid(True)
 
         if xlimits:
@@ -464,14 +481,14 @@ class MyPlot:
         # Filled contour plot
         cf = ax.contourf(OMEGA_grid, PARAM_grid, damping, levels=levels, cmap=cmap)
         cbar = fig.colorbar(cf, ax=ax)
-        cbar.set_label(r'Damping $\lambda$ $\mathrm{[1/s]}$', fontsize=plot_property.fontsize_label)
+        cbar.set_label(r'$\lambda$ $\mathrm{[1/s]}$ of least damped mode', fontsize=plot_property.fontsize_label)
 
         # Stability boundary (damping = 0) for main analysis
         if show_stability_boundary:
             cs = ax.contour(OMEGA_grid, PARAM_grid, damping, levels=[0],
                            colors='black', linewidths=2, linestyles='--')
             # Add to legend manually
-            boundary_label = f"{parametric_analysis.solver_type} boundary"
+            boundary_label = f"{parametric_analysis.solver_type} stability boundary"
             ax.plot([], [], 'k--', linewidth=2, label=boundary_label)
 
         # Overlay reference analysis stability boundary if provided
@@ -494,7 +511,7 @@ class MyPlot:
 
         # Labels
         if xlabel is None:
-            xlabel = r'$\Omega$ $\mathrm{[RPM]}$'
+            xlabel = r'$\Omega$ $\mathrm{[rpm]}$'
         ax.set_xlabel(xlabel, fontsize=plot_property.fontsize_label)
 
         if ylabel is None:
@@ -563,7 +580,7 @@ class MyPlot:
 
         # Labels
         if xlabel is None:
-            xlabel = r'$\Omega$ $\mathrm{[RPM]}$'
+            xlabel = r'$\Omega$ $\mathrm{[rpm]}$'
         ax.set_xlabel(xlabel, fontsize=plot_property.fontsize_label)
 
         if ylabel is None:
@@ -631,7 +648,7 @@ class MyPlot:
         ax.axhline(y=0, color='k', linestyle='--', linewidth=plot_property.dash_width,
                   label='Stability boundary')
 
-        ax.set_xlabel(r'$\Omega$ $\mathrm{[RPM]}$', fontsize=plot_property.fontsize_label)
+        ax.set_xlabel(r'$\Omega$ $\mathrm{[rpm]}$', fontsize=plot_property.fontsize_label)
         ax.set_ylabel(r'Damping $\lambda$ $\mathrm{[1/s]}$', fontsize=plot_property.fontsize_label)
 
         if title is None:
@@ -689,7 +706,7 @@ class MyPlot:
             ax.contourf(OMEGA_grid, PARAM_grid, damping, levels=[damping.min(), 0],
                        colors=['green'], alpha=0.3)
 
-        ax.set_xlabel(r'$\Omega$ $\mathrm{[RPM]}$', fontsize=plot_property.fontsize_label)
+        ax.set_xlabel(r'$\Omega$ $\mathrm{[rpm]}$', fontsize=plot_property.fontsize_label)
         ax.set_ylabel(MyPlot._format_parameter_label(parametric_analysis.parameter_name),
                      fontsize=plot_property.fontsize_label)
 
@@ -712,7 +729,7 @@ class MyPlot:
             Formatted label with units if known
         """
         label_map = {
-            "nominal_damping_Cd": r"Damper Coefficient $C_d$ $\mathrm{[Nms/rad]}$",
+            "nominal_damping_Cd": r"Nominal Damping $C_d$ $\mathrm{[Nms/rad]}$",
             "nominal_stiffness_Kd": r"Damper Stiffness $K_d$ $\mathrm{[Nm/rad]}$",
             "hub_damping_Cx": r"Hub Damping $C_x$ $\mathrm{[Ns/m]}$",
             "hub_damping_Cy": r"Hub Damping $C_y$ $\mathrm{[Ns/m]}$",

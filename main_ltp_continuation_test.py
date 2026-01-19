@@ -85,6 +85,7 @@ def main():
     # Override to ensure LTP solver with continuation is used
     rotor.problem.required_solver = "LTP"
     rotor.problem.continuation = "YES"
+    rotor.problem.damper_activation = "ODI"
 
     print(f"  [OK] Rotor system built successfully")
     print(f"    - Number of blades: {rotor.problem.number_blades}")

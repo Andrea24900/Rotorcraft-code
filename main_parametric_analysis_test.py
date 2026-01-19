@@ -58,7 +58,7 @@ def main():
 
     # Define sweep parameters
     omega_range_RPM = np.linspace(50, 400, 40)  # 40 points from 50 to 400 RPM
-    damping_range = np.linspace(500, 8000, 40)  # 25 points from 500 to 8000 Nms/rad
+    damping_range = np.linspace(0,4067, 40)  # 25 points from 500 to 8000 Nms/rad
 
     # Run the sweep
     print(f"\nRunning parametric sweep...")
@@ -174,8 +174,8 @@ def main():
         problem.damper_activation_vector = np.array([ratio, 1.0, 1.0, 1.0])
 
     # Sweep parameters
-    omega_sweep = np.linspace(100, 350, 30)
-    damper_ratios = np.linspace(0.0, 1.0, 30)
+    omega_sweep = np.linspace(100, 350, 40)
+    damper_ratios = np.linspace(0.0, 1.0, 40)  # C1 varies from 0 to Cd
 
     # -------------------------------------------------------------------------
     # Run HD analysis
@@ -220,7 +220,8 @@ def main():
         reference_label="LTP stability boundary",
         reference_color="blue",
         reference_linestyle="-",
-        title="Stability Map - First Damper Effectiveness Variation\n(HD contours with LTP boundary comparison)"
+        title="",
+        ylabel=r"$C_1/C_d$ $\mathrm{[-]}$"
     )
     fig5.tight_layout()
 
