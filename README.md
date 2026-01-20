@@ -135,10 +135,36 @@ class ProblemDefinition:
     hd_use_complex: bool = False       # Complex HD formulation
 ```
 
+### Damper Connection Types
+- **H2B (Hub-to-Blade)**: Each damper connects hub to individual blade (diagonal damping matrix)
+- **B2B (Blade-to-Blade)**: Each damper connects adjacent blades cyclically (damping matrix with diagonal and extra-diagonal coupling terms)
+
 ### Damper Activation Modes
 - **ALL**: All dampers active (LTI system)
 - **ODI**: One Damper Inoperative - first damper disabled (LTP system)
 - **CUSTOM**: User-defined via `damper_activation_vector` (e.g., `np.array([0,1,1,1])` disables first damper)
+
+### B2B Configuration Example
+
+```python
+from src.config.problem_definition import ProblemDefinition
+from src.rotor_build import RotorBuild
+from src.stability_analysis.continuation_analysis import ContinuationAnalysis
+
+# B2B requires using ProblemDefinition constructor for proper geometric initialization
+problem = ProblemDefinition(
+    number_blades=4,
+    damper_connection="B2B",
+    damper_activation="ODI",
+    required_solver="LTP",
+    continuation="YES"
+)
+
+rotor = RotorBuild(problem)
+analysis = ContinuationAnalysis(rotor).continuation()
+```
+
+**Note**: For B2B configuration, always use the `ProblemDefinition` constructor with `damper_connection="B2B"` to ensure proper initialization of B2B geometric parameters (`l0`, `lE`, `gamma_E`, `phi`).
 
 ## Features
 
@@ -165,6 +191,18 @@ class ProblemDefinition:
 | Modal Participation | 🚧 | Structure exists |
 
 ## Recent Improvements (January 2026)
+
+### v1.0.2 - B2B Damper Configuration
+- **B2B Matrix Generation**: Added `damping_activation_B2B()` function in `matrix_generation_GR.py` implementing blade-to-blade damper matrices with:
+  - Diagonal terms: contributions from dampers on both sides of each blade (`C_before`, `C_after`)
+  - Extra-diagonal terms: coupling between adjacent blades (`C_zetaed`)
+  - Stiffness coefficients: `K_before`, `K_after`, `K_zetaed` with proper geometric formulation
+- **B2B Test Suite**: Added continuation tests for B2B configuration (`tests_to_run_2.py`):
+  - LTI continuation with ALL dampers
+  - LTP continuation with ODI
+  - HD continuation with ODI (1 harmonic)
+- **Separate Output Directories**: B2B figures saved to `extra_figures/B2B/`, H2B to `extra_figures/H2B/`
+- **ProblemDefinition Constructor**: All test files updated to use constructor approach for proper B2B geometric initialization
 
 ### v1.0.1 - API Simplification & Code Cleanup
 - **Simplified API Signatures**:

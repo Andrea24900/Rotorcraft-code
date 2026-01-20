@@ -116,8 +116,8 @@ def build_MCK_matrices(
             if problem.damper_connection == "H2B":
                 diagonal = damping_activation_H2B(problem)
                 damping_matrix_addition[0:num_blades,0:num_blades] = np.diag(diagonal)
-            #elif problem.damper_connection == "B2B":
-                # B2B damper connection logic to be implemented
+            elif problem.damper_connection == "B2B":
+                damping_matrix_addition, _ = damping_activation_B2B(problem)
                 
             # summation of matrices
             damping_matrix_result = damping_matrix_partial+damping_matrix_addition
@@ -154,8 +154,8 @@ def build_MCK_matrices(
             if problem.damper_connection == "H2B":
                 diagonal = nominal_stiffness*np.ones(num_blades)
                 stiffness_matrix_addition[0:num_blades,0:num_blades] = np.diag(diagonal)
-            #elif problem.damper_connection == "B2B":
-                    # B2B damper connection logic to be implemented
+            elif problem.damper_connection == "B2B":
+                _, stiffness_matrix_addition = damping_activation_B2B(problem)
                     
                 # summation of matrices
             stiffness_matrix_result= stiffness_matrix_partial+stiffness_matrix_addition
@@ -223,6 +223,132 @@ def damping_activation_H2B(problem:ProblemDefinition):
         damping_vector = blade_damping*problem.damper_activation_vector
 
     return damping_vector
+
+def damping_activation_B2B(problem: ProblemDefinition):
+    """Generate the damping and stiffness addition matrices for B2B (blade-to-blade) dampers.
+
+    In B2B configuration, each damper connects blade i to blade i+1 (cyclically).
+    This creates a matrix with:
+    - Diagonal terms: contribution from dampers on both sides of each blade
+    - Extra-diagonal terms: coupling between adjacent blades
+
+    Args:
+        problem: ProblemDefinition object containing rotor characteristics
+
+    Returns:
+        Tuple of (damping_matrix_addition, stiffness_matrix_addition)
+        Both are (num_blades+2) x (num_blades+2) matrices
+    """
+    num_blades = problem.number_blades
+    rotor_chars = problem.rotor_characteristics
+
+    # Extract damper parameters
+    cd = rotor_chars.nominal_damping_Cd
+    kd = rotor_chars.nominal_stiffness_Kd
+    a = rotor_chars.hub_to_A_a
+    b = rotor_chars.hub_to_B_b
+    zeta_E = rotor_chars.zeta_E
+    phi = rotor_chars.phi
+    gamma_E = rotor_chars.gamma_E
+    lE = rotor_chars.length_eq_lE
+    l0 = rotor_chars.length_undef_l0
+
+    # Precompute trigonometric terms
+    sin_minus = np.sin(zeta_E - phi + gamma_E)  # sin(zeta_E - phi + gamma_E)
+    sin_plus = np.sin(zeta_E + phi + gamma_E)   # sin(zeta_E + phi + gamma_E)
+    cos_minus = np.cos(zeta_E - phi + gamma_E)  # cos(zeta_E - phi + gamma_E)
+    cos_plus = np.cos(zeta_E + phi + gamma_E)   # cos(zeta_E + phi + gamma_E)
+
+    # B2B damping coefficients (from symbolic derivation)
+    # C_zetaed: extra-diagonal coupling term between adjacent blades
+    C_zetaed = a * b * cd * sin_minus * sin_plus
+    # C_before: contribution from damper before blade i (damper i-1, connects blade i-1 to i)
+    C_before = b**2 * cd * sin_plus**2
+    # C_after: contribution from damper after blade i (damper i, connects blade i to i+1)
+    C_after = a**2 * cd * sin_minus**2
+    # Note: C_zetad = C_before + C_after (full diagonal when both dampers active)
+
+    # B2B stiffness coefficients (from symbolic derivation)
+    # K_zetaed: extra-diagonal coupling term between adjacent blades
+    K_zetaed = (a * b * kd * sin_minus * sin_plus
+                + a * b * kd * (lE - l0) / l0 * cos_minus * cos_plus)
+    # K_before: contribution from damper before blade i (damper i-1, connects blade i-1 to i)
+    K_before = (b**2 * kd * sin_plus
+                - b * kd * (lE - l0) / lE * cos_plus * (lE - b * cos_plus))
+    # K_after: contribution from damper after blade i (damper i, connects blade i to i+1)
+    K_after = (a**2 * kd * sin_minus
+               - a * kd * (lE - l0) / lE * cos_minus * (lE - a * cos_minus))
+    # Note: K_zetad = K_before + K_after (full diagonal when both dampers active)
+
+    # Initialize matrices (only blade DOFs, hub DOFs remain zero)
+    damping_matrix_addition = np.zeros((num_blades + 2, num_blades + 2))
+    stiffness_matrix_addition = np.zeros((num_blades + 2, num_blades + 2))
+
+    # Build activation vector based on damper_activation mode
+    # damper_active[i] = 1 if damper i (connecting blade i to blade i+1) is active
+    if problem.damper_activation == "ALL":
+        damper_active = np.ones(num_blades)
+    elif problem.damper_activation == "ODI":
+        # Damper 1 (between blade 1 and blade 2, index 0) is inoperative
+        damper_active = np.ones(num_blades)
+        damper_active[0] = 0
+    elif problem.damper_activation == "CUSTOM":
+        damper_active = problem.damper_activation_vector
+    else:
+        damper_active = np.ones(num_blades)
+
+    # Build the damping matrix for blade DOFs
+    # Each blade i is affected by damper i-1 (connecting blade i-1 to blade i)
+    # and damper i (connecting blade i to blade i+1)
+    for i in range(num_blades):
+        # Damper indices (cyclic): damper connecting blade i to blade i+1 has index i
+        damper_prev = (i - 1) % num_blades  # Damper connecting blade i-1 to blade i
+        damper_curr = i  # Damper connecting blade i to blade i+1
+
+        # Diagonal term: sum of contributions from both adjacent dampers
+        diag_contrib = 0.0
+        if damper_active[damper_prev]:
+            diag_contrib += C_before  # Contribution from damper before blade i
+        if damper_active[damper_curr]:
+            diag_contrib += C_after  # Contribution from damper after blade i
+        damping_matrix_addition[i, i] = diag_contrib
+
+        # Extra-diagonal terms: coupling with adjacent blades
+        i_next = (i + 1) % num_blades
+        i_prev = (i - 1) % num_blades
+
+        # Coupling with next blade (through damper i)
+        if damper_active[damper_curr]:
+            damping_matrix_addition[i, i_next] = C_zetaed
+
+        # Coupling with previous blade (through damper i-1)
+        if damper_active[damper_prev]:
+            damping_matrix_addition[i, i_prev] = C_zetaed
+
+    # Build the stiffness matrix for blade DOFs (same structure as damping)
+    for i in range(num_blades):
+        damper_prev = (i - 1) % num_blades
+        damper_curr = i
+
+        # Diagonal term: sum of contributions from both adjacent dampers
+        diag_contrib = 0.0
+        if damper_active[damper_prev]:
+            diag_contrib += K_before  # Contribution from damper before blade i
+        if damper_active[damper_curr]:
+            diag_contrib += K_after  # Contribution from damper after blade i
+        stiffness_matrix_addition[i, i] = diag_contrib
+
+        # Extra-diagonal terms
+        i_next = (i + 1) % num_blades
+        i_prev = (i - 1) % num_blades
+
+        if damper_active[damper_curr]:
+            stiffness_matrix_addition[i, i_next] = K_zetaed
+
+        if damper_active[damper_prev]:
+            stiffness_matrix_addition[i, i_prev] = K_zetaed
+
+    return damping_matrix_addition, stiffness_matrix_addition
 
 def build_mbc_matrix(problem:ProblemDefinition, time: float, rotor_omega:float)-> np.ndarray:
     """ This function build the mbc_matrix T as a function of time and omega.

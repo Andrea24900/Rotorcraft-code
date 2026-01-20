@@ -2,7 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from src.config.problem_definition import create_default_problem
+from src.config.problem_definition import ProblemDefinition
 from src.rotor_build import RotorBuild
 from src.stability_analysis.lti_stability import LTIStability
 from src.utils.plotting import MyPlot
@@ -15,12 +15,15 @@ def main():
     print("LTI Stability Analysis")
     print("=" * 60)
 
-    # Build rotor system - set parameters BEFORE building
-    problem = create_default_problem()
-    problem.number_blades = 4
-    problem.damper_activation = "ALL"
-    problem.required_solver = "LTI"
-    problem.continuation = "NO"
+    # Build rotor system - set parameters in constructor for proper initialization
+    # Note: damper_connection must be set at creation time for B2B geometric parameters
+    problem = ProblemDefinition(
+        number_blades=4,
+        damper_connection="H2B",
+        damper_activation="ALL",
+        required_solver="LTI",
+        continuation="NO"
+    )
 
     rotor = RotorBuild(problem)
 
@@ -68,8 +71,8 @@ def main():
     plt.title("LTI Analysis: Frequency vs RPM")
     plt.tight_layout()
 
-    fig1.savefig("results_figures/lti_damping.png", dpi=600, bbox_inches='tight')
-    fig2.savefig("results_figures/lti_frequency.png", dpi=600, bbox_inches='tight')
+    #fig1.savefig("results_figures/lti_damping.png", dpi=600, bbox_inches='tight')
+    #fig2.savefig("results_figures/lti_frequency.png", dpi=600, bbox_inches='tight')
     print("  Figures saved to results_figures/")
 
     print("\n" + "=" * 60)

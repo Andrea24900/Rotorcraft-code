@@ -7,7 +7,7 @@ This document presents key results from stability analysis of a 4-blade rotorcra
 ## System Configuration
 
 - **Blade count**: 4
-- **Damper configuration**: Hub-to-Blade (H2B)
+- **Damper configurations**: Hub-to-Blade (H2B) and Blade-to-Blade (B2B)
 - **RPM range**: 20-400 RPM
 - **Analysis points**: 100
 - **State dimension**: 12 DOF
@@ -76,6 +76,21 @@ Predictor-corrector algorithms for robust eigenvalue tracking across parameter r
 ![HD Continuation Frequency](results_figures/hd_cont_frequency.png)
 *Figure 12: HD Continuation: Frequency vs RPM (N=1 harmonics). Complete tracking of harmonic decomposition modes.*
 
+### 7. B2B (Blade-to-Blade) HD Continuation Analysis
+
+The B2B configuration uses dampers connecting adjacent blades cyclically, creating a damping matrix with both diagonal and extra-diagonal (coupling) terms. This differs from the H2B (Hub-to-Blade) configuration where each damper connects independently to the hub.
+
+![HD B2B Continuation Damping](results_figures/hd_b2b_cont_damping.png)
+*Figure 13: HD Continuation B2B: Damping vs RPM (N=1 harmonics). Blade-to-blade damper configuration with ODI (One Damper Inoperative).*
+
+![HD B2B Continuation Frequency](results_figures/hd_b2b_cont_frequency.png)
+*Figure 14: HD Continuation B2B: Frequency vs RPM (N=1 harmonics). Mode tracking for B2B damper topology.*
+
+**B2B Matrix Structure:**
+- Diagonal terms: contributions from dampers on both sides of each blade (C_before + C_after)
+- Extra-diagonal terms: coupling between adjacent blades (C_zetaed)
+- Stiffness follows same structure with K_before, K_after, K_zetaed coefficients
+
 ## Key Findings
 
 1. **System Stability**: All methods confirm system stability across 20-400 RPM range (maximum damping < 0)
@@ -89,6 +104,8 @@ Predictor-corrector algorithms for robust eigenvalue tracking across parameter r
    - 2-3x computational cost
 
 4. **HD Expansion**: Harmonic decomposition creates (1+2N)×n dimensional system, tracking all harmonic components
+
+5. **B2B Configuration**: Blade-to-blade damper topology correctly handled with coupled damping/stiffness matrices, producing accurate stability predictions for both ALL and ODI damper activation modes
 
 ## Bibliography
 
