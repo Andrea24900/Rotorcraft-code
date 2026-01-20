@@ -16,11 +16,11 @@ plt.rcParams.update({
     'font.serif': ['Computer Modern Roman', 'CMU Serif', 'DejaVu Serif'],
     'mathtext.fontset': 'cm',  # Computer Modern for math text
     'axes.unicode_minus': False,
-    'axes.labelsize': 18,
+    'axes.labelsize': 22,
     'axes.titlesize': 20,
     'xtick.labelsize': 14,
     'ytick.labelsize': 14,
-    'legend.fontsize': 14,
+    'legend.fontsize': 18,
     'figure.titlesize': 20,
 })
 

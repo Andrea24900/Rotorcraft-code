@@ -94,7 +94,7 @@ def test_1_h2b_4blades_1harmonic():
     print("\n  Creating stability map...")
     fig = MyPlot.plot_parametric_stability_map(
         analysis_hd,
-        figsize=(12, 8),
+        figsize=(8, 6),
         reference_analysis=analysis_ltp,
         reference_label="LTP stability boundary",
         reference_color="blue",
@@ -105,10 +105,10 @@ def test_1_h2b_4blades_1harmonic():
     fig.tight_layout()
 
     # Save figure (PNG and PDF)
-    # fig_path_png = os.path.join(FIGURES_DIR, "test1_h2b_4blades_1harmonic.png")
-    # fig_path_pdf = os.path.join(FIGURES_DIR, "test1_h2b_4blades_1harmonic.pdf")
-    # fig.savefig(fig_path_png, dpi=600, bbox_inches='tight')
-    # fig.savefig(fig_path_pdf, bbox_inches='tight')
+    fig_path_png = os.path.join(FIGURES_DIR, "test1_h2b_4blades_1harmonic.png")
+    fig_path_pdf = os.path.join(FIGURES_DIR, "test1_h2b_4blades_1harmonic.pdf")
+    fig.savefig(fig_path_png, dpi=600, bbox_inches='tight')
+    fig.savefig(fig_path_pdf, bbox_inches='tight')
     # print(f"  Saved: {fig_path_png}")
     # print(f"  Saved: {fig_path_pdf}")
 
@@ -183,7 +183,7 @@ def test_2_h2b_5blades_2harmonics():
     print("\n  Creating stability map...")
     fig = MyPlot.plot_parametric_stability_map(
         analysis_hd,
-        figsize=(12, 8),
+        figsize=(8, 6),
         reference_analysis=analysis_ltp,
         reference_label="LTP stability boundary",
         reference_color="blue",
@@ -194,10 +194,10 @@ def test_2_h2b_5blades_2harmonics():
     fig.tight_layout()
 
     # Save figure (PNG and PDF)
-    # fig_path_png = os.path.join(FIGURES_DIR, "test2_h2b_5blades_2harmonics.png")
-    # fig_path_pdf = os.path.join(FIGURES_DIR, "test2_h2b_5blades_2harmonics.pdf")
-    # fig.savefig(fig_path_png, dpi=600, bbox_inches='tight')
-    # fig.savefig(fig_path_pdf, bbox_inches='tight')
+    fig_path_png = os.path.join(FIGURES_DIR, "test2_h2b_5blades_2harmonics.png")
+    fig_path_pdf = os.path.join(FIGURES_DIR, "test2_h2b_5blades_2harmonics.pdf")
+    fig.savefig(fig_path_png, dpi=600, bbox_inches='tight')
+    fig.savefig(fig_path_pdf, bbox_inches='tight')
     # print(f"  Saved: {fig_path_png}")
     # print(f"  Saved: {fig_path_pdf}")
 
@@ -272,7 +272,7 @@ def test_3_h2b_7blades_3harmonics():
     print("\n  Creating stability map...")
     fig = MyPlot.plot_parametric_stability_map(
         analysis_hd,
-        figsize=(12, 8),
+        figsize=(8, 6),
         reference_analysis=analysis_ltp,
         reference_label="LTP stability boundary",
         reference_color="blue",
@@ -283,10 +283,10 @@ def test_3_h2b_7blades_3harmonics():
     fig.tight_layout()
 
     # Save figure (PNG and PDF)
-    # fig_path_png = os.path.join(FIGURES_DIR, "test3_h2b_7blades_3harmonics.png")
-    # fig_path_pdf = os.path.join(FIGURES_DIR, "test3_h2b_7blades_3harmonics.pdf")
-    # fig.savefig(fig_path_png, dpi=600, bbox_inches='tight')
-    # fig.savefig(fig_path_pdf, bbox_inches='tight')
+    fig_path_png = os.path.join(FIGURES_DIR, "test3_h2b_7blades_3harmonics.png")
+    fig_path_pdf = os.path.join(FIGURES_DIR, "test3_h2b_7blades_3harmonics.pdf")
+    fig.savefig(fig_path_png, dpi=600, bbox_inches='tight')
+    fig.savefig(fig_path_pdf, bbox_inches='tight')
     # print(f"  Saved: {fig_path_png}")
     # print(f"  Saved: {fig_path_pdf}")
 
@@ -362,7 +362,7 @@ def test_4_h2b_4blades_adjacent_dampers_fail():
     print("\n  Creating stability map...")
     fig = MyPlot.plot_parametric_stability_map(
         analysis_hd,
-        figsize=(12, 8),
+        figsize=(8, 6),
         reference_analysis=analysis_ltp,
         reference_label="LTP stability boundary",
         reference_color="blue",
@@ -373,10 +373,10 @@ def test_4_h2b_4blades_adjacent_dampers_fail():
     fig.tight_layout()
 
     # Save figure (PNG and PDF)
-    # fig_path_png = os.path.join(FIGURES_DIR, "test4_h2b_4blades_adjacent_dampers_fail.png")
-    # fig_path_pdf = os.path.join(FIGURES_DIR, "test4_h2b_4blades_adjacent_dampers_fail.pdf")
-    # fig.savefig(fig_path_png, dpi=600, bbox_inches='tight')
-    # fig.savefig(fig_path_pdf, bbox_inches='tight')
+    fig_path_png = os.path.join(FIGURES_DIR, "test4_h2b_4blades_adjacent_dampers_fail.png")
+    fig_path_pdf = os.path.join(FIGURES_DIR, "test4_h2b_4blades_adjacent_dampers_fail.pdf")
+    fig.savefig(fig_path_png, dpi=600, bbox_inches='tight')
+    fig.savefig(fig_path_pdf, bbox_inches='tight')
     # print(f"  Saved: {fig_path_png}")
     # print(f"  Saved: {fig_path_pdf}")
 
@@ -452,7 +452,7 @@ def test_5_h2b_4blades_opposite_dampers_fail():
     print("\n  Creating stability map...")
     fig = MyPlot.plot_parametric_stability_map(
         analysis_hd,
-        figsize=(12, 8),
+        figsize=(8, 6),
         reference_analysis=analysis_ltp,
         reference_label="LTP stability boundary",
         reference_color="blue",
@@ -463,10 +463,10 @@ def test_5_h2b_4blades_opposite_dampers_fail():
     fig.tight_layout()
 
     # Save figure (PNG and PDF)
-    # fig_path_png = os.path.join(FIGURES_DIR, "test5_h2b_4blades_opposite_dampers_fail.png")
-    # fig_path_pdf = os.path.join(FIGURES_DIR, "test5_h2b_4blades_opposite_dampers_fail.pdf")
-    # fig.savefig(fig_path_png, dpi=600, bbox_inches='tight')
-    # fig.savefig(fig_path_pdf, bbox_inches='tight')
+    fig_path_png = os.path.join(FIGURES_DIR, "test5_h2b_4blades_opposite_dampers_fail.png")
+    fig_path_pdf = os.path.join(FIGURES_DIR, "test5_h2b_4blades_opposite_dampers_fail.pdf")
+    fig.savefig(fig_path_png, dpi=600, bbox_inches='tight')
+    fig.savefig(fig_path_pdf, bbox_inches='tight')
     # print(f"  Saved: {fig_path_png}")
     # print(f"  Saved: {fig_path_pdf}")
 
@@ -488,11 +488,12 @@ def main():
     print("=" * 70)
 
     # Run all tests
-    fig1 = test_1_h2b_4blades_1harmonic()
-    fig2 = test_2_h2b_5blades_2harmonics()
-    fig3 = test_3_h2b_7blades_3harmonics()
-    fig4 = test_4_h2b_4blades_adjacent_dampers_fail()
-    fig5 = test_5_h2b_4blades_opposite_dampers_fail()
+    #fig1 = test_1_h2b_4blades_1harmonic()
+    #fig2 = test_2_h2b_5blades_2harmonics()
+    #fig3 = test_3_h2b_7blades_3harmonics()
+    #broken
+    #fig4 = test_4_h2b_4blades_adjacent_dampers_fail()
+    #fig5 = test_5_h2b_4blades_opposite_dampers_fail()
 
     # Summary
     print("\n" + "=" * 70)
