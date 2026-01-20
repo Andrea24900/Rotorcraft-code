@@ -309,15 +309,21 @@ class TestContinuationIntegration:
             assert len(sol.damping) == n_eigenvalues
             assert len(sol.frequency) == n_eigenvalues
 
-        # Verify eigenvalues are complex conjugate pairs (for real systems)
+        # Verify eigenvalues come in complex conjugate pairs (for real systems)
+        # For each eigenvalue with nonzero imaginary part, its conjugate should exist
         for sol in cont_analysis.modal_solution:
             eigs = sol.damping + 1j * sol.frequency
-            # Sort by real part, then imaginary part
-            sorted_eigs = sorted(eigs, key=lambda x: (x.real, x.imag))
-            # Check pairs are conjugates (within tolerance)
-            for i in range(0, len(sorted_eigs), 2):
-                if i + 1 < len(sorted_eigs):
-                    assert abs(sorted_eigs[i].imag + sorted_eigs[i+1].imag) < 1e-6
+            tol = 1e-6
+            for eig in eigs:
+                if abs(eig.imag) > tol:
+                    # Find conjugate in the list
+                    conjugate = eig.conjugate()
+                    found_conjugate = any(
+                        abs(e.real - conjugate.real) < tol and
+                        abs(e.imag - conjugate.imag) < tol
+                        for e in eigs
+                    )
+                    assert found_conjugate, f"Conjugate of {eig} not found in eigenvalues"
 
 
 class TestRefactoringCorrectness:

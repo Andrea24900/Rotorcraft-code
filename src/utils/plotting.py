@@ -133,14 +133,13 @@ class MyPlot:
 
         ax.grid(True)
 
-        # Plot all eigenvalues for all operating points (dots only, no lines)
+        # Plot all eigenvalues for all operating points (continuous lines)
         n_modes = len(modal_solution[0].damping)
         for j in range(n_modes):
             rpm_values = [modal_sol.OMEGA_RPM for modal_sol in modal_solution]
             damping_values = [modal_sol.damping[j] for modal_sol in modal_solution]
             ax.plot(rpm_values, damping_values,
-                   color='blue', marker='*', markersize=plot_property.marker_size,
-                   linestyle='None')
+                   color='blue', marker='.', linestyle='none', markersize=plot_property.marker_size)
 
         ax.set_xlabel(r'$\Omega$ $\mathrm{[rpm]}$', fontsize=plot_property.fontsize_label)
         ax.set_ylabel(r'$\lambda$ $\mathrm{[1/s]}$', fontsize=plot_property.fontsize_label)
@@ -151,7 +150,7 @@ class MyPlot:
             ax.set_ylim(ylimits)
 
         return fig
-    
+
     @staticmethod
     def plot_damping_order(
         modal_solution: List,
@@ -199,9 +198,7 @@ class MyPlot:
                 rpm_values = [modal_sol.OMEGA_RPM for modal_sol in modal_solution]
                 damping_values = [modal_sol.damping[j] for modal_sol in modal_solution]
                 ax.plot(rpm_values, damping_values,
-                       color=colors_double[j], marker='o',
-                       markersize=plot_property.marker_size,
-                       linewidth=plot_property.line_width)
+                       color=colors_double[j], linewidth=2)
         else:
             # Plot selected modes (convert 1-based to 0-based for array indexing)
             # Eigenvalues come in pairs: (1,2), (3,4), (5,6), (7,8), (9,10), (11,12)
@@ -216,15 +213,11 @@ class MyPlot:
                 # Show label for even mode_numbers (2, 4, 6, 8, 10, 12)
                 if mode_number % 2 == 0:
                     ax.plot(rpm_values, damping_values,
-                           color=colors_double[mode_idx], marker='o',
-                           markersize=plot_property.marker_size,
-                           linewidth=plot_property.line_width,
+                           color=colors_double[mode_idx], linewidth=2,
                            label=f'{mode_number // 2}')
                 else:
                     ax.plot(rpm_values, damping_values,
-                           color=colors_double[mode_idx], marker='o',
-                           markersize=plot_property.marker_size,
-                           linewidth=plot_property.line_width)
+                           color=colors_double[mode_idx], linewidth=2)
 
         ax.set_xlabel(r'$\Omega$ $\mathrm{[rpm]}$', fontsize=plot_property.fontsize_label)
         ax.set_ylabel(r'$\lambda$ $\mathrm{[1/s]}$', fontsize=plot_property.fontsize_label)
@@ -266,14 +259,13 @@ class MyPlot:
 
         ax.grid(True)
 
-        # Plot all eigenvalues for all operating points (dots only, no lines)
+        # Plot all eigenvalues for all operating points (continuous lines)
         n_modes = len(modal_solution[0].frequency)
         for j in range(n_modes):
             rpm_values = [modal_sol.OMEGA_RPM for modal_sol in modal_solution]
             freq_values = [modal_sol.frequency[j] for modal_sol in modal_solution]
             ax.plot(rpm_values, freq_values,
-                   color='blue', marker='*', markersize=plot_property.marker_size,
-                   linestyle='None')
+                   color='blue', marker='.', linestyle='none', markersize=plot_property.marker_size)
 
         ax.set_xlabel(r'$\Omega$ $\mathrm{[rpm]}$', fontsize=plot_property.fontsize_label)
         ax.set_ylabel(r'$\omega$ $\mathrm{[rad/s]}$', fontsize=plot_property.fontsize_label)
@@ -332,9 +324,7 @@ class MyPlot:
                 rpm_values = [modal_sol.OMEGA_RPM for modal_sol in modal_solution]
                 freq_values = [modal_sol.frequency[j] for modal_sol in modal_solution]
                 ax.plot(rpm_values, freq_values,
-                       color=colors_double[j], marker='o',
-                       markersize=plot_property.marker_size,
-                       linewidth=plot_property.line_width)
+                       color=colors_double[j], linewidth=2)
         else:
             # Plot selected modes (convert 1-based to 0-based for array indexing)
             # Eigenvalues come in pairs: (1,2), (3,4), (5,6), (7,8), (9,10), (11,12)
@@ -349,15 +339,11 @@ class MyPlot:
                 # Show label for even mode_numbers (2, 4, 6, 8, 10, 12)
                 if mode_number % 2 == 0:
                     ax.plot(rpm_values, freq_values,
-                           color=colors_double[mode_idx], marker='o',
-                           markersize=plot_property.marker_size,
-                           linewidth=plot_property.line_width,
+                           color=colors_double[mode_idx], linewidth=2,
                            label=f'{mode_number // 2}')
                 else:
                     ax.plot(rpm_values, freq_values,
-                           color=colors_double[mode_idx], marker='o',
-                           markersize=plot_property.marker_size,
-                           linewidth=plot_property.line_width)
+                           color=colors_double[mode_idx], linewidth=2)
 
         ax.set_xlabel(r'$\Omega$ $\mathrm{[rpm]}$', fontsize=plot_property.fontsize_label)
         ax.set_ylabel(r'$\omega$ $\mathrm{[rad/s]}$', fontsize=plot_property.fontsize_label)
@@ -446,7 +432,7 @@ class MyPlot:
             reference_color: Color for reference boundary line
             reference_linestyle: Line style for reference boundary
             title: Custom title. If None, auto-generated from solver type
-            xlabel: Custom x-axis label. If None, uses "Rotor Speed [RPM]"
+            xlabel: Custom x-axis label. If None, uses "Rotor Speed [rpm]"
             ylabel: Custom y-axis label. If None, auto-generated from parameter name
             figure_handle: Optional existing figure to plot on
 
@@ -640,8 +626,7 @@ class MyPlot:
 
             ax.plot(parametric_analysis.omega_values_RPM, damping,
                    color=colors_vec[i % len(colors_vec)],
-                   linewidth=plot_property.line_width,
-                   marker='o', markersize=plot_property.marker_size,
+                   linewidth=2,
                    label=label)
 
         # Stability boundary

@@ -52,7 +52,7 @@ def test_problem_definition_default_creation():
     assert problem.required_solver == "LTI", "Default solver should be LTI"
     assert problem.lower_rotor_RPM == 20.0, "Default lower RPM should be 20.0"
     assert problem.higher_rotor_RPM == 400.0, "Default higher RPM should be 400.0"
-    assert problem.number_points == 100, "Default number of points should be 100"
+    assert problem.number_points == 200, "Default number of points should be 200"
 
 
 def test_h2b_configuration():

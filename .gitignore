@@ -116,7 +116,9 @@ Desktop.ini
 *.pdf
 #results/
 extra_figures
+extra-figures
 tests_to_run
+tests_to_run_2
 output/
 
 # Data files
