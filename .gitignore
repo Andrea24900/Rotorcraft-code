@@ -117,8 +117,8 @@ Desktop.ini
 #results/
 extra_figures
 extra-figures
-tests_to_run
-tests_to_run_2
+tests_to_run.py
+tests_to_run_2.py
 output/
 
 # Data files
