@@ -16,11 +16,11 @@ plt.rcParams.update({
     'font.serif': ['Computer Modern Roman', 'CMU Serif', 'DejaVu Serif'],
     'mathtext.fontset': 'cm',  # Computer Modern for math text
     'axes.unicode_minus': False,
-    'axes.labelsize': 22,
+    'axes.labelsize': 26,
     'axes.titlesize': 20,
-    'xtick.labelsize': 14,
-    'ytick.labelsize': 14,
-    'legend.fontsize': 18,
+    'xtick.labelsize': 16,
+    'ytick.labelsize': 16,
+    'legend.fontsize': 22,
     'figure.titlesize': 20,
 })
 
@@ -30,11 +30,11 @@ class PlotProperties:
     """Plot styling properties for publication-quality figures."""
 
     marker_size: int = 6
-    line_width: float = 2.0
-    fontsize_legend: int = 14
+    line_width: float = 3.0
+    fontsize_legend: int = 22
     dash_width: float = 2.0
-    fontsize_label: int = 18
-    fontsize_tick: int = 14
+    fontsize_label: int = 26
+    fontsize_tick: int = 16
 
 
 @dataclass
@@ -139,7 +139,7 @@ class MyPlot:
             rpm_values = [modal_sol.OMEGA_RPM for modal_sol in modal_solution]
             damping_values = [modal_sol.damping[j] for modal_sol in modal_solution]
             ax.plot(rpm_values, damping_values,
-                   color='blue', marker='.', linestyle='none', markersize=plot_property.marker_size)
+                   color='blue', marker='.', linestyle='none', markersize=plot_property.marker_size, linewidth=plot_property.line_width)
 
         ax.set_xlabel(r'$\Omega$ $\mathrm{[rpm]}$', fontsize=plot_property.fontsize_label)
         ax.set_ylabel(r'$\lambda$ $\mathrm{[1/s]}$', fontsize=plot_property.fontsize_label)
@@ -198,7 +198,7 @@ class MyPlot:
                 rpm_values = [modal_sol.OMEGA_RPM for modal_sol in modal_solution]
                 damping_values = [modal_sol.damping[j] for modal_sol in modal_solution]
                 ax.plot(rpm_values, damping_values,
-                       color=colors_double[j], linewidth=2)
+                       color=colors_double[j], linewidth=plot_property.line_width)
         else:
             # Plot selected modes (convert 1-based to 0-based for array indexing)
             # Eigenvalues come in pairs: (1,2), (3,4), (5,6), (7,8), (9,10), (11,12)
@@ -213,11 +213,11 @@ class MyPlot:
                 # Show label for even mode_numbers (2, 4, 6, 8, 10, 12)
                 if mode_number % 2 == 0:
                     ax.plot(rpm_values, damping_values,
-                           color=colors_double[mode_idx], linewidth=2,
-                           label=f'{mode_number // 2}')
+                           color=colors_double[j], linewidth=plot_property.line_width,
+                           label=f'{j // 2+1}')
                 else:
                     ax.plot(rpm_values, damping_values,
-                           color=colors_double[mode_idx], linewidth=2)
+                           color=colors_double[j], linewidth=plot_property.line_width)
 
         ax.set_xlabel(r'$\Omega$ $\mathrm{[rpm]}$', fontsize=plot_property.fontsize_label)
         ax.set_ylabel(r'$\lambda$ $\mathrm{[1/s]}$', fontsize=plot_property.fontsize_label)
@@ -232,6 +232,89 @@ class MyPlot:
             ax.set_ylim(ylimits)
 
         return fig
+    @staticmethod
+    def plot_damping_hd(
+        modal_solution: List,
+        modes: Optional[List[int]] = None,
+        xlimits: Optional[Tuple[float, float]] = (0, 400),
+        ylimits: Optional[Tuple[float, float]] = (-5, 1),
+        figure_handle: Optional[plt.Figure] = None
+    ) -> plt.Figure:
+        """Plot damping for specific mode orders.
+
+        Args:
+            modal_solution: List of modal solution structures
+            modes: List of mode numbers to highlight (1-based indexing)
+            xlimits: Optional x-axis limits (min_rpm, max_rpm)
+            ylimits: Optional y-axis limits (min_damping, max_damping)
+            figure_handle: Optional existing figure to plot on
+
+        Returns:
+            matplotlib Figure object
+        """
+        if figure_handle is None:
+            fig, ax = plt.subplots(figsize=(10, 6))
+        else:
+            fig = figure_handle
+            ax = fig.gca()
+
+        ax.grid(True)
+
+        # Get color vector
+        colors_double = color.get_color_vector_double()
+
+        # Generate ordered mode names for the modes to highlight
+        if modes is not None and len(modes) > 0:
+            min_mode_number = min(modes)
+            max_mode_number = max(modes)
+            mode_names = np.arange(min_mode_number, max_mode_number + 1)
+        else:
+            modes = None
+
+        # Plot all data in purple
+        n_modes = len(modal_solution[0].damping)
+        rpm_values = [modal_sol.OMEGA_RPM for modal_sol in modal_solution]
+        damping_values = [modal_sol.damping[0] for modal_sol in modal_solution]
+        ax.plot(rpm_values, damping_values,
+                    color=colors_double[12], linewidth=plot_property.line_width,label="All HD")
+        for j in range(n_modes):
+            damping_values = [modal_sol.damping[j] for modal_sol in modal_solution]
+            ax.plot(rpm_values, damping_values,
+                       color=colors_double[12], linewidth=plot_property.line_width)
+        
+        # superimpose the highlighted modes from the list
+        # take the part to plot the modes from above
+        for j in range(0,10): #plot the extra modes, used 12 for the special case 
+            mode_number= modes[j]-1 
+            damping_values = [modal_sol.damping[mode_number] for modal_sol in modal_solution]
+            if j % 2 == 0:
+                ax.plot(rpm_values, damping_values,
+                       color=colors_double[j], linewidth=plot_property.line_width,label=f"HD {j//2+1}") # remember to change for more than 4 blades
+            else:
+                ax.plot(rpm_values, damping_values,
+                       color=colors_double[j], linewidth=plot_property.line_width)
+        
+        mode_number = modes[11]
+        damping_values = [modal_sol.damping[mode_number] for modal_sol in modal_solution]
+        ax.plot(rpm_values, damping_values,
+                       color=colors_double[11], linewidth=plot_property.line_width,label=f"HD 6") # remember to change for more than 4 blades
+
+        ax.set_xlabel(r'$\Omega$ $\mathrm{[rpm]}$', fontsize=plot_property.fontsize_label)
+        ax.set_ylabel(r'$\lambda$ $\mathrm{[1/s]}$', fontsize=plot_property.fontsize_label)
+
+        # use the predefined legend template
+
+        ax.legend(fontsize=plot_property.fontsize_legend, loc='center left',
+                     bbox_to_anchor=(1, 0.5))
+
+        if xlimits:
+            ax.set_xlim(xlimits)
+        if ylimits:
+            ax.set_ylim(ylimits)
+
+        return fig
+    
+
 
     @staticmethod
     def plot_frequency_generic(
@@ -324,7 +407,7 @@ class MyPlot:
                 rpm_values = [modal_sol.OMEGA_RPM for modal_sol in modal_solution]
                 freq_values = [modal_sol.frequency[j] for modal_sol in modal_solution]
                 ax.plot(rpm_values, freq_values,
-                       color=colors_double[j], linewidth=2)
+                       color=colors_double[j], linewidth=plot_property.line_width)
         else:
             # Plot selected modes (convert 1-based to 0-based for array indexing)
             # Eigenvalues come in pairs: (1,2), (3,4), (5,6), (7,8), (9,10), (11,12)
@@ -339,11 +422,11 @@ class MyPlot:
                 # Show label for even mode_numbers (2, 4, 6, 8, 10, 12)
                 if mode_number % 2 == 0:
                     ax.plot(rpm_values, freq_values,
-                           color=colors_double[mode_idx], linewidth=2,
+                           color=colors_double[mode_idx], linewidth=plot_property.line_width,
                            label=f'{mode_number // 2}')
                 else:
                     ax.plot(rpm_values, freq_values,
-                           color=colors_double[mode_idx], linewidth=2)
+                           color=colors_double[mode_idx], linewidth=plot_property.line_width)
 
         ax.set_xlabel(r'$\Omega$ $\mathrm{[rpm]}$', fontsize=plot_property.fontsize_label)
         ax.set_ylabel(r'$\omega$ $\mathrm{[rad/s]}$', fontsize=plot_property.fontsize_label)
@@ -475,7 +558,7 @@ class MyPlot:
                            colors='black', linewidths=2, linestyles='--')
             # Add to legend manually
             boundary_label = f"{parametric_analysis.solver_type} stability boundary"
-            ax.plot([], [], 'k--', linewidth=2, label=boundary_label)
+            ax.plot([], [], 'k--', linewidth=plot_property.line_width, label=boundary_label)
 
         # Overlay reference analysis stability boundary if provided
         if reference_analysis is not None:
@@ -493,7 +576,7 @@ class MyPlot:
             if reference_label is None:
                 reference_label = f"{reference_analysis.solver_type} boundary"
             ax.plot([], [], color=reference_color, linestyle=reference_linestyle,
-                   linewidth=2.5, label=reference_label)
+                   linewidth=plot_property.line_width, label=reference_label)
 
         # Labels
         if xlabel is None:
@@ -626,7 +709,7 @@ class MyPlot:
 
             ax.plot(parametric_analysis.omega_values_RPM, damping,
                    color=colors_vec[i % len(colors_vec)],
-                   linewidth=2,
+                   linewidth=plot_property.line_width,
                    label=label)
 
         # Stability boundary

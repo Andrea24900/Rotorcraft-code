@@ -306,11 +306,9 @@ def damping_activation_B2B(problem: ProblemDefinition):
         damper_curr = i  # Damper connecting blade i to blade i+1
 
         # Diagonal term: sum of contributions from both adjacent dampers
-        diag_contrib = 0.0
-        if damper_active[damper_prev]:
-            diag_contrib += C_before  # Contribution from damper before blade i
-        if damper_active[damper_curr]:
-            diag_contrib += C_after  # Contribution from damper after blade i
+        # Scale by damper activation ratio (0.0 to 1.0)
+        diag_contrib = (damper_active[damper_prev] * C_before +
+                        damper_active[damper_curr] * C_after)
         damping_matrix_addition[i, i] = diag_contrib
 
         # Extra-diagonal terms: coupling with adjacent blades
@@ -318,12 +316,10 @@ def damping_activation_B2B(problem: ProblemDefinition):
         i_prev = (i - 1) % num_blades
 
         # Coupling with next blade (through damper i)
-        if damper_active[damper_curr]:
-            damping_matrix_addition[i, i_next] = C_zetaed
+        damping_matrix_addition[i, i_next] = damper_active[damper_curr] * C_zetaed
 
         # Coupling with previous blade (through damper i-1)
-        if damper_active[damper_prev]:
-            damping_matrix_addition[i, i_prev] = C_zetaed
+        damping_matrix_addition[i, i_prev] = damper_active[damper_prev] * C_zetaed
 
     # Build the stiffness matrix for blade DOFs (same structure as damping)
     for i in range(num_blades):
@@ -331,22 +327,17 @@ def damping_activation_B2B(problem: ProblemDefinition):
         damper_curr = i
 
         # Diagonal term: sum of contributions from both adjacent dampers
-        diag_contrib = 0.0
-        if damper_active[damper_prev]:
-            diag_contrib += K_before  # Contribution from damper before blade i
-        if damper_active[damper_curr]:
-            diag_contrib += K_after  # Contribution from damper after blade i
+        # Scale by damper activation ratio (0.0 to 1.0)
+        diag_contrib = (damper_active[damper_prev] * K_before +
+                        damper_active[damper_curr] * K_after)
         stiffness_matrix_addition[i, i] = diag_contrib
 
         # Extra-diagonal terms
         i_next = (i + 1) % num_blades
         i_prev = (i - 1) % num_blades
 
-        if damper_active[damper_curr]:
-            stiffness_matrix_addition[i, i_next] = K_zetaed
-
-        if damper_active[damper_prev]:
-            stiffness_matrix_addition[i, i_prev] = K_zetaed
+        stiffness_matrix_addition[i, i_next] = damper_active[damper_curr] * K_zetaed
+        stiffness_matrix_addition[i, i_prev] = damper_active[damper_prev] * K_zetaed
 
     return damping_matrix_addition, stiffness_matrix_addition
 

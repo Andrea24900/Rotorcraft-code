@@ -105,12 +105,12 @@ class ProblemDefinition:
         # Set damper properties based on connection type
         if self.damper_connection == "H2B":
             # Hub-to-Blade configuration
-            self.rotor_characteristics.nominal_damping_Cd = 4067.0  # Nms/rad
+            self.rotor_characteristics.nominal_damping_Cd = 4067  # Nms/rad #nominal is 4067
             self.rotor_characteristics.nominal_stiffness_Kd = 0.0  # Nm/rad
         
         elif self.damper_connection == "B2B":
             # Blade-to-Blade configuration
-            self.rotor_characteristics.nominal_damping_Cd = 36500.0  # Ns/m
+            self.rotor_characteristics.nominal_damping_Cd = 38000.0  # Ns/m
             self.rotor_characteristics.nominal_stiffness_Kd = 0.0  # N/m
             
             # Geometric relationships for B2B
