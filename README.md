@@ -30,10 +30,10 @@ rotor_dynamics_python/
 ### From Release (Recommended)
 ```bash
 # Install specific version
-pip install git+https://github.com/Andrea24900/rotor_dynamics_python.git@v1.0.1
+pip install git+https://github.com/Andrea24900/rotor_dynamics_python.git@v1.1.0
 
 # Or clone specific version
-git clone --branch v1.0.1 https://github.com/Andrea24900/rotor_dynamics_python.git
+git clone --branch v1.1.0 https://github.com/Andrea24900/rotor_dynamics_python.git
 cd rotor_dynamics_python
 pip install -e ".[dev]"
 ```
@@ -192,6 +192,12 @@ analysis = ContinuationAnalysis(rotor).continuation()
 
 ## Recent Improvements (January 2026)
 
+### v1.1.0 - B2B Damper Activation Fix
+- **Critical Bug Fix**: Fixed `damping_activation_B2B()` to properly scale damping/stiffness contributions by the `damper_activation_vector` values. Previously, any non-zero ratio (e.g., 0.5) was incorrectly treated as full activation due to boolean checks instead of multiplication.
+- **B2B Nominal Damping**: Updated from 36500 to 38000 Ns/m for better alignment with reference values
+- **Plotting Improvements**: Enhanced publication-quality figures with larger fonts (labels: 26pt, ticks: 16pt, legend: 22pt) and thicker lines (3.0pt)
+- **New Plotting Function**: Added `plot_damping_hd()` for HD-specific damping visualization with mode highlighting
+
 ### v1.0.2 - B2B Damper Configuration
 - **B2B Matrix Generation**: Added `damping_activation_B2B()` function in `matrix_generation_GR.py` implementing blade-to-blade damper matrices with:
   - Diagonal terms: contributions from dampers on both sides of each blade (`C_before`, `C_after`)
@@ -294,7 +300,7 @@ If you use this software in your research, please cite:
   author = {Bassi, Andrea},
   title = {Rotor Dynamics Analysis - Python},
   year = {2026},
-  version = {1.0.1},
+  version = {1.1.0},
   url = {https://github.com/Andrea24900/rotor_dynamics_python}
 }
 
