@@ -37,7 +37,7 @@ class ParametricPoint:
 
 
 class ParametricAnalysis:
-    """Parametric sweep analysis over OMEGA and a system parameter.
+    """Parametric sweep analysis over OMEGA and a system parameter to find the least damped mode.
 
     This class performs stability analysis across a 2D grid of (OMEGA, parameter)
     values. It automatically validates that the chosen solver is appropriate

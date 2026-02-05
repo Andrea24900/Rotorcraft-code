@@ -17,6 +17,7 @@ Stability analysis tools for rotorcraft systems:
 rotor_dynamics_python/
 ├── src/                     # Source code
 │   ├── config/              # Configuration
+    |── analysis/            # Modal participation and parameteric analysis
 │   ├── stability_analysis/  # LTI, LTP, HD analysis
 │   ├── analysis/            # Continuation methods
 │   └── utils/               # Plotting utilities
@@ -196,7 +197,10 @@ analysis = ContinuationAnalysis(rotor).continuation()
 | Plotting | ✅ | Damping/frequency plots |
 | Modal Participation | 🚧 | Structure exists |
 
-## Recent Improvements (January 2026)
+## Recent Improvements (February 2026)
+
+### v1.2.0 - Code generalisation
+- **Separation of variables**: Separated the solver options from the rotor characteristics in 'problem_definition'. Adapted code accordingly. Updated and clarified some comments. 
 
 ### v1.1.0 - B2B Damper Activation Fix
 - **Critical Bug Fix**: Fixed `damping_activation_B2B()` to properly scale damping/stiffness contributions by the `damper_activation_vector` values. Previously, any non-zero ratio (e.g., 0.5) was incorrectly treated as full activation due to boolean checks instead of multiplication.

@@ -1,6 +1,7 @@
 """Base stability analysis class.
 
-Converted from MATLAB stability_analysis.m classdef.
+Contains all methods required to perform various stability analyses, 
+such as the Floquet method of characteristic exponents and the harmonic decomposition.
 """
 
 import numpy as np
