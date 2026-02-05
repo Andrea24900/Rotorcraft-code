@@ -100,7 +100,6 @@ class ProblemDefinition:
     
     def _initialize_rotor_characteristics(self):
         """Initialize rotor characteristics based on configuration."""
-        import numpy as np
         
         # Set damper properties based on connection type
         if self.damper_connection == "H2B":
