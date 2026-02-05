@@ -11,6 +11,8 @@ Damper activation modes:
 Damper attachments: H2B (hub-to-blade) and B2B (blade-to-blade or interblade)
 
 Number of blades: from 3 (minimum number for GR prone rotor) to arbitrary Nb
+
+
 """
 
 import numpy as np
@@ -20,13 +22,13 @@ from ..config.problem_definition import ProblemDefinition
 def build_MCK_matrices(
     problem: ProblemDefinition,mbc_matrices = None
 ) -> Tuple [np.ndarray,np.ndarray,np.ndarray]:
-    """Build M,C,K matrices for the rotor system. If the MBC matrices are not created, build them.
+    """Builds M,C,K matrices (as function handles in t,omega) for the rotor system. If the MBC matrices are not created, build them.
 
     Args:
         problem: Problem definition containing rotor characteristics
 
     Returns:
-        mass_matrix, damping_matrix, stiffness_matrix (function handles in Omega,t)
+        mass_matrix, damping_matrix, stiffness_matrix (function handles in t,omega)
 
     Note:
         Matrix dimensions depend on number of blades (Nb blade states and 2 hub ones):

@@ -5,6 +5,7 @@ rotor characteristics.
 
 When dealing with another problem:
 - all physical properties are used to generate the matrices and can be changed
+  to generate different matrices
 - the problem characteristics are used in the methods and should not be removed
 """
 

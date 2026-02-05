@@ -16,12 +16,8 @@ plt.rcParams.update({
     'font.serif': ['Computer Modern Roman', 'CMU Serif', 'DejaVu Serif'],
     'mathtext.fontset': 'cm',  # Computer Modern for math text
     'axes.unicode_minus': False,
-    'axes.labelsize': 26,
-    'axes.titlesize': 20,
     'xtick.labelsize': 16,
     'ytick.labelsize': 16,
-    'legend.fontsize': 22,
-    'figure.titlesize': 20,
 })
 
 
@@ -34,7 +30,6 @@ class PlotProperties:
     fontsize_legend: int = 22
     dash_width: float = 2.0
     fontsize_label: int = 26
-    fontsize_tick: int = 16
 
 
 @dataclass
@@ -100,11 +95,6 @@ class MyPlot:
 
     This class will contain methods converted from my_plot.m
     """
-
-    def __init__(self):
-        """Initialize plotting utilities."""
-        self.properties = PlotProperties()
-        self.colors = ColorScheme()
 
     @staticmethod
     def plot_damping_generic(
@@ -824,5 +814,4 @@ if __name__ == "__main__":
     print(f"First color (blue): {colors[0]}")
     
     # Test plotting utilities
-    plotter = MyPlot()
-    print(f"Line width: {plotter.properties.line_width}")
+    print(f"Line width: {plot_property.line_width}")

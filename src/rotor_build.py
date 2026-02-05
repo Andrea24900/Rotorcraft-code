@@ -38,7 +38,9 @@ class RotorBuild:
             auto_build: If True, automatically build state matrix (default: True)
         """
         self.problem = problem
+        # the type can be a callable or a None, with a default None
         self.MCK_func: Callable[[float, float], tuple] | None = None
+       
         self.state_matrix_function: Callable[[float, float], np.ndarray] | None = None
 
         if auto_build:
