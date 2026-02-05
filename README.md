@@ -116,16 +116,22 @@ continuation_max_iter: int = 100
 
 ## Configuration
 
-Edit `src/config/problem_definition.py`:
+Edit `src/config/problem_definition.py`. The configuration is split into two classes:
+
+- **`RotorCharacteristics`**: physical properties of the rotor (blades, dampers, geometry)
+- **`ProblemDefinition`**: analysis settings (solver, RPM range, tolerances)
 
 ```python
 @dataclass
-class ProblemDefinition:
+class RotorCharacteristics:
     number_blades: int = 4
     damper_connection: Literal["H2B", "B2B"] = "H2B"
     damper_activation: Literal["ALL", "ODI", "CUSTOM"] = "ALL"
     damper_activation_vector: np.ndarray  # For CUSTOM mode, e.g., np.array([0,1,1,1])
+    # ... blade, hub, and damper physical properties
 
+@dataclass
+class ProblemDefinition:
     lower_rotor_RPM: float = 20.0
     higher_rotor_RPM: float = 400.0
     number_points: int = 100
@@ -133,6 +139,8 @@ class ProblemDefinition:
     required_solver: Literal["LTI", "LTP", "HD"] = "LTI"
     number_harmonics: int = 1          # HD analysis
     hd_use_complex: bool = False       # Complex HD formulation
+
+    rotor_characteristics: RotorCharacteristics = ...
 ```
 
 ### Damper Connection Types
@@ -147,15 +155,13 @@ class ProblemDefinition:
 ### B2B Configuration Example
 
 ```python
-from src.config.problem_definition import ProblemDefinition
+from src.config.problem_definition import ProblemDefinition, RotorCharacteristics
 from src.rotor_build import RotorBuild
 from src.stability_analysis.continuation_analysis import ContinuationAnalysis
 
-# B2B requires using ProblemDefinition constructor for proper geometric initialization
 problem = ProblemDefinition(
-    number_blades=4,
-    damper_connection="B2B",
-    damper_activation="ODI",
+    rotor_characteristics=RotorCharacteristics(
+        number_blades=4, damper_connection="B2B", damper_activation="ODI"),
     required_solver="LTP",
     continuation="YES"
 )
@@ -164,7 +170,7 @@ rotor = RotorBuild(problem)
 analysis = ContinuationAnalysis(rotor).continuation()
 ```
 
-**Note**: For B2B configuration, always use the `ProblemDefinition` constructor with `damper_connection="B2B"` to ensure proper initialization of B2B geometric parameters (`l0`, `lE`, `gamma_E`, `phi`).
+**Note**: B2B geometric parameters (`l0`, `lE`, `gamma_E`, `phi`) are computed automatically by `RotorCharacteristics.__post_init__` when `damper_connection="B2B"`.
 
 ## Features
 
