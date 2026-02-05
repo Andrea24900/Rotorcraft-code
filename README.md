@@ -178,9 +178,10 @@ analysis = ContinuationAnalysis(rotor).continuation()
 ### Implemented ✅
 - LTI, LTP, HD stability analysis
 - Continuation methods (OMEGA and parametric)
-- Mass, damping, stiffness matrices for 3/4/5/7 blades
+- Mass, damping, stiffness matrices for arbitrary number of blades
 - H2B and B2B damper configurations
 - Complex HD formulation
+- Parametric analysis (OMEGA and one parameter)
 - Visualization tools
 - 78 comprehensive tests
 
@@ -220,24 +221,6 @@ analysis = ContinuationAnalysis(rotor).continuation()
 - **Separate Output Directories**: B2B figures saved to `extra_figures/B2B/`, H2B to `extra_figures/H2B/`
 - **ProblemDefinition Constructor**: All test files updated to use constructor approach for proper B2B geometric initialization
 
-### v1.0.1 - API Simplification & Code Cleanup
-- **Simplified API Signatures**:
-  - `ltp_single_point(OMEGA)` and `hd_single_point(OMEGA)` now only require OMEGA; period T computed internally as `T = 2π/OMEGA`
-  - `monodromy_computer(A_handle, OMEGA, rtol, atol)` signature with OMEGA instead of T
-  - `hd_computer(A_handle, OMEGA, number_harmonics, time_samples, use_complex)` signature
-- **Unified Matrix Generation**: New `build_MCK_matrices()` function in `matrix_generation_GR.py` replaces separate `build_mass_matrix` and `build_damping_matrix` functions
-- **Configurable Integration Tolerances**: Added `ode_rtol` and `ode_atol` parameters to `ProblemDefinition` for ODE solver control
-- **Docstring Cleanup**: Reduced verbose docstrings to concise documentation while preserving essential information
-- **Removed Legacy Code**: Deleted MATLAB `OOP_build/` directory and obsolete `matrix_repositories.py`
-- **HDStability Inheritance**: Now inherits directly from `StabilityAnalysis` instead of `LTPStability`
-
-### v1.0.0 - System Matrices Refactor
-- **Matrix Generation**: Refactored `matrix_generation_GR.py` with proper MBC transformation
-- **LTP Performance**: Vectorized monodromy integration (single n² ODE instead of n separate integrations)
-- **Damper Activation**: Fixed CUSTOM mode with proper `damper_activation_vector` support
-- **Mass Matrix Reuse**: `build_damping_matrix` accepts pre-computed `mass_matrix_rot` to avoid redundant computation
-- **Integration Tolerances**: Adjusted to (rtol=1e-4, atol=1e-6) for better performance
-
 ### Key Enhancements
 - **Continuation**: Fixed conjugation bug, parametric continuation support, code deduplication
 - **HD Analysis**: Complex formulation option, vectorized computation (2-5x faster)
@@ -254,23 +237,12 @@ Comprehensive stability analysis results and visualizations for all methods (LTI
 - Method comparisons and validation
 - Complete bibliography
 
-## Verification
-
-All code verified against MATLAB implementation:
-- Physical parameters and matrix formulations
-- HD computer with FFT coefficients
-- 8 H-matrix assignment functions
-
-See [CONVERSION_GUIDE.md](CONVERSION_GUIDE.md) for details.
-
 ## Dependencies
 
 - NumPy (>=1.24.0), SciPy (>=1.10.0), Matplotlib (>=3.7.0)
 - Dev: pytest, pytest-cov
 
 Automatically installed with `pip install -e ".[dev]"`
-
-## Development
 
 ### Running Tests (78 total)
 
