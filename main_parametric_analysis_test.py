@@ -40,14 +40,14 @@ def main():
 
     # Create base problem with all dampers active (symmetric -> LTI valid)
     problem = create_default_problem()
-    problem.damper_activation = "ALL"
-    problem.number_blades = 1
+    problem.rotor_characteristics.damper_activation = "ALL"
+    problem.rotor_characteristics.number_blades = 1
     problem.number_harmonics = 1
 
     print(f"Configuration:")
-    print(f"  - Number of blades: {problem.number_blades}")
-    print(f"  - Damper activation: {problem.damper_activation}")
-    print(f"  - Damper connection: {problem.damper_connection}")
+    print(f"  - Number of blades: {problem.rotor_characteristics.number_blades}")
+    print(f"  - Damper activation: {problem.rotor_characteristics.damper_activation}")
+    print(f"  - Damper connection: {problem.rotor_characteristics.damper_connection}")
 
     # Check periodicity
     is_periodic = ParametricAnalysis.check_system_periodicity(problem)
@@ -127,10 +127,10 @@ def main():
 
     # Create problem with One Damper Inoperative (periodic system)
     problem_odi = create_default_problem()
-    problem_odi.damper_activation = "ODI"
+    problem_odi.rotor_characteristics.damper_activation = "ODI"
 
     print(f"Configuration:")
-    print(f"  - Damper activation: {problem_odi.damper_activation}")
+    print(f"  - Damper activation: {problem_odi.rotor_characteristics.damper_activation}")
 
     is_periodic_odi = ParametricAnalysis.check_system_periodicity(problem_odi)
     print(f"  - System is periodic: {is_periodic_odi}")
@@ -161,17 +161,17 @@ def main():
 
     # Create problem with CUSTOM damper activation
     problem_custom = create_default_problem()
-    problem_custom.damper_activation = "CUSTOM"
-    problem_custom.damper_activation_vector = np.array([1.0, 1.0, 1.0, 1.0])
+    problem_custom.rotor_characteristics.damper_activation = "CUSTOM"
+    problem_custom.rotor_characteristics.damper_activation_vector = np.array([1.0, 1.0, 1.0, 1.0])
     print(f"Configuration:")
-    print(f"  - Damper activation: {problem_custom.damper_activation}")
-    print(f"  - Initial activation vector: {problem_custom.damper_activation_vector}")
+    print(f"  - Damper activation: {problem_custom.rotor_characteristics.damper_activation}")
+    print(f"  - Initial activation vector: {problem_custom.rotor_characteristics.damper_activation_vector}")
 
     # Define a custom parameter setter that modifies the first damper's effectiveness
     def set_first_damper_ratio(problem: ProblemDefinition, ratio: float):
         """Set the first damper to a fraction of nominal, others remain at 100%."""
-        problem.damper_activation = "CUSTOM"
-        problem.damper_activation_vector = np.array([ratio, 1.0, 1.0, 1.0])
+        problem.rotor_characteristics.damper_activation = "CUSTOM"
+        problem.rotor_characteristics.damper_activation_vector = np.array([ratio, 1.0, 1.0, 1.0])
         
 
     # Sweep parameters
@@ -197,8 +197,8 @@ def main():
     # -------------------------------------------------------------------------
     print(f"\n[3b] Running LTP solver sweep for comparison...")
     problem_custom_ltp = create_default_problem()
-    problem_custom_ltp.damper_activation = "CUSTOM"
-    problem_custom_ltp.damper_activation_vector = np.array([1.0, 1.0, 1.0, 1.0])
+    problem_custom_ltp.rotor_characteristics.damper_activation = "CUSTOM"
+    problem_custom_ltp.rotor_characteristics.damper_activation_vector = np.array([1.0, 1.0, 1.0, 1.0])
 
     analysis_ltp = ParametricAnalysis(problem_custom_ltp)
     analysis_ltp.sweep(

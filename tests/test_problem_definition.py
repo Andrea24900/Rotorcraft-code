@@ -47,8 +47,8 @@ def test_problem_definition_default_creation():
     """Test default problem creation."""
     problem = create_default_problem()
 
-    assert problem.number_blades == 4, "Default should be 4 blades"
-    assert problem.damper_connection == "H2B", "Default damper connection should be H2B"
+    assert problem.rotor_characteristics.number_blades == 4, "Default should be 4 blades"
+    assert problem.rotor_characteristics.damper_connection == "H2B", "Default damper connection should be H2B"
     assert problem.required_solver == "LTI", "Default solver should be LTI"
     assert problem.lower_rotor_RPM == 20.0, "Default lower RPM should be 20.0"
     assert problem.higher_rotor_RPM == 400.0, "Default higher RPM should be 400.0"
@@ -57,7 +57,7 @@ def test_problem_definition_default_creation():
 
 def test_h2b_configuration():
     """Test Hub-to-Blade damper configuration."""
-    problem = ProblemDefinition(damper_connection="H2B")
+    problem = ProblemDefinition(rotor_characteristics=RotorCharacteristics(damper_connection="H2B"))
 
     assert problem.rotor_characteristics.nominal_damping_Cd == 4067.0, \
         "H2B damping should be 4067.0 Nms/rad"
@@ -68,8 +68,7 @@ def test_h2b_configuration():
 def test_b2b_configuration():
     """Test Blade-to-Blade damper configuration."""
     problem = ProblemDefinition(
-        damper_connection="B2B",
-        number_blades=4
+        rotor_characteristics=RotorCharacteristics(damper_connection="B2B", number_blades=4)
     )
 
     # Check damper values
@@ -94,8 +93,7 @@ def test_b2b_geometric_calculations():
     """Test B2B geometric parameter calculations for different blade counts."""
     for n_blades in [3, 4, 5, 7]:
         problem = ProblemDefinition(
-            damper_connection="B2B",
-            number_blades=n_blades
+            rotor_characteristics=RotorCharacteristics(damper_connection="B2B", number_blades=n_blades)
         )
 
         expected_delta_psi = 2 * np.pi / n_blades
@@ -113,8 +111,8 @@ def test_number_blades_validation():
     valid_blades = [3, 4, 5, 7]
 
     for n_blades in valid_blades:
-        problem = ProblemDefinition(number_blades=n_blades)
-        assert problem.number_blades == n_blades, \
+        problem = ProblemDefinition(rotor_characteristics=RotorCharacteristics(number_blades=n_blades))
+        assert problem.rotor_characteristics.number_blades == n_blades, \
             f"Should accept {n_blades} blades"
 
 
@@ -133,8 +131,8 @@ def test_damper_activation_modes():
     activation_modes = ["ALL", "ODI", "2DI ADJ", "2DI OPP", "3DI"]
 
     for mode in activation_modes:
-        problem = ProblemDefinition(damper_activation=mode)
-        assert problem.damper_activation == mode, \
+        problem = ProblemDefinition(rotor_characteristics=RotorCharacteristics(damper_activation=mode))
+        assert problem.rotor_characteristics.damper_activation == mode, \
             f"Damper activation should be set to {mode}"
 
 

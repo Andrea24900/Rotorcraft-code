@@ -17,8 +17,8 @@ def main():
 
     # Build rotor system - set parameters BEFORE building
     problem = create_default_problem()
-    problem.number_blades = 4
-    problem.damper_activation = "ODI"
+    problem.rotor_characteristics.number_blades = 4
+    problem.rotor_characteristics.damper_activation = "ODI"
     problem.required_solver = "HD"
     problem.hd_use_complex = True
     problem.continuation = "YES"
@@ -26,10 +26,10 @@ def main():
 
     rotor = RotorBuild(problem)
 
-    state_size = 2 * problem.number_blades + 4
+    state_size = 2 * problem.rotor_characteristics.number_blades + 4
     hd_size = (1 + 2 * problem.number_harmonics) * state_size
 
-    print(f"  Blades: {problem.number_blades}, Harmonics: {problem.number_harmonics}")
+    print(f"  Blades: {problem.rotor_characteristics.number_blades}, Harmonics: {problem.number_harmonics}")
     print(f"  HD matrix: {hd_size}x{hd_size}")
     print(f"  RPM range: {problem.lower_rotor_RPM}-{problem.higher_rotor_RPM}, Points: {problem.number_points}")
     print(f"  Continuation tol: {problem.continuation_tolerance}, max iter: {problem.continuation_max_iter}")

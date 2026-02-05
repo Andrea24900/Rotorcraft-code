@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import numpy as np
 from src.rotor_build import RotorBuild
-from src.config.problem_definition import ProblemDefinition
+from src.config.problem_definition import ProblemDefinition, RotorCharacteristics
 
 
 def test_rotor_build_initialization():
@@ -46,8 +46,8 @@ def test_build_all_factory_method():
     assert rotor.state_matrix_function is not None, "State matrix function should be initialized"
 
     # Check default problem values
-    assert rotor.problem.number_blades == 4, "Default should be 4 blades"
-    assert rotor.problem.damper_connection == "H2B", "Default should be H2B"
+    assert rotor.problem.rotor_characteristics.number_blades == 4, "Default should be 4 blades"
+    assert rotor.problem.rotor_characteristics.damper_connection == "H2B", "Default should be H2B"
 
 
 def test_state_matrix_function_exists():
@@ -135,14 +135,12 @@ def test_different_damper_activation_modes():
     """Test different damper activation modes produce different matrices."""
     # Test ALL vs ODI activation modes with H2B (which is well-supported)
     problem_all = ProblemDefinition(
-        damper_connection="H2B",
-        damper_activation="ALL",
-        number_blades=4
+        rotor_characteristics=RotorCharacteristics(
+            damper_connection="H2B", damper_activation="ALL", number_blades=4)
     )
     problem_odi = ProblemDefinition(
-        damper_connection="H2B",
-        damper_activation="ODI",
-        number_blades=4
+        rotor_characteristics=RotorCharacteristics(
+            damper_connection="H2B", damper_activation="ODI", number_blades=4)
     )
 
     rotor_all = RotorBuild(problem_all, auto_build=True)

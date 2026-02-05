@@ -2,7 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from src.config.problem_definition import ProblemDefinition
+from src.config.problem_definition import ProblemDefinition, RotorCharacteristics
 from src.rotor_build import RotorBuild
 from src.stability_analysis.lti_stability import LTIStability
 from src.utils.plotting import MyPlot
@@ -18,16 +18,15 @@ def main():
     # Build rotor system - set parameters in constructor for proper initialization
     # Note: damper_connection must be set at creation time for B2B geometric parameters
     problem = ProblemDefinition(
-        number_blades=4,
-        damper_connection="H2B",
-        damper_activation="ALL",
+        rotor_characteristics=RotorCharacteristics(
+            number_blades=4, damper_connection="H2B", damper_activation="ALL"),
         required_solver="LTI",
         continuation="NO"
     )
 
     rotor = RotorBuild(problem)
 
-    print(f"  Blades: {problem.number_blades}, Solver: {problem.required_solver}")
+    print(f"  Blades: {problem.rotor_characteristics.number_blades}, Solver: {problem.required_solver}")
     print(f"  RPM range: {problem.lower_rotor_RPM}-{problem.higher_rotor_RPM}, Points: {problem.number_points}")
 
     # Run analysis

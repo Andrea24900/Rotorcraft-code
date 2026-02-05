@@ -33,9 +33,10 @@ def build_MCK_matrices(
         - 3 blades: 5x5 matrix
         - 4 blades: 6x6 matrix
         - 5 blades: 7x7 matrix
+        - ...
     """
-    num_blades = problem.number_blades
     rotor_chars = problem.rotor_characteristics
+    num_blades = rotor_chars.number_blades
 
     # Extract rotor characteristics for clarity
     blade_mass = rotor_chars.blade_mass_Mb
@@ -113,10 +114,10 @@ def build_MCK_matrices(
             
             # 2) C with the addition of the dampers
             damping_matrix_addition = np.zeros((num_blades+2,num_blades+2))
-            if problem.damper_connection == "H2B":
+            if rotor_chars.damper_connection == "H2B":
                 diagonal = damping_activation_H2B(problem)
                 damping_matrix_addition[0:num_blades,0:num_blades] = np.diag(diagonal)
-            elif problem.damper_connection == "B2B":
+            elif rotor_chars.damper_connection == "B2B":
                 damping_matrix_addition, _ = damping_activation_B2B(problem)
                 
             # summation of matrices
@@ -151,10 +152,10 @@ def build_MCK_matrices(
                 
             # 2) K with the addition of the dampers
             stiffness_matrix_addition = np.zeros((num_blades+2,num_blades+2))
-            if problem.damper_connection == "H2B":
+            if rotor_chars.damper_connection == "H2B":
                 diagonal = nominal_stiffness*np.ones(num_blades)
                 stiffness_matrix_addition[0:num_blades,0:num_blades] = np.diag(diagonal)
-            elif problem.damper_connection == "B2B":
+            elif rotor_chars.damper_connection == "B2B":
                 _, stiffness_matrix_addition = damping_activation_B2B(problem)
                     
                 # summation of matrices
@@ -212,15 +213,16 @@ def damping_activation_H2B(problem:ProblemDefinition):
     Returns: damping_vector which becomes the diagonal of the additional damping matrix
     """
 
-    num_blades = problem.number_blades
-    blade_damping = problem.rotor_characteristics.nominal_damping_Cd
-    if problem.damper_activation == "ALL":
+    rotor_chars = problem.rotor_characteristics
+    num_blades = rotor_chars.number_blades
+    blade_damping = rotor_chars.nominal_damping_Cd
+    if rotor_chars.damper_activation == "ALL":
         damping_vector = blade_damping*np.ones(num_blades)
-    elif problem.damper_activation == "ODI":
+    elif rotor_chars.damper_activation == "ODI":
         damping_vector = blade_damping*np.ones(num_blades)
         damping_vector[0] = 0
-    elif problem.damper_activation == "CUSTOM":
-        damping_vector = blade_damping*problem.damper_activation_vector
+    elif rotor_chars.damper_activation == "CUSTOM":
+        damping_vector = blade_damping*rotor_chars.damper_activation_vector
 
     return damping_vector
 
@@ -239,8 +241,8 @@ def damping_activation_B2B(problem: ProblemDefinition):
         Tuple of (damping_matrix_addition, stiffness_matrix_addition)
         Both are (num_blades+2) x (num_blades+2) matrices
     """
-    num_blades = problem.number_blades
     rotor_chars = problem.rotor_characteristics
+    num_blades = rotor_chars.number_blades
 
     # Extract damper parameters
     cd = rotor_chars.nominal_damping_Cd
@@ -286,14 +288,14 @@ def damping_activation_B2B(problem: ProblemDefinition):
 
     # Build activation vector based on damper_activation mode
     # damper_active[i] = 1 if damper i (connecting blade i to blade i+1) is active
-    if problem.damper_activation == "ALL":
+    if rotor_chars.damper_activation == "ALL":
         damper_active = np.ones(num_blades)
-    elif problem.damper_activation == "ODI":
+    elif rotor_chars.damper_activation == "ODI":
         # Damper 1 (between blade 1 and blade 2, index 0) is inoperative
         damper_active = np.ones(num_blades)
         damper_active[0] = 0
-    elif problem.damper_activation == "CUSTOM":
-        damper_active = problem.damper_activation_vector
+    elif rotor_chars.damper_activation == "CUSTOM":
+        damper_active = rotor_chars.damper_activation_vector
     else:
         damper_active = np.ones(num_blades)
 
@@ -348,7 +350,7 @@ def build_mbc_matrix(problem:ProblemDefinition, time: float, rotor_omega:float)-
     
     Returns: mbc_matrix
     """
-    num_blades = problem.number_blades
+    num_blades = problem.rotor_characteristics.number_blades
 
     num_cyclic = number_mbc(num_blades)
 
@@ -391,7 +393,7 @@ def build_mbc_matrix_derivative(problem:ProblemDefinition, time: float, rotor_om
     
     Returns: mbc_matrix
     """
-    num_blades = problem.number_blades
+    num_blades = problem.rotor_characteristics.number_blades
 
     num_cyclic = number_mbc(num_blades)
 
@@ -432,7 +434,7 @@ def build_mbc_matrix_derivative_second(problem:ProblemDefinition, time: float, r
     
     Returns: mbc_matrix
     """
-    num_blades = problem.number_blades
+    num_blades = problem.rotor_characteristics.number_blades
 
     num_cyclic = number_mbc(num_blades)
 
@@ -488,12 +490,8 @@ if __name__ == "__main__":
     problem = create_default_problem()
     
     # Test mass matrix
-    M = build_mass_matrix(problem)
-    print(f"Mass matrix shape: {M.shape}")
-    
-    # Test damping and stiffness matrices
-    C_func, K_func = build_damping_matrix(problem)
-    C = C_func(0.0, 25.0)
-    K = K_func(0.0, 25.0)
-    print(f"Damping matrix shape: {C.shape}")
-    print(f"Stiffness matrix shape: {K.shape}")
+    MCK_func = build_MCK_matrices(problem)
+    M,C,K = MCK_func(time=0.0, rotor_omega=1.0)
+    print(f"Mass matrix: {M}")
+    print(f"Damping matrix: {C}")
+    print(f"Stiffness matrix: {K}")

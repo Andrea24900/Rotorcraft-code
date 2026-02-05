@@ -2,7 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from src.config.problem_definition import ProblemDefinition
+from src.config.problem_definition import ProblemDefinition, RotorCharacteristics
 from src.rotor_build import RotorBuild
 from src.stability_analysis.continuation_analysis import ContinuationAnalysis
 from src.utils.plotting import MyPlot
@@ -17,9 +17,8 @@ def main():
 
     # Build rotor system - must use ProblemDefinition constructor for proper B2B initialization
     problem = ProblemDefinition(
-        number_blades=4,
-        damper_connection="B2B",
-        damper_activation="ODI",
+        rotor_characteristics=RotorCharacteristics(
+            number_blades=4, damper_connection="B2B", damper_activation="ODI"),
         required_solver="HD",
         number_harmonics=1,
         hd_use_complex=True,
@@ -28,11 +27,11 @@ def main():
 
     rotor = RotorBuild(problem)
 
-    state_size = 2 * problem.number_blades + 4
+    state_size = 2 * problem.rotor_characteristics.number_blades + 4
     hd_size = (1 + 2 * problem.number_harmonics) * state_size
 
-    print(f"  Damper connection: {problem.damper_connection}")
-    print(f"  Blades: {problem.number_blades}, Harmonics: {problem.number_harmonics}")
+    print(f"  Damper connection: {problem.rotor_characteristics.damper_connection}")
+    print(f"  Blades: {problem.rotor_characteristics.number_blades}, Harmonics: {problem.number_harmonics}")
     print(f"  HD matrix: {hd_size}x{hd_size}")
     print(f"  RPM range: {problem.lower_rotor_RPM}-{problem.higher_rotor_RPM}, Points: {problem.number_points}")
     print(f"  Continuation tol: {problem.continuation_tolerance}, max iter: {problem.continuation_max_iter}")

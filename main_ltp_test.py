@@ -17,15 +17,15 @@ def main():
 
     # Build rotor system - set parameters BEFORE building
     problem = create_default_problem()
-    problem.number_blades = 4
-    problem.damper_activation = "CUSTOM"
-    problem.damper_activation_vector = np.array([0, 1, 1, 1])
+    problem.rotor_characteristics.number_blades = 4
+    problem.rotor_characteristics.damper_activation = "CUSTOM"
+    problem.rotor_characteristics.damper_activation_vector = np.array([0, 1, 1, 1])
     problem.required_solver = "LTP"
     problem.continuation = "NO"
 
     rotor = RotorBuild(problem)
 
-    print(f"  Blades: {problem.number_blades}, Solver: {problem.required_solver}")
+    print(f"  Blades: {problem.rotor_characteristics.number_blades}, Solver: {problem.required_solver}")
     print(f"  RPM range: {problem.lower_rotor_RPM}-{problem.higher_rotor_RPM}, Points: {problem.number_points}")
 
     # Run analysis

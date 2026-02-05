@@ -1,7 +1,14 @@
 """Rotor build class for constructing state-space matrices.
 
-Converted from MATLAB rotor_build.m classdef.
-Builds state-space representation for rotorcraft dynamics analysis.
+Builds state-space representation for rotorcraft dynamics analysis from the 
+chosen matrix generation routine. 
+
+What to change and when:
+- import of build_MCK_matrices from .utils.matrix_generation_GR with a 
+  similarly built module which gives back callables for M,C,K in (t,omega) 
+  if the problem is changed.
+- .config.problem_definition must be changed to feed 
+  the required problem data in the matrix generator
 """
 
 import numpy as np
@@ -97,9 +104,9 @@ if __name__ == "__main__":
     rotor = RotorBuild.build_all()
 
     print(f"\nProblem configuration:")
-    print(f"  Number of blades: {rotor.problem.number_blades}")
+    print(f"  Number of blades: {rotor.problem.rotor_characteristics.number_blades}")
     print(f"  Solver: {rotor.problem.required_solver}")
-    print(f"  Damper connection: {rotor.problem.damper_connection}")
+    print(f"  Damper connection: {rotor.problem.rotor_characteristics.damper_connection}")
 
     # Test state matrix evaluation
     if rotor.state_matrix_function is not None:

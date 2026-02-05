@@ -122,6 +122,9 @@ tests_to_run_2.py
 mini_test_map
 output/
 
+# Personal notes
+git_commands.txt
+
 # Data files
 data/
 *.csv

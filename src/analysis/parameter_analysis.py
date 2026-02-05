@@ -107,16 +107,16 @@ class ParametricAnalysis:
         Returns:
             True if system is periodic (requires LTP/HD), False if LTI is valid
         """
-        if problem.damper_activation == "ALL":
+        if problem.rotor_characteristics.damper_activation == "ALL":
             return False  # Symmetric system -> LTI valid
 
-        elif problem.damper_activation == "ODI":
+        elif problem.rotor_characteristics.damper_activation == "ODI":
             return True  # One damper out -> periodic system
 
-        elif problem.damper_activation == "CUSTOM":
+        elif problem.rotor_characteristics.damper_activation == "CUSTOM":
             # Check if activation vector is uniform (all elements equal)
             # The actual value doesn't matter - only uniformity determines periodicity
-            activation = problem.damper_activation_vector
+            activation = problem.rotor_characteristics.damper_activation_vector
             if len(activation) == 0:
                 return True  # Default to periodic (safer)
 
@@ -175,10 +175,10 @@ class ParametricAnalysis:
         if solver_type == "LTI" and is_periodic:
             msg = (
                 f"Cannot use LTI solver for periodic system.\n"
-                f"  - damper_activation: {problem.damper_activation}\n"
+                f"  - damper_activation: {problem.rotor_characteristics.damper_activation}\n"
             )
-            if problem.damper_activation == "CUSTOM":
-                msg += f"  - damper_activation_vector: {problem.damper_activation_vector}\n"
+            if problem.rotor_characteristics.damper_activation == "CUSTOM":
+                msg += f"  - damper_activation_vector: {problem.rotor_characteristics.damper_activation_vector}\n"
             msg += (
                 f"The system has asymmetric damper configuration, making it time-periodic.\n"
                 f"Use LTP or HD solver instead."
@@ -619,7 +619,7 @@ if __name__ == "__main__":
 
     # Create base problem
     problem = create_default_problem()
-    problem.damper_activation = "ALL"  # Symmetric system -> LTI valid
+    problem.rotor_characteristics.damper_activation = "ALL"  # Symmetric system -> LTI valid
 
     # Create analysis object
     analysis = ParametricAnalysis(problem)
