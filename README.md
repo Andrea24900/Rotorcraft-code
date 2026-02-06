@@ -21,7 +21,7 @@ rotor_dynamics_python/
 │   ├── stability_analysis/  # LTI, LTP, HD analysis
 │   ├── analysis/            # Continuation methods
 │   └── utils/               # Plotting utilities
-├── tests/                   # Unit tests (78 total)
+├── tests/                   # No tests (code already validated in known cases)
 ├── pyproject.toml           # Package configuration
 └── main_*.py                # Example scripts
 ```
@@ -183,7 +183,6 @@ analysis = ContinuationAnalysis(rotor).continuation()
 - Complex HD formulation
 - Parametric analysis (OMEGA and one parameter)
 - Visualization tools
-- 78 comprehensive tests
 
 ### In Progress 🚧
 - Modal participation analysis
@@ -202,6 +201,7 @@ analysis = ContinuationAnalysis(rotor).continuation()
 
 ### v1.2.0 - Code generalisation
 - **Separation of variables**: Separated the solver options from the rotor characteristics in 'problem_definition'. Adapted code accordingly. Updated and clarified some comments. 
+- **Cleanup of old code**: Deleted old code with outdated tests.
 
 ### v1.1.0 - B2B Damper Activation Fix
 - **Critical Bug Fix**: Fixed `damping_activation_B2B()` to properly scale damping/stiffness contributions by the `damper_activation_vector` values. Previously, any non-zero ratio (e.g., 0.5) was incorrectly treated as full activation due to boolean checks instead of multiplication.
