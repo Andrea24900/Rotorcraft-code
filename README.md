@@ -18,7 +18,7 @@ rotor_dynamics_python/
 ├── src/                     # Source code
 │   ├── config/              # Configuration
     |── analysis/            # Modal participation and parameteric analysis
-│   ├── stability_analysis/  # LTI, LTP, HD analysis
+│   ├── stability_analysis/  # LTI, LTP, HD, sorting-free Hill analysis
 │   ├── analysis/            # Continuation methods
 │   └── utils/               # Plotting utilities
 ├── tests/                   # No tests (code already validated in known cases)
@@ -31,10 +31,10 @@ rotor_dynamics_python/
 ### From Release (Recommended)
 ```bash
 # Install specific version
-pip install git+https://github.com/Andrea24900/rotor_dynamics_python.git@v1.1.0
+pip install git+https://github.com/Andrea24900/rotor_dynamics_python.git@v1.2.0
 
 # Or clone specific version
-git clone --branch v1.1.0 https://github.com/Andrea24900/rotor_dynamics_python.git
+git clone --branch v1.2.0 https://github.com/Andrea24900/rotor_dynamics_python.git
 cd rotor_dynamics_python
 pip install -e ".[dev]"
 ```
@@ -186,16 +186,7 @@ analysis = ContinuationAnalysis(rotor).continuation()
 
 ### In Progress 🚧
 - Modal participation analysis
-
-## Conversion Status
-
-| Module | Status | Notes |
-|--------|--------|-------|
-| Core Infrastructure | ✅ | Configuration, matrices |
-| LTI/LTP/HD Analysis | ✅ | All methods complete |
-| Continuation | ✅ | OMEGA and parametric |
-| Plotting | ✅ | Damping/frequency plots |
-| Modal Participation | 🚧 | Structure exists |
+- Sorting-free Hill's method
 
 ## Recent Improvements (February 2026)
 
@@ -243,25 +234,6 @@ Comprehensive stability analysis results and visualizations for all methods (LTI
 - Dev: pytest, pytest-cov
 
 Automatically installed with `pip install -e ".[dev]"`
-
-### Running Tests (78 total)
-
-```bash
-# All tests
-python -m pytest tests/ -v
-
-# With coverage
-python -m pytest tests/ --cov=src --cov-report=term-missing
-
-# Specific test file
-python -m pytest tests/test_lti_stability.py -v
-```
-
-**Test breakdown:**
-- LTI stability: 27 tests
-- LTP stability: 32 tests
-- HD stability: 19 tests
-- Core modules: 63 tests (matrices, rotor build, config)
 
 ### Building
 

@@ -92,8 +92,6 @@ class ColorScheme:
 
 class MyPlot:
     """Plotting utilities for rotor dynamics analysis.
-
-    This class will contain methods converted from my_plot.m
     """
 
     @staticmethod
@@ -117,19 +115,23 @@ class MyPlot:
         # Create or reuse figure
         if figure_handle is None:
             fig, ax = plt.subplots(figsize=(10, 6))
+            color = 'blue'
+            marker = '.'
         else:
             fig = figure_handle
             ax = fig.gca()
+            color = 'red'
+            marker = '*'
 
         ax.grid(True)
 
-        # Plot all eigenvalues for all operating points (continuous lines)
+        # Plot all eigenvalues for all operating points 
         n_modes = len(modal_solution[0].damping)
         for j in range(n_modes):
             rpm_values = [modal_sol.OMEGA_RPM for modal_sol in modal_solution]
             damping_values = [modal_sol.damping[j] for modal_sol in modal_solution]
             ax.plot(rpm_values, damping_values,
-                   color='blue', marker='.', linestyle='none', markersize=plot_property.marker_size, linewidth=plot_property.line_width)
+                   color, marker, linestyle='none', markersize=plot_property.marker_size, linewidth=plot_property.line_width)
 
         ax.set_xlabel(r'$\Omega$ $\mathrm{[rpm]}$', fontsize=plot_property.fontsize_label)
         ax.set_ylabel(r'$\lambda$ $\mathrm{[1/s]}$', fontsize=plot_property.fontsize_label)
@@ -222,6 +224,7 @@ class MyPlot:
             ax.set_ylim(ylimits)
 
         return fig
+    
     @staticmethod
     def plot_damping_hd(
         modal_solution: List,
@@ -230,7 +233,7 @@ class MyPlot:
         ylimits: Optional[Tuple[float, float]] = (-5, 1),
         figure_handle: Optional[plt.Figure] = None
     ) -> plt.Figure:
-        """Plot damping for specific mode orders.
+        """Plot damping for specific mode orders. Used only by me.
 
         Args:
             modal_solution: List of modal solution structures

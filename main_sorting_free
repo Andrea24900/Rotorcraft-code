@@ -63,21 +63,18 @@ def main():
         ylimits=(damping_min, damping_max)
     )
     plt.figure(fig1.number)
-    plt.title("LTP Analysis: Damping vs RPM")
     plt.tight_layout()
-
     fig2 = plotter.plot_damping_generic(
         sortfree.modal_solution,
-        xlimits=(rpm_min, rpm_max),
-        ylimits=(damping_min, damping_max)
+        (rpm_min, rpm_max),
+        (damping_min, damping_max), fig1
     )
+
     plt.figure(fig2.number)
-    plt.title("Sorting-free Analysis: Damping vs RPM")
+    plt.title("Integration of monodromy matrix vs sorting-free Hill's method: Damping vs RPM")
+    #plt.legend("Integration of $\Phi_T$","Sorting-free")
     plt.tight_layout()
 
-
-
-    
 
     #fig1.savefig("results_figures/exact_damping.png", dpi=600, bbox_inches='tight')
     #fig2.savefig("results_figures/approx_damping.png", dpi=600, bbox_inches='tight')

@@ -86,6 +86,14 @@ The B2B configuration uses dampers connecting adjacent blades cyclically, creati
 ![HD B2B Continuation Frequency](results_figures/hd_b2b_cont_frequency.png)
 *Figure 14: HD Continuation B2B: Frequency vs RPM (N=1 harmonics). Mode tracking for B2B damper topology.*
 
+## 8. Sorting-free Hill's method applied to Hammond's rotor
+
+The sorting-free Hill's method used the Hill matrix, aka the complex HD matrix, to approximate the monodromy matrix through Koopman embeddings. 
+These are the "exact" LTP modes from the integration of the monodromy matrix compared against the approximate multipliers/exponents (from logarithm of multipliers).
+
+![Comparison of exact LTP and sorting-free characteristic exponents](results_figures/hd_b2b_cont_damping.png)
+*Figure 14: LTP vs sorting-free H2B: Damping vs RPM (N=1 harmonics). Hub-to-blade damper configuration with ODI (One Damper Inoperative).*
+
 **B2B Matrix Structure:**
 - Diagonal terms: contributions from dampers on both sides of each blade (C_before + C_after)
 - Extra-diagonal terms: coupling between adjacent blades (C_zetaed)
@@ -126,6 +134,9 @@ The B2B configuration uses dampers connecting adjacent blades cyclically, creati
 - Coleman, R. P., & Feingold, A. M. (1958). "Theory of Self-Excited Mechanical Oscillations of Helicopter Rotors with Hinged Blades". *Technical Report 1351*, NACA.
 - Hammond, C. E. (1974). "An application of Floquet theory to prediction of mechanical instability". *Journal of the American Helicopter Society*, 19, 14-18.
 - Muscarello, V., & Quaranta, G. (2023). "Analysis of rotorcraft ground resonance with generic inter-blade damper configurations". *CEAS Aeronautical Journal*, 14(2), 469-490.
+
+**Sorting-free Hill's method**
+- Bayer, F., & Leine, R.I. (2023). "Sorting-free Hill-based stability analysis of periodic solutions through Koopman analysis". *Nonlinear Dyn*, 111, 8439–8466.
 
 ## Implementation
 
