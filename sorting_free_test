@@ -1,0 +1,93 @@
+"""Example script for sorting-free Hill's method analysis.
+
+This script demonstrates how to use the SortingFreeStability class to implement Bayer's method, which
+approximates the characteristic multipliers through Koopman embeddings. 
+The example shows:
+1. Compute the approximate values for a range of Omega
+2. Running the analysis with LTP solver to compute the "exact" values
+3. Plotting the root locus. 
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+from src.config.problem_definition import create_default_problem
+from src.rotor_build import RotorBuild
+from src.stability_analysis.ltp_stability import LTPStability
+from src.stability_analysis.sorting_free_stability import SortingFreeStability
+from src.utils.plotting import MyPlot
+
+
+def main():
+    """Run LTP stability analysis and plot results."""
+
+    print("=" * 60)
+    print("Sorting-free Stability Analysis (Bayer)")
+    print("=" * 60)
+
+    # Build rotor system - set parameters BEFORE building
+    problem = create_default_problem()
+    problem.rotor_characteristics.number_blades = 4
+    problem.rotor_characteristics.damper_activation = "ODI"
+    problem.number_harmonics = 1
+    problem.number_points = 100
+    problem.required_solver = "LTP"
+    problem.continuation = "NO"
+
+    rotor = RotorBuild(problem)
+
+    print(f"  Blades: {problem.rotor_characteristics.number_blades}, Solver: {problem.required_solver}")
+    print(f"  RPM range: {problem.lower_rotor_RPM}-{problem.higher_rotor_RPM}, Points: {problem.number_points}")
+
+    # Run analysis
+    print("\nComputing characteristic exponents (this may take a few minutes)...")
+
+    exact = LTPStability(rotor)
+    exact = exact.ltp_full_range()
+
+    sortfree = SortingFreeStability(rotor)
+    sortfree = sortfree.char_mult_full_range()
+
+    # Generate plots
+    print("\nGenerating plots...")
+    plotter = MyPlot()
+
+    rpm_min, rpm_max = problem.lower_rotor_RPM, problem.higher_rotor_RPM
+    all_damping = np.concatenate([sol.damping for sol in exact.modal_solution])
+
+    damping_min = np.min(all_damping) - 0.5
+    damping_max = max(1.0, np.max(all_damping) + 0.5)
+
+    fig1 = plotter.plot_damping_generic(
+        exact.modal_solution,
+        xlimits=(rpm_min, rpm_max),
+        ylimits=(damping_min, damping_max)
+    )
+    plt.figure(fig1.number)
+    plt.title("LTP Analysis: Damping vs RPM")
+    plt.tight_layout()
+
+    fig2 = plotter.plot_damping_generic(
+        sortfree.modal_solution,
+        xlimits=(rpm_min, rpm_max),
+        ylimits=(damping_min, damping_max)
+    )
+    plt.figure(fig2.number)
+    plt.title("Sorting-free Analysis: Damping vs RPM")
+    plt.tight_layout()
+
+
+
+    
+
+    #fig1.savefig("results_figures/exact_damping.png", dpi=600, bbox_inches='tight')
+    #fig2.savefig("results_figures/approx_damping.png", dpi=600, bbox_inches='tight')
+    print("  Figures saved to results_figures/")
+
+    print("\n" + "=" * 60)
+    print("Analysis Complete!")
+    print("=" * 60)
+    plt.show()
+
+
+if __name__ == "__main__":
+    main()

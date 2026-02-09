@@ -135,7 +135,7 @@ class SortingFreeStability(StabilityAnalysis):
                 size: the size of the problem, i.e. of the HD matrix
                 number_harmonics: the number of harmonics in the decomposition
         Returns: 
-                W: horizontal stack of identity matrices.
+                C: horizontal stack of identity matrices.
         """
         identity = np.eye(size)
         C = np.zeros((size,size*(2*number_harmonics+1)))
@@ -168,11 +168,13 @@ class SortingFreeStability(StabilityAnalysis):
                 "rotor_build.problem must have 'time_samples' attribute"
             )
         
+        number_harmonics = self.rotor_build.problem.number_harmonics
+
         A_HD,number_states = self.hill_single_point(OMEGA)
 
-        W = self.compute_W_matrix(number_states,rotor.problem.number_harmonics)
+        W = self.compute_W_matrix(number_states,number_harmonics)
         
-        C = self.compute_C_matrix(number_states,rotor.problem.number_harmonics)
+        C = self.compute_C_matrix(number_states,number_harmonics)
         
         expmat = expm(A_HD*T)
 
@@ -186,10 +188,26 @@ class SortingFreeStability(StabilityAnalysis):
                 f"Eigenvalue computation failed for monodromy matrix at "
                 f"OMEGA={OMEGA:.2f} rad/s: {e}"
             ) from e
+        
+        magnitude_squared = np.real(eigenvalues)**2 + np.imag(eigenvalues)**2
+
+        # Avoid log of zero or negative values
+        magnitude_squared = np.maximum(magnitude_squared, 1e-300)
+
+        real_char_exp = (1 / (2 * T)) * np.log(magnitude_squared)
+
+        # Imaginary part: ω = (1/T) * atan2(Im(μ), Re(μ))
+        imag_char_exp = (1 / T) * np.arctan2(
+            np.imag(eigenvalues),
+            np.real(eigenvalues)
+        )
 
         eigensolution = {
             'eigenvectors': eigenvectors,
-            'char multipliers': eigenvalues
+            'char multipliers': eigenvalues,
+            'real_char_exp': real_char_exp,
+            'imag_char_exp': imag_char_exp
+
         }
         return eigensolution
 
@@ -218,6 +236,8 @@ class SortingFreeStability(StabilityAnalysis):
                 # Store results
                 self.modal_solution[i].char_solution=eigensolution['char multipliers']
                 self.modal_solution[i].eigensolution = eigensolution
+                self.modal_solution[i].damping = eigensolution['real_char_exp']
+                self.modal_solution[i].frequency = eigensolution['imag_char_exp']
 
             except (ValueError, RuntimeError, TypeError, AttributeError) as e:
                 raise RuntimeError(
@@ -233,6 +253,7 @@ if __name__ == "__main__":
     # Test HD stability analysis
     from ..rotor_build import RotorBuild
     from ..config.problem_definition import create_default_problem
+    from ..stability_analysis.ltp_stability import LTPStability
     
     
     print("Building rotor system...")
@@ -248,6 +269,10 @@ if __name__ == "__main__":
     
     
     print("Running sorting-free stability analysis...")
+
+    exact = LTPStability(rotor)
+    exact = exact.ltp_full_range()
+
     sortfree = SortingFreeStability(rotor)
     sortfree = sortfree.char_mult_full_range()
     
@@ -257,3 +282,5 @@ if __name__ == "__main__":
         print(f"Number of characteristic multipliers: {len(sortfree.modal_solution[0].damping)}")
         print(f"Sample characteristic multiplier at first point:")
         print(f"  Characteristic multipliers: {sortfree.modal_solution[0].char_solution}")
+        print(f"Sample of exact characteristic multiplier at first point:")
+        print(f"   Exact Characteristic multipliers: {exact.modal_solution[0].char_solution}")
