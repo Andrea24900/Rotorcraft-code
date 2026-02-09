@@ -458,7 +458,7 @@ class StabilityAnalysis:
                 if m < 0:
                     A_m = A_coeff[:, :, m]  # Negative index wraps around in Python
                 elif m == 0:
-                    A_m = A_coeff[:, :, 0] - 1j * k * OMEGA * np.eye(state_number)
+                    A_m = A_coeff[:, :, 0] - 1j * j * OMEGA * np.eye(state_number)
                 else:  # m > 0
                     A_m = A_coeff[:, :, m]
 

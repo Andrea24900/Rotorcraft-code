@@ -22,7 +22,7 @@ class RotorCharacteristics:
     number_blades: int = 4
     damper_connection: Literal["H2B", "B2B"] = "H2B"
     damper_activation: Literal["ALL", "ODI", "CUSTOM"] = "ALL"  # ODI = One Damper Inoperative
-    damper_activation_vector: np.ndarray = field(default_factory=lambda: np.array([1,1,1,1]))
+    damper_activation_vector: np.array = field(default_factory=lambda: np.array([1,1,1,1]))
 
     # Blade properties
     blade_mass_Mb: float = 94.9  # kg
@@ -127,12 +127,18 @@ class ProblemDefinition:
     step_h: float = 1e-4
     time_samples: int = 10  # must be chosen in accordance with Nyquist criterion
     # based on the number of harmonics that are required for the fft of A and the
-    # harmonic decomposition
+    # harmonic decomposition (min samples = 2N+1, where N is the number of harmonic to include in fft)
     solution_direction: Literal["L2R", "R2L"] = "R2L"
 
     # ODE integration tolerances (for LTP monodromy matrix computation)
     ode_rtol: float = 1e-5  # relative tolerance
     ode_atol: float = 1e-7  # absolute tolerance
+
+    # Sorting method for Floquet candidates
+    sorting_method: Literal["IMPART","SYM"]="IMPART"
+
+    # Choice of "sorting" matrix C(t)
+    C_choice: Literal["NAIVE","OPTTRUE","OPTSYM"] = "NAIVE"
 
     # Rotor physical characteristics
     rotor_characteristics: RotorCharacteristics = field(default_factory=RotorCharacteristics)
