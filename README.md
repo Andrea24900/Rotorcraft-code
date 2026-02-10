@@ -31,10 +31,10 @@ rotor_dynamics_python/
 ### From Release (Recommended)
 ```bash
 # Install specific version
-pip install git+https://github.com/Andrea24900/rotor_dynamics_python.git@v1.2.0
+pip install git+https://github.com/Andrea24900/rotor_dynamics_python.git@v1.3.0
 
 # Or clone specific version
-git clone --branch v1.2.0 https://github.com/Andrea24900/rotor_dynamics_python.git
+git clone --branch v1.3.0 https://github.com/Andrea24900/rotor_dynamics_python.git
 cd rotor_dynamics_python
 pip install -e ".[dev]"
 ```
@@ -183,42 +183,19 @@ analysis = ContinuationAnalysis(rotor).continuation()
 - Complex HD formulation
 - Parametric analysis (OMEGA and one parameter)
 - Visualization tools
+- Sorting-free Hill's method
 
 ### In Progress 🚧
 - Modal participation analysis
-- Sorting-free Hill's method
 
 ## Recent Improvements (February 2026)
+### v1.3.0 - Sorting-free stability method
+- **Sorting-free stability**: Added the 'SortingFreeStability class, which implements the method by Bayer (2023) to compute the Floquet modes from Hill's matrix, aka the complex HD matrix. 
+- **Improvement of plots**: Added some features to the plot_***_generic method. 
 
 ### v1.2.0 - Code generalisation
 - **Separation of variables**: Separated the solver options from the rotor characteristics in 'problem_definition'. Adapted code accordingly. Updated and clarified some comments. 
 - **Cleanup of old code**: Deleted old code with outdated tests.
-
-### v1.1.0 - B2B Damper Activation Fix
-- **Critical Bug Fix**: Fixed `damping_activation_B2B()` to properly scale damping/stiffness contributions by the `damper_activation_vector` values. Previously, any non-zero ratio (e.g., 0.5) was incorrectly treated as full activation due to boolean checks instead of multiplication.
-- **B2B Nominal Damping**: Updated from 36500 to 38000 Ns/m for better alignment with reference values
-- **Plotting Improvements**: Enhanced publication-quality figures with larger fonts (labels: 26pt, ticks: 16pt, legend: 22pt) and thicker lines (3.0pt)
-- **New Plotting Function**: Added `plot_damping_hd()` for HD-specific damping visualization with mode highlighting
-
-### v1.0.2 - B2B Damper Configuration
-- **B2B Matrix Generation**: Added `damping_activation_B2B()` function in `matrix_generation_GR.py` implementing blade-to-blade damper matrices with:
-  - Diagonal terms: contributions from dampers on both sides of each blade (`C_before`, `C_after`)
-  - Extra-diagonal terms: coupling between adjacent blades (`C_zetaed`)
-  - Stiffness coefficients: `K_before`, `K_after`, `K_zetaed` with proper geometric formulation
-- **B2B Test Suite**: Added continuation tests for B2B configuration (`tests_to_run_2.py`):
-  - LTI continuation with ALL dampers
-  - LTP continuation with ODI
-  - HD continuation with ODI (1 harmonic)
-- **Separate Output Directories**: B2B figures saved to `extra_figures/B2B/`, H2B to `extra_figures/H2B/`
-- **ProblemDefinition Constructor**: All test files updated to use constructor approach for proper B2B geometric initialization
-
-### Key Enhancements
-- **Continuation**: Fixed conjugation bug, parametric continuation support, code deduplication
-- **HD Analysis**: Complex formulation option, vectorized computation (2-5x faster)
-- **Nomenclature**: Unified to "HD" (Harmonic Decomposition), snake_case methods
-- **Validation**: Comprehensive input checks with clear error messages
-- **Performance**: Configurable tolerances, automatic warnings for large systems
-- **Testing**: 78 tests with 100% pass rate
 
 ## Results
 
