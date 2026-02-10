@@ -99,7 +99,10 @@ class MyPlot:
         modal_solution: List,
         xlimits: Optional[Tuple[float, float]] = (0, 400),
         ylimits: Optional[Tuple[float, float]] = (-5, 1),
-        figure_handle: Optional[plt.Figure] = None
+        figure_handle: Optional[plt.Figure] = None,
+        legend_text: Optional[str] = None,
+        color: Optional[str] = None,
+        marker: Optional[str] = None
     ) -> plt.Figure:
         """Plot generic damping vs RPM.
 
@@ -108,6 +111,9 @@ class MyPlot:
             xlimits: Optional x-axis limits (min_rpm, max_rpm)
             ylimits: Optional y-axis limits (min_damping, max_damping)
             figure_handle: Optional existing figure to plot on
+            legend_text: Optional text entry for the current series
+            color: Optional color from default ones
+            marker: Optional maerker from default ones
 
         Returns:
             matplotlib Figure object
@@ -115,13 +121,11 @@ class MyPlot:
         # Create or reuse figure
         if figure_handle is None:
             fig, ax = plt.subplots(figsize=(10, 6))
-            color = 'blue'
-            marker = '.'
+            
         else:
             fig = figure_handle
             ax = fig.gca()
-            color = 'red'
-            marker = '*'
+            
 
         ax.grid(True)
 
@@ -130,9 +134,13 @@ class MyPlot:
         for j in range(n_modes):
             rpm_values = [modal_sol.OMEGA_RPM for modal_sol in modal_solution]
             damping_values = [modal_sol.damping[j] for modal_sol in modal_solution]
+            # Only add label to first mode for legend
+            label = legend_text if (j == 0 and legend_text is not None) else None
+            color = color if (color is not None) else 'blue'
+            marker = marker if (marker is not None) else '.'
             ax.plot(rpm_values, damping_values,
-                   color, marker, linestyle='none', markersize=plot_property.marker_size, linewidth=plot_property.line_width)
-
+               color=color, marker=marker, linestyle='none', markersize=plot_property.marker_size, 
+               linewidth=plot_property.line_width, label=label)
         ax.set_xlabel(r'$\Omega$ $\mathrm{[rpm]}$', fontsize=plot_property.fontsize_label)
         ax.set_ylabel(r'$\lambda$ $\mathrm{[1/s]}$', fontsize=plot_property.fontsize_label)
 
@@ -803,7 +811,8 @@ class MyPlot:
             "damper_ratio": r"Damper Effectiveness $\varepsilon = C_d/C_{d,nom}$ $\mathrm{[-]}$",
         }
         return label_map.get(parameter_name, parameter_name)
-
+    
+    
 
 # Initialize global instances for convenience
 plot_property = PlotProperties()

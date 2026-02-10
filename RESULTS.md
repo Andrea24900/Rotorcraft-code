@@ -91,7 +91,7 @@ The B2B configuration uses dampers connecting adjacent blades cyclically, creati
 The sorting-free Hill's method used the Hill matrix, aka the complex HD matrix, to approximate the monodromy matrix through Koopman embeddings. 
 These are the "exact" LTP modes from the integration of the monodromy matrix compared against the approximate multipliers/exponents (from logarithm of multipliers).
 
-![Comparison of exact LTP and sorting-free characteristic exponents](results_figures/hd_b2b_cont_damping.png)
+![Comparison of exact LTP and sorting-free characteristic exponents](results_figures/comparison.png)
 *Figure 14: LTP vs sorting-free H2B: Damping vs RPM (N=1 harmonics). Hub-to-blade damper configuration with ODI (One Damper Inoperative).*
 
 **B2B Matrix Structure:**

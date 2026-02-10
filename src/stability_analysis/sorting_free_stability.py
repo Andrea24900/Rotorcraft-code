@@ -129,7 +129,8 @@ class SortingFreeStability(StabilityAnalysis):
         return W
     
     def compute_C_matrix(self,size,number_harmonics) -> np.ndarray:
-        """ Computes the constant W matrix according to the size of the problem.
+        """ Computes the constant C matrix according to the size of the problem.
+            Uses the naive choice for C: extraction of the lifted states corresponding to the zero-th harmonic.
 
         Args: 
                 size: the size of the problem, i.e. of the HD matrix

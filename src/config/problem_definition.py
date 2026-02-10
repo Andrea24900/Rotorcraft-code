@@ -134,11 +134,8 @@ class ProblemDefinition:
     ode_rtol: float = 1e-5  # relative tolerance
     ode_atol: float = 1e-7  # absolute tolerance
 
-    # Sorting method for Floquet candidates
-    sorting_method: Literal["IMPART","SYM"]="IMPART"
-
     # Choice of "sorting" matrix C(t)
-    C_choice: Literal["NAIVE","OPTTRUE","OPTSYM"] = "NAIVE"
+    C_choice: Literal["NAIVE"] = "NAIVE"
 
     # Rotor physical characteristics
     rotor_characteristics: RotorCharacteristics = field(default_factory=RotorCharacteristics)

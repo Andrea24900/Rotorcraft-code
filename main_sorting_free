@@ -28,7 +28,8 @@ def main():
     problem = create_default_problem()
     problem.rotor_characteristics.number_blades = 4
     problem.rotor_characteristics.damper_activation = "ODI"
-    problem.number_harmonics = 1
+    problem.number_harmonics = 2
+    problem.time_samples = 20
     problem.number_points = 100
     problem.required_solver = "LTP"
     problem.continuation = "NO"
@@ -39,11 +40,12 @@ def main():
     print(f"  RPM range: {problem.lower_rotor_RPM}-{problem.higher_rotor_RPM}, Points: {problem.number_points}")
 
     # Run analysis
-    print("\nComputing characteristic exponents (this may take a few minutes)...")
+    print("\nComputing characteristic exponents with monodromy integration...")
 
     exact = LTPStability(rotor)
     exact = exact.ltp_full_range()
 
+    print("\nComputing characteristic exponents with SORTING-FREE method...")
     sortfree = SortingFreeStability(rotor)
     sortfree = sortfree.char_mult_full_range()
 
@@ -60,24 +62,24 @@ def main():
     fig1 = plotter.plot_damping_generic(
         exact.modal_solution,
         xlimits=(rpm_min, rpm_max),
-        ylimits=(damping_min, damping_max)
+        ylimits=(damping_min, damping_max), legend_text='Integration', color='blue'
     )
     plt.figure(fig1.number)
     plt.tight_layout()
     fig2 = plotter.plot_damping_generic(
         sortfree.modal_solution,
         (rpm_min, rpm_max),
-        (damping_min, damping_max), fig1
+        (damping_min, damping_max), fig1, legend_text='Naive C', color= 'red',marker='*'
     )
 
     plt.figure(fig2.number)
+    plt.legend(fontsize=16, loc='center left',
+          bbox_to_anchor=(1, 0.5))
     plt.title("Integration of monodromy matrix vs sorting-free Hill's method: Damping vs RPM")
-    #plt.legend("Integration of $\Phi_T$","Sorting-free")
     plt.tight_layout()
+    fig2.savefig("results_figures/comparison.png", dpi=600, bbox_inches='tight')
 
-
-    #fig1.savefig("results_figures/exact_damping.png", dpi=600, bbox_inches='tight')
-    #fig2.savefig("results_figures/approx_damping.png", dpi=600, bbox_inches='tight')
+    
     print("  Figures saved to results_figures/")
 
     print("\n" + "=" * 60)
