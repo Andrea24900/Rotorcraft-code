@@ -114,6 +114,7 @@ Desktop.ini
 *.png
 *.jpg
 *.pdf
+
 #results/
 extra_figures
 extra-figures
@@ -125,6 +126,9 @@ output/
 
 # Personal notes
 git_commands.txt
+
+# MAECO
+#read_MAECO.py
 
 # Data files
 data/
