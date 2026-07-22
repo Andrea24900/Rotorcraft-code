@@ -5,6 +5,7 @@ Converted from MATLAB plot_properties.m and my_plot.m.
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.patches import Circle
 from dataclasses import dataclass
 from typing import Optional, List, Tuple
 
@@ -775,6 +776,119 @@ class MyPlot:
         ax.grid(True, alpha=0.3)
 
         return fig
+
+    @staticmethod
+    def root_locus(
+        modal_solution: List,
+        figsize: Tuple[float, float] = (10, 6),
+        title: Optional[str] = None,
+        figure_handle: Optional[plt.Figure] = None
+            ) -> plt.Figure:
+        """Plot the locus of characteristic multipliers and the unit circle,"""
+
+        # Create or reuse figure and axis
+        if figure_handle is None:
+            fig, ax = plt.subplots(figsize=figsize)
+        else:
+            fig = figure_handle
+            ax = fig.gca()
+
+        # Normalize input: accept
+        # - a list of ModalSolution-like objects (with .char_solution or .eigensolution),
+        # - a list/array of complex eigenvalue arrays,
+        # - a single dict returned by LTPStability.ltp_single_point_given_M
+        mult_list = []
+
+        # Single dict case (char_solutions)
+        if isinstance(modal_solution, dict):
+            if 'char_multipliers' in modal_solution:
+                vals = modal_solution.get('char_multipliers')
+            elif 'eigenvalues' in modal_solution:
+                vals = modal_solution.get('eigenvalues')
+            else:
+                vals = None
+            if vals is None:
+                raise ValueError('Dict input must contain "char_multipliers" or "eigenvalues"')
+            mult_list.append(np.asarray(vals))
+
+        # Numpy array of complex eigenvalues (single point)
+        elif isinstance(modal_solution, np.ndarray) and modal_solution.ndim == 1:
+            mult_list.append(np.asarray(modal_solution))
+
+        else:
+            # Assume iterable of solutions or arrays
+            for sol in modal_solution:
+                vals = None
+                if isinstance(sol, dict):
+                    if 'char_multipliers' in sol:
+                        vals = sol.get('char_multipliers')
+                    elif 'eigenvalues' in sol:
+                        vals = sol.get('eigenvalues')
+                    else:
+                        vals = None
+                else:
+                    if hasattr(sol, 'char_solution') and sol.char_solution:
+                        vals = sol.char_solution.get('char_multipliers')
+                    if vals is None and hasattr(sol, 'eigensolution') and sol.eigensolution:
+                        vals = sol.eigensolution.get('eigenvalues') or sol.eigensolution.get('eigvals')
+                    # If sol itself is array-like, accept it
+                    if vals is None:
+                        try:
+                            arr = np.asarray(sol)
+                            if arr.ndim == 1 and np.iscomplexobj(arr):
+                                vals = arr
+                        except Exception:
+                            vals = None
+
+                if vals is None:
+                    raise ValueError('Each modal_solution entry must contain char_multipliers/eigenvalues or be an array of complex eigenvalues')
+                mult_list.append(np.asarray(vals))
+
+        # Ensure consistent shape
+        n_points = len(mult_list)
+        n_modes = mult_list[0].size
+        for arr in mult_list:
+            if arr.size != n_modes:
+                raise ValueError('Inconsistent number of modes across modal_solution entries')
+
+        # Stack into (n_points, n_modes)
+        mults = np.vstack(mult_list)
+
+        # Plot shaded unstable region outside unit circle
+        max_radius = max(1.0, np.max(np.abs(mults)) * 1.2)
+        outer = Circle((0, 0), max_radius, color='lightcoral', alpha=0.12, zorder=0)
+        inner = Circle((0, 0), 1.0, color=ax.get_facecolor(), zorder=1)
+        ax.add_patch(outer)
+        ax.add_patch(inner)
+
+        # Unit circle boundary
+        theta = np.linspace(0, 2 * np.pi, 400)
+        ax.plot(np.cos(theta), np.sin(theta), color='red', linestyle='--', linewidth=2.0, zorder=2)
+
+        # Choose colors for mode branches
+        cmap = plt.get_cmap('tab20')
+
+        # Plot each mode branch (connect points across rotor speeds)
+        for j in range(n_modes):
+            real_parts = np.real(mults[:, j])
+            imag_parts = np.imag(mults[:, j])
+            color_idx = j % cmap.N
+            ax.plot(real_parts, imag_parts, '-', color=cmap(color_idx), linewidth=plot_property.line_width * 0.6, alpha=0.9, zorder=3)
+            ax.plot(real_parts, imag_parts, '.', color=cmap(color_idx), markersize=plot_property.marker_size, zorder=4)
+
+        ax.set_xlabel('Real', fontsize=plot_property.fontsize_label)
+        ax.set_ylabel('Imag', fontsize=plot_property.fontsize_label)
+        ax.set_title(title or 'Root Locus (Characteristic Multipliers)', fontsize=plot_property.fontsize_label + 2)
+        ax.grid(True, which='both', linestyle=':', alpha=0.6)
+        ax.set_aspect('equal', 'box')
+
+        # Set limits with some margin
+        lim = max_radius
+        ax.set_xlim(-lim, lim)
+        ax.set_ylim(-lim, lim)
+
+        return fig
+
 
     @staticmethod
     def _format_parameter_label(parameter_name: str) -> str:
