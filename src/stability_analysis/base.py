@@ -228,7 +228,7 @@ class StabilityAnalysis:
     
     @staticmethod
     def hd_computer(
-        A_handle: Callable[[float, float], np.ndarray],
+        A_computed: np.ndarray,
         OMEGA: float,
         number_harmonics: int,
         time_samples: int,
@@ -240,7 +240,7 @@ class StabilityAnalysis:
         Fourier coefficients of the time-periodic state matrix A(Ω,t).
 
         Args:
-            A_handle: Function handle A(OMEGA, t) that returns the n×n state matrix
+            A_computed: Function handle A(OMEGA, t) that returns the n×n state matrix
                 at angular velocity OMEGA and time t
             OMEGA: Angular velocity (rad/s). Period is computed as T = 2π/OMEGA
             number_harmonics: Number of harmonics to include
@@ -255,9 +255,9 @@ class StabilityAnalysis:
 
         Example:
         -------
-        >>> A_handle = lambda Om, t: np.array([[0, 1], [-1 - 0.1*np.sin(Om*t), -0.1]])
+        >>> A_computed = lambda Om, t: np.array([[0, 1], [-1 - 0.1*np.sin(Om*t), -0.1]])
         >>> OMEGA = 1.0  # rad/s
-        >>> A_HD = StabilityAnalysis.hd_computer(A_handle, OMEGA, number_harmonics=2, time_samples=100)
+        >>> A_HD = StabilityAnalysis.hd_computer(A_computed, OMEGA, number_harmonics=2, time_samples=100)
         >>> eigenvalues = np.linalg.eigvals(A_HD)
         """
         # Input validation
@@ -274,27 +274,28 @@ class StabilityAnalysis:
         period_T = 2 * np.pi / OMEGA
         time = np.linspace(0, period_T, time_samples)
 
-        try:
-            A_0 = A_handle(OMEGA, 0)
-        except Exception as e:
-            raise ValueError(f"A_handle(OMEGA, 0) failed: {e}")
+        if callable(A_computed):
+            try:
+                A_0 = A_computed(OMEGA, 0)
+            except Exception as e:
+                raise ValueError(f"A_computed(OMEGA, 0) failed: {e}")
 
-        if A_0 is None:
-            raise ValueError("A_handle(OMEGA, 0) returned None")
+            if A_0 is None:
+                raise ValueError("A_computed(OMEGA, 0) returned None")
 
-        if not isinstance(A_0, np.ndarray):
-            raise ValueError(f"A_handle must return numpy array, got {type(A_0)}")
+            if not isinstance(A_0, np.ndarray):
+                raise ValueError(f"A_computed must return numpy array, got {type(A_0)}")
 
-        if A_0.ndim != 2:
-            raise ValueError(f"A_handle must return 2D array, got {A_0.ndim}D")
+            if A_0.ndim != 2:
+                raise ValueError(f"A_computed must return 2D array, got {A_0.ndim}D")
 
-        if A_0.shape[0] != A_0.shape[1]:
-            raise ValueError(f"A_handle must return square matrix, got shape {A_0.shape}")
-
+            if A_0.shape[0] != A_0.shape[1]:
+                raise ValueError(f"A_computed must return square matrix, got shape {A_0.shape}")
+        
         # Dispatch to complex or real formulation
         if use_complex:
             return StabilityAnalysis.hd_computer_complex(
-                A_handle, OMEGA, number_harmonics, time_samples
+                A_computed, OMEGA, number_harmonics, time_samples
             )
 
         state_number = A_0.shape[0]
@@ -302,7 +303,7 @@ class StabilityAnalysis:
         A_HD = np.zeros((size_A_HD, size_A_HD))
 
         # Compute time realizations of A(OMEGA, t) - vectorized for better performance
-        time_realisation_A = np.array([A_handle(OMEGA, t) for t in time])
+        time_realisation_A = np.array([A_computed(OMEGA, t) for t in time])
         # Transpose to shape (state_number, state_number, len(time))
         time_realisation_A = np.transpose(time_realisation_A, (1, 2, 0))
 
@@ -409,7 +410,7 @@ class StabilityAnalysis:
 
     @staticmethod
     def hd_computer_complex(
-        A_handle: Callable[[float, float], np.ndarray],
+        A_computed:  np.ndarray,
         OMEGA: float,
         number_harmonics: int,
         time_samples: int
@@ -421,7 +422,7 @@ class StabilityAnalysis:
         internally by hd_computer when use_complex=True.
 
         Args:
-            A_handle: Function handle A(OMEGA, t) that returns the n×n state matrix
+            A_computed: Function handle A(OMEGA, t) that returns the n×n state matrix
                 at angular velocity OMEGA and time t
             OMEGA: Angular velocity (rad/s). Period is computed as T = 2π/OMEGA
             number_harmonics: Number of harmonics to include
@@ -432,19 +433,26 @@ class StabilityAnalysis:
         """
         # Compute period and time vector
         period_T = 2 * np.pi / OMEGA
-        time = np.linspace(0, period_T, time_samples)
 
-        state_number = A_handle(OMEGA, 0).shape[0]
+        if callable(A_computed):
+            time = np.linspace(0, period_T, time_samples)
+            state_number = A_computed(OMEGA, 0).shape[0]
+        else:
+            state_number = A_computed.shape[0]
+
         size_A_HD = (1 + 2 * number_harmonics) * state_number
         A_HD = np.zeros((size_A_HD, size_A_HD), dtype=complex)
 
-        # Compute time realizations of A(OMEGA, t) - vectorized for better performance
-        time_realisation_A = np.array([A_handle(OMEGA, t) for t in time])
-        # Transpose to shape (state_number, state_number, len(time))
-        time_realisation_A = np.transpose(time_realisation_A, (1, 2, 0))
-
-        # Compute FFT coefficients (vectorized along time axis)
-        A_coeff = np.fft.fft(time_realisation_A, axis=2) / len(time)
+        if callable(A_computed):
+            # Compute time realizations of A(OMEGA, t) - vectorized for better performance
+            time_realisation_A = np.array([A_computed(OMEGA, t) for t in time])
+            # Transpose to shape (state_number, state_number, len(time))
+            time_realisation_A = np.transpose(time_realisation_A, (1, 2, 0))
+            # Compute FFT coefficients (vectorized along time axis)
+            A_coeff = np.fft.fft(time_realisation_A, axis=2) / len(time)
+        else:
+            # If A_computed is already a 3D array of shape (state_number, state_number, time_samples)
+            A_coeff = np.fft.fft(A_computed, axis=2) / A_computed.shape[2]
 
         # k is used to cycle the harmonics from -N to N (columns)
         # j is used to cycle the blocks in the A matrix (rows)
