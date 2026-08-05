@@ -162,14 +162,10 @@ class LTPStability(StabilityAnalysis):
             np.imag(char_multipliers),
             np.real(char_multipliers)
             )
+
+        char_exp = real_char_exp + 1j * imag_char_exp
         
-        char_solutions = {
-            'char_multipliers': char_multipliers,
-            'real_char_exp': real_char_exp,
-            'imag_char_exp': imag_char_exp
-                }
-        
-        return char_solutions
+        return char_multipliers, char_exp, real_char_exp, imag_char_exp
 
 
 if __name__ == "__main__":
