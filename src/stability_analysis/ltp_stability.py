@@ -147,7 +147,7 @@ class LTPStability(StabilityAnalysis):
 
     def ltp_single_point_given_M(monodromy_matrix_M,T):
         
-        char_multipliers = np.linalg.eigvals(monodromy_matrix_M)
+        char_multipliers, eigenvectors_mon = np.linalg.eig(monodromy_matrix_M)
         # Compute characteristic exponents
         # Real part: σ = (1/2T) * ln(|μ|²)
         magnitude_squared = np.real(char_multipliers)**2 + np.imag(char_multipliers)**2
@@ -165,7 +165,7 @@ class LTPStability(StabilityAnalysis):
 
         char_exp = real_char_exp + 1j * imag_char_exp
         
-        return char_multipliers, char_exp, real_char_exp, imag_char_exp
+        return char_multipliers, char_exp, eigenvectors_mon, imag_char_exp
 
 
 if __name__ == "__main__":
